@@ -1,0 +1,14 @@
+[
+    {
+        "name": "nombre",
+        "dbType": "string"
+    },
+    {
+        "name": "created_at",
+        "dbType": "timestamp,nullable"
+    },
+    {
+        "name": "updated_at",
+        "dbType": "timestamp,nullable"
+    }
+]

@@ -1,0 +1,8 @@
+[
+  { "name": "ot_id", "dbType": "integer:unsigned", "htmlType": "number", "validations": "required" },
+  { "name": "tipo", "dbType": "string", "htmlType": "select", "options": ["inicio_carga", "en_transito", "entrega"], "validations": "required" },
+  { "name": "observaciones", "dbType": "text", "htmlType": "textarea" },
+  { "name": "fotos", "dbType": "json", "htmlType": "text" },
+  { "name": "created_at", "dbType": "timestamp", "htmlType": "text" },
+  { "name": "updated_at", "dbType": "timestamp", "htmlType": "text" }
+]

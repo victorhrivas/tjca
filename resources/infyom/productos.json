@@ -1,0 +1,38 @@
+[
+    {
+        "name": "marca",
+        "dbType": "string"
+    },
+    {
+        "name": "modelo",
+        "dbType": "string"
+    },
+    {
+        "name": "anio",
+        "dbType": "string"
+    },
+    {
+        "name": "tipo_vidrio",
+        "dbType": "string"
+    },
+    {
+        "name": "precio_base",
+        "dbType": "decimal,10,2"
+    },
+    {
+        "name": "stock_actual",
+        "dbType": "integer"
+    },
+    {
+        "name": "user_id",
+        "dbType": "integer"
+    },
+    {
+        "name": "created_at",
+        "dbType": "timestamp,nullable"
+    },
+    {
+        "name": "updated_at",
+        "dbType": "timestamp,nullable"
+    }
+]

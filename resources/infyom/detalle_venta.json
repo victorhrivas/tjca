@@ -1,0 +1,30 @@
+[
+    {
+        "name": "venta_id",
+        "dbType": "integer"
+    },
+    {
+        "name": "producto_id",
+        "dbType": "integer"
+    },
+    {
+        "name": "cantidad",
+        "dbType": "integer"
+    },
+    {
+        "name": "precio_unitario",
+        "dbType": "decimal,10,2"
+    },
+    {
+        "name": "subtotal",
+        "dbType": "decimal,12,2"
+    },
+    {
+        "name": "created_at",
+        "dbType": "timestamp,nullable"
+    },
+    {
+        "name": "updated_at",
+        "dbType": "timestamp,nullable"
+    }
+]

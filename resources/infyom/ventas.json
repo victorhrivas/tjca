@@ -1,0 +1,22 @@
+[
+    {
+        "name": "cliente_id",
+        "dbType": "integer,nullable"
+    },
+    {
+        "name": "total",
+        "dbType": "decimal,12,2"
+    },
+    {
+        "name": "user_id",
+        "dbType": "integer"
+    },
+    {
+        "name": "created_at",
+        "dbType": "timestamp,nullable"
+    },
+    {
+        "name": "updated_at",
+        "dbType": "timestamp,nullable"
+    }
+]

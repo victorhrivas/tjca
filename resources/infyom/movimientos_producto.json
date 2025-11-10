@@ -1,0 +1,30 @@
+[
+    {
+        "name": "producto_id",
+        "dbType": "integer"
+    },
+    {
+        "name": "tipo_movimiento",
+        "dbType": "enum,entrada,salida"
+    },
+    {
+        "name": "cantidad",
+        "dbType": "integer"
+    },
+    {
+        "name": "descripcion",
+        "dbType": "string,nullable"
+    },
+    {
+        "name": "user_id",
+        "dbType": "integer"
+    },
+    {
+        "name": "created_at",
+        "dbType": "timestamp,nullable"
+    },
+    {
+        "name": "updated_at",
+        "dbType": "timestamp,nullable"
+    }
+]
