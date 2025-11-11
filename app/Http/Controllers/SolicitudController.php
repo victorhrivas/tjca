@@ -6,6 +6,7 @@ use App\Http\Requests\CreateSolicitudRequest;
 use App\Http\Requests\UpdateSolicitudRequest;
 use App\Http\Controllers\AppBaseController;
 use App\Repositories\SolicitudRepository;
+use App\Models\Cliente;
 use Illuminate\Http\Request;
 use Flash;
 
@@ -35,7 +36,8 @@ class SolicitudController extends AppBaseController
      */
     public function create()
     {
-        return view('solicituds.create');
+        $clientes = Cliente::orderBy('razon_social')->pluck('razon_social', 'id');
+        return view('solicituds.create', compact('clientes'));
     }
 
     /**
@@ -74,14 +76,14 @@ class SolicitudController extends AppBaseController
     public function edit($id)
     {
         $solicitud = $this->solicitudRepository->find($id);
+        $clientes = Cliente::orderBy('razon_social')->pluck('razon_social', 'id');
 
         if (empty($solicitud)) {
             Flash::error('Solicitud not found');
-
             return redirect(route('solicituds.index'));
         }
 
-        return view('solicituds.edit')->with('solicitud', $solicitud);
+        return view('solicituds.edit', compact('solicitud', 'clientes'));
     }
 
     /**
@@ -125,4 +127,63 @@ class SolicitudController extends AppBaseController
 
         return redirect(route('solicituds.index'));
     }
+
+    public function select(\Illuminate\Http\Request $request)
+    {
+        $q = trim($request->get('q', ''));
+
+        // intento seguro de parsear fecha
+        $fecha = null;
+        foreach (['d/m/Y','d-m-Y','Y-m-d'] as $fmt) {
+            try {
+                $tmp = \Carbon\Carbon::createFromFormat($fmt, $q);
+                if ($tmp !== false) { $fecha = $tmp->format('Y-m-d'); break; }
+            } catch (\Exception $e) {}
+        }
+
+        $query = \App\Models\Solicitud::query()
+            ->with('cliente')
+            ->orderByDesc('id');
+
+        if ($q !== '') {
+            $query->where(function ($w) use ($q, $fecha) {
+                // ID exacto si es número
+                if (ctype_digit($q)) {
+                    $w->orWhere('id', (int)$q);
+                }
+                // Cliente
+                $w->orWhereHas('cliente', function ($c) use ($q) {
+                    $c->where('razon_social', 'like', "%{$q}%")
+                    ->orWhere('rut', 'like', "%{$q}%");
+                });
+                // Campos libres
+                $w->orWhere('origen', 'like', "%{$q}%")
+                ->orWhere('destino', 'like', "%{$q}%");
+                // Fecha si se pudo parsear
+                if ($fecha) {
+                    $w->orWhereDate('created_at', $fecha);
+                }
+            });
+        } else {
+            // sin query: últimos 25 para que TomSelect muestre algo
+            $query->limit(25);
+        }
+
+        $solicitudes = $query->limit(25)->get();
+
+        return response()->json($solicitudes->map(function ($s) {
+            return [
+                'id'   => $s->id,
+                'text' => sprintf(
+                    '#%d · %s · %s → %s · %s',
+                    $s->id,
+                    optional($s->cliente)->razon_social ?? 'Sin cliente',
+                    $s->origen, $s->destino,
+                    optional($s->created_at)?->format('d/m/Y H:i') ?? ''
+                ),
+            ];
+        }));
+    }
+
+
 }

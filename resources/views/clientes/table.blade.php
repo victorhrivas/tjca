@@ -8,9 +8,9 @@
                 <th>Correo</th>
                 <th>Telefono</th>
                 <th>Direccion</th>
-                <th>Created At</th>
-                <th>Updated At</th>
-                <th colspan="3">Action</th>
+                <th>Creado</th>
+                <th>Actalizado</th>
+                <th colspan="3">Acción</th>
             </tr>
             </thead>
             <tbody>
@@ -21,8 +21,8 @@
                     <td>{{ $cliente->correo }}</td>
                     <td>{{ $cliente->telefono }}</td>
                     <td>{{ $cliente->direccion }}</td>
-                    <td>{{ $cliente->created_at }}</td>
-                    <td>{{ $cliente->updated_at }}</td>
+                    <td>{{ $cliente->created_at ? $cliente->created_at->format('d/m/y H:i') : '' }}</td>
+                    <td>{{ $cliente->updated_at ? $cliente->updated_at->format('d/m/y H:i') : '' }}</td>
                     <td  style="width: 120px">
                         {!! Form::open(['route' => ['clientes.destroy', $cliente->id], 'method' => 'delete']) !!}
                         <div class='btn-group'>

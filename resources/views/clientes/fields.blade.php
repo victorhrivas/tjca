@@ -25,17 +25,17 @@
 <!-- Direccion Field -->
 <div class="form-group col-sm-12 col-lg-12">
     {!! Form::label('direccion', 'Direccion:') !!}
-    {!! Form::textarea('direccion', null, ['class' => 'form-control']) !!}
+    {!! Form::text('direccion', null, ['class' => 'form-control']) !!}
 </div>
 
 <!-- Created At Field -->
 <div class="form-group col-sm-6">
-    {!! Form::label('created_at', 'Created At:') !!}
+    {!! Form::label('created_at', 'Fecha de Creación:') !!}
     {!! Form::text('created_at', null, ['class' => 'form-control']) !!}
 </div>
 
 <!-- Updated At Field -->
 <div class="form-group col-sm-6">
-    {!! Form::label('updated_at', 'Updated At:') !!}
+    {!! Form::label('updated_at', 'Ultima Actualización:') !!}
     {!! Form::text('updated_at', null, ['class' => 'form-control']) !!}
 </div>

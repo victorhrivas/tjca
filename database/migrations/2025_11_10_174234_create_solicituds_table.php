@@ -14,6 +14,7 @@ return new class extends Migration
     public function up()
     {
         Schema::create('solicituds', function (Blueprint $table) {
+            $table->id();
             $table->integer('cliente_id')->unsigned();
             $table->string('canal');
             $table->string('origen');

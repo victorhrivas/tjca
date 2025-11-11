@@ -1,13 +1,26 @@
-<!-- Cliente Id Field -->
+<!-- Cliente Field -->
 <div class="form-group col-sm-6">
-    {!! Form::label('cliente_id', 'Cliente Id:') !!}
-    {!! Form::number('cliente_id', null, ['class' => 'form-control', 'required']) !!}
+    {!! Form::label('cliente_id', 'Cliente:') !!}
+    {!! Form::select('cliente_id', $clientes, null, [
+        'class' => 'form-control',
+        'placeholder' => 'Seleccione un cliente...',
+        'required'
+    ]) !!}
 </div>
 
 <!-- Canal Field -->
 <div class="form-group col-sm-6">
     {!! Form::label('canal', 'Canal:') !!}
-    {!! Form::text('canal', null, ['class' => 'form-control']) !!}
+    {!! Form::select('canal', [
+        'whatsapp' => 'WhatsApp',
+        'llamada' => 'Llamada',
+        'email' => 'Email',
+        'otro' => 'Otro'
+    ], null, [
+        'class' => 'form-control',
+        'placeholder' => 'Seleccione un canal...',
+        'required'
+    ]) !!}
 </div>
 
 <!-- Origen Field -->
@@ -32,16 +45,4 @@
 <div class="form-group col-sm-12 col-lg-12">
     {!! Form::label('notas', 'Notas:') !!}
     {!! Form::textarea('notas', null, ['class' => 'form-control']) !!}
-</div>
-
-<!-- Created At Field -->
-<div class="form-group col-sm-6">
-    {!! Form::label('created_at', 'Created At:') !!}
-    {!! Form::text('created_at', null, ['class' => 'form-control']) !!}
-</div>
-
-<!-- Updated At Field -->
-<div class="form-group col-sm-6">
-    {!! Form::label('updated_at', 'Updated At:') !!}
-    {!! Form::text('updated_at', null, ['class' => 'form-control']) !!}
 </div>

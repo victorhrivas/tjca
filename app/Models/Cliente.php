@@ -8,14 +8,12 @@ class Cliente extends Model
 {
     public $table = 'clientes';
 
-    public $fillable = [
+    protected $fillable = [
         'razon_social',
         'rut',
         'correo',
         'telefono',
         'direccion',
-        'created_at',
-        'updated_at'
     ];
 
     protected $casts = [
@@ -23,12 +21,12 @@ class Cliente extends Model
         'rut' => 'string',
         'correo' => 'string',
         'telefono' => 'string',
-        'direccion' => 'string'
+        'direccion' => 'string',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     public static array $rules = [
-        'razon_social' => 'required'
+        'razon_social' => 'required',
     ];
-
-    
 }

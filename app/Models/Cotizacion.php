@@ -26,5 +26,10 @@ class Cotizacion extends Model
         'solicitud_id' => 'required'
     ];
 
-    
+    public function solicitud()
+    {
+        return $this->belongsTo(\App\Models\Solicitud::class);
+    }
+
+        
 }

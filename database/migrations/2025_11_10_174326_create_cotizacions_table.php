@@ -14,6 +14,7 @@ return new class extends Migration
     public function up()
     {
         Schema::create('cotizacions', function (Blueprint $table) {
+            $table->id();
             $table->integer('solicitud_id')->unsigned();
             $table->enum('estado', ['enviada', 'aceptada', 'rechazada'])->default('enviada');
             $table->integer('monto');

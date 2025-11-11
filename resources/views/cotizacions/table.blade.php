@@ -6,8 +6,8 @@
                 <th>Solicitud Id</th>
                 <th>Estado</th>
                 <th>Monto</th>
-                <th>Created At</th>
-                <th>Updated At</th>
+                <th>Creado</th>
+                <th>Actualizado</th>
                 <th colspan="3">Action</th>
             </tr>
             </thead>
@@ -17,8 +17,8 @@
                     <td>{{ $cotizacion->solicitud_id }}</td>
                     <td>{{ $cotizacion->estado }}</td>
                     <td>{{ $cotizacion->monto }}</td>
-                    <td>{{ $cotizacion->created_at }}</td>
-                    <td>{{ $cotizacion->updated_at }}</td>
+                    <td>{{ $cotizacion->created_at ? $cotizacion->created_at->format('d/m/y H:i') : '' }}</td>
+                    <td>{{ $cotizacion->updated_at ? $cotizacion->updated_at->format('d/m/y H:i') : '' }}</td>
                     <td  style="width: 120px">
                         {!! Form::open(['route' => ['cotizacions.destroy', $cotizacion->id], 'method' => 'delete']) !!}
                         <div class='btn-group'>

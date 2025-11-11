@@ -23,8 +23,8 @@
                     <td>{{ $solicitud->destino }}</td>
                     <td>{{ $solicitud->carga }}</td>
                     <td>{{ $solicitud->notas }}</td>
-                    <td>{{ $solicitud->created_at }}</td>
-                    <td>{{ $solicitud->updated_at }}</td>
+                    <td>{{ $solicitud->created_at ? $solicitud->created_at->format('d/m/y H:i') : '' }}</td>
+                    <td>{{ $solicitud->updated_at ? $solicitud->updated_at->format('d/m/y H:i') : '' }}</td>
                     <td  style="width: 120px">
                         {!! Form::open(['route' => ['solicituds.destroy', $solicitud->id], 'method' => 'delete']) !!}
                         <div class='btn-group'>

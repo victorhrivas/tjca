@@ -34,5 +34,11 @@ class Solicitud extends Model
         'destino' => 'required'
     ];
 
+    public function cliente()
+    {
+        return $this->belongsTo(\App\Models\Cliente::class);
+    }
+
+
     
 }

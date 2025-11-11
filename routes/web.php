@@ -45,6 +45,10 @@ Route::middleware(['auth.redirect'])->group(function () {
     Route::resource('cotizaciones', CotizacionController::class)->only(['index','create','store','show']);
     Route::resource('ot', OtController::class)->only(['index','create','store','show','update']);
 
+    
+    Route::get('/solicituds/select', [SolicitudController::class, 'select'])
+        ->name('solicituds.select');
+
     // Operación logística
     Route::prefix('operacion')->name('operacion.')->group(function () {
         Route::resource('inicio-carga', InicioCargaController::class)->only(['index','store','show']);
