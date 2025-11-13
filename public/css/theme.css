@@ -1,0 +1,102 @@
+:root{
+  /* Claro */
+  --bg-0:#ffffff;         /* fondo general */
+  --bg-1:#ffffff;         /* paneles / tarjetas */
+  --bg-2:#f9f9f9;         /* bloques secundarios */
+  --bg-3:#f2f3f5;         /* headers/tabla */
+  --line:#e0e0e0;
+  --ink:#141414;          /* texto principal */
+  --muted:#60656f;        /* texto secundario */
+  --accent:#d4ad18;
+  --accent-hover:#e1ba1f;
+  --accent-ink:#0b0c0e;
+}
+
+body.dark-mode{
+  /* Oscuro */
+  --bg-0:#101114;
+  --bg-1:#15171b;
+  --bg-2:#1c1f24;
+  --bg-3:#23272e;
+  --line:#2c3139;
+  --ink:#e6e7ea;
+  --muted:#a7adb7;
+  --accent:#d4ad18;
+  --accent-hover:#e1ba1f;
+  --accent-ink:#0b0c0e;
+}
+
+/* Base común (todo usa variables) */
+html,body{background:var(--bg-0);color:var(--ink);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial,sans-serif}
+a{color:var(--accent)} a:hover{color:var(--accent-hover);text-decoration:none}
+
+/* Navbar */
+.main-header.navbar{background:linear-gradient(180deg,var(--bg-3),var(--bg-2));color:var(--ink);border-bottom:1px solid var(--line)}
+.navbar-nav .nav-link[data-widget="pushmenu"] i{color:var(--accent)}
+.main-header .nav-link{color:var(--ink)}
+
+/* Sidebar */
+.main-sidebar{background:linear-gradient(180deg,var(--bg-2),var(--bg-1)) !important;border-right:1px solid var(--line);box-shadow:4px 0 15px rgba(0,0,0,.08)}
+.brand-link{background:var(--bg-1)!important;border-bottom:1px solid var(--line)}
+.brand-text{color:var(--ink)}
+.nav-sidebar>.nav-item>.nav-link{color:var(--muted);border-radius:8px;margin:2px 8px}
+.nav-sidebar>.nav-item>.nav-link i{color:var(--muted)}
+.nav-sidebar>.nav-item>.nav-link:hover{background:var(--bg-3);color:var(--accent)}
+.nav-sidebar>.nav-item>.nav-link:hover i{color:var(--accent)}
+.nav-sidebar>.nav-item>.nav-link.active{background:var(--accent)!important;color:var(--accent-ink)!important;box-shadow:0 0 12px rgba(212,173,24,.25)}
+.nav-sidebar>.nav-item>.nav-link.active i{color:var(--accent-ink)!important}
+.nav-treeview>.nav-item>.nav-link{color:var(--muted);background:var(--bg-2);border-left:2px solid transparent;margin:1px 14px;border-radius:6px}
+.nav-treeview>.nav-item>.nav-link:hover{color:var(--accent);background:var(--bg-3);border-left:2px solid var(--accent)}
+
+/* Navbar: colores que siguen el tema */
+.navbar .nav-link,
+.navbar .user-menu > a,
+.navbar .user-menu > a i {
+  color: var(--ink) !important;
+}
+.navbar .dropdown-menu {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.navbar .dropdown-menu * {
+  color: var(--ink);
+}
+.navbar .dropdown-divider { border-color: var(--line); }
+
+
+/* Contenido */
+.content-wrapper{
+  background:
+    radial-gradient(1200px 500px at 80% -20%, rgba(212,173,24,.05), transparent 60%),
+    radial-gradient(900px 400px at -10% 110%, rgba(0,0,0,.03), transparent 60%),
+    var(--bg-0);
+  min-height:calc(100vh - 56px);
+}
+
+/* Tarjetas */
+.card{background:linear-gradient(180deg,var(--bg-1),var(--bg-2));border:1px solid var(--line);border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.card-header{background:var(--bg-3);border-bottom:1px solid var(--line);color:var(--ink)}
+.card-body,.card-footer{background:transparent}
+
+/* Botones */
+.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700;border-radius:10px}
+.btn-primary:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+.btn-secondary,.btn-default{background:var(--bg-2);border-color:var(--line);color:var(--ink);border-radius:10px}
+.btn-secondary:hover,.btn-default:hover{background:var(--bg-3)}
+
+/* Formularios */
+.form-control{background:var(--bg-1);border:1px solid var(--line);color:var(--ink);border-radius:10px}
+.form-control:focus{border-color:var(--accent);box-shadow:0 0 0 .2rem rgba(212,173,24,.15)}
+label{color:var(--muted)}
+
+/* Tablas */
+.table{background:var(--bg-1);color:var(--ink)}
+.table th{background:var(--bg-3);border-color:var(--line)}
+.table td{background:var(--bg-1);border-color:var(--line)}
+.table-hover tbody tr:hover{background:var(--bg-2)}
+
+/* Dropdowns / Footer */
+.dropdown-menu{background:var(--bg-1);border:1px solid var(--line);border-radius:12px}
+.user-header{background:var(--accent)!important;color:var(--accent-ink)!important}
+.main-footer{background:var(--bg-3);color:var(--muted);border-top:1px solid var(--line)}
