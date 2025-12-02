@@ -34,6 +34,7 @@
                 position: relative;
                 z-index: 1;
                 max-width: 900px;
+                max-height: 700px;
                 margin: 40px auto 40px auto; /* centrado horizontalmente */
                 margin-right: 10%;           /* mantiene la inclinación a la derecha */
                 padding: 24px;
@@ -197,30 +198,26 @@
                 <div class="card-section">
                     <div class="divider"><span>Acciones rápidas</span></div>
                     <div class="action-grid">
-                        <button type="button" class="action-tile">
+
+                        {{-- Inicio de carga --}}
+                        <a href="{{ route('inicio-cargas.create') }}" class="action-tile">
                             <i class="fas fa-truck-loading"></i>
                             <span>Inicio de carga</span>
-                        </button>
-                        <button type="button" class="action-tile">
+                        </a>
+
+                        {{-- Entrega --}}
+                        <a href="{{ route('entregas.create') }}" class="action-tile">
                             <i class="fas fa-clipboard-check"></i>
                             <span>Entrega</span>
-                        </button>
-                        <button type="button" class="action-tile">
+                        </a>
+
+                        {{-- Checklist camión --}}
+                        <a href="{{ route('checklist-camions.create') }}" class="action-tile">
                             <i class="fas fa-list-check"></i>
                             <span>Checklist camión</span>
-                        </button>
+                        </a>
                     </div>
                 </div>
-
-                {{-- Soporte --}}
-                <div class="card-section">
-                    <div class="divider"><span>Soporte</span></div>
-                    <div class="help-row">
-                        <span>Problemas de acceso</span>
-                        <a href="{{ route('password.request') }}">¿Olvidó su contraseña?</a>
-                    </div>
-                </div>
-
             </div>
         </div>
     </div>

@@ -7,17 +7,19 @@
 </li>
 
 <li class="nav-item">
-    <a href="{{ route('solicitudes.index') }}" class="nav-link {{ Request::is('solicitudes*') ? 'active' : '' }}">
+    <a href="{{ route('solicituds.index') }}" class="nav-link {{ Request::is('solicitudes*') ? 'active' : '' }}">
         <i class="nav-icon fas fa-inbox"></i><p>Solicitudes</p>
     </a>
 </li>
+
 <li class="nav-item">
-    <a href="{{ route('cotizaciones.index') }}" class="nav-link {{ Request::is('cotizaciones*') ? 'active' : '' }}">
+    <a href="{{ route('cotizacions.index') }}" class="nav-link {{ Request::is('cotizaciones*') ? 'active' : '' }}">
         <i class="nav-icon fas fa-file-signature"></i><p>Cotizaciones</p>
     </a>
 </li>
+
 <li class="nav-item">
-    <a href="{{ route('ot.index') }}" class="nav-link {{ Request::is('ot*') ? 'active' : '' }}">
+    <a href="{{ route('ots.index') }}" class="nav-link {{ Request::is('ots*') ? 'active' : '' }}">
         <i class="nav-icon fas fa-clipboard-check"></i><p>OT's</p>
     </a>
 </li>
@@ -58,5 +60,12 @@
 <li class="nav-item">
     <a href="{{ route('clientes.index') }}" class="nav-link {{ Request::is('clientes*') ? 'active' : '' }}">
         <i class="nav-icon fas fa-user-friends"></i><p>Clientes</p>
+    </a>
+</li>
+
+<li class="nav-item">
+    <a href="{{ route('conductors.index') }}" class="nav-link {{ Request::is('conductors*') ? 'active' : '' }}">
+        <i class="nav-icon fas fa-truck-moving"></i>
+        <p>Conductores</p>
     </a>
 </li>

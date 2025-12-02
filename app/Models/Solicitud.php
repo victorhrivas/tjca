@@ -10,28 +10,32 @@ class Solicitud extends Model
 
     public $fillable = [
         'cliente_id',
+        'solicitante',
         'canal',
         'origen',
         'destino',
         'carga',
         'notas',
+        'estado',
         'created_at',
         'updated_at'
     ];
 
     protected $casts = [
         'cliente_id' => 'integer',
-        'canal' => 'string',
-        'origen' => 'string',
-        'destino' => 'string',
-        'carga' => 'string',
-        'notas' => 'string'
+        'solicitante' => 'string',
+        'canal'      => 'string',
+        'origen'     => 'string',
+        'destino'    => 'string',
+        'carga'      => 'string',
+        'notas'      => 'string',
+        'estado' => 'string'
     ];
 
     public static array $rules = [
         'cliente_id' => 'required',
-        'origen' => 'required',
-        'destino' => 'required'
+        'origen'     => 'required',
+        'destino'    => 'required'
     ];
 
     public function cliente()
@@ -39,6 +43,8 @@ class Solicitud extends Model
         return $this->belongsTo(\App\Models\Cliente::class);
     }
 
-
-    
+    public function cotizacion()
+    {
+        return $this->hasOne(\App\Models\Cotizacion::class);
+    }
 }

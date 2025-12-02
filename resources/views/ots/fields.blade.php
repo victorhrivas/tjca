@@ -1,41 +1,91 @@
-<!-- Cotizacion Id Field -->
+<!-- Cotización Field -->
 <div class="form-group col-sm-6">
-    {!! Form::label('cotizacion_id', 'Cotizacion Id:') !!}
-    {!! Form::number('cotizacion_id', null, ['class' => 'form-control', 'required']) !!}
+    {!! Form::label('cotizacion_id', 'Cotización (ID):') !!}
+    {!! Form::number('cotizacion_id', null, [
+        'class' => 'form-control',
+        'required' => true,
+        'min' => 1
+    ]) !!}
 </div>
 
-<!-- Conductor Field -->
+<!-- Equipo / Tipo de carga -->
+<div class="form-group col-sm-6">
+    {!! Form::label('equipo', 'Equipo / Tipo de carga:') !!}
+    {!! Form::text('equipo', null, ['class' => 'form-control']) !!}
+</div>
+
+<!-- Origen -->
+<div class="form-group col-sm-6">
+    {!! Form::label('origen', 'Origen:') !!}
+    {!! Form::text('origen', null, ['class' => 'form-control']) !!}
+</div>
+
+<!-- Destino -->
+<div class="form-group col-sm-6">
+    {!! Form::label('destino', 'Destino:') !!}
+    {!! Form::text('destino', null, ['class' => 'form-control']) !!}
+</div>
+
+<!-- Cliente -->
+<div class="form-group col-sm-6">
+    {!! Form::label('cliente', 'Cliente:') !!}
+    {!! Form::text('cliente', null, ['class' => 'form-control']) !!}
+</div>
+
+<!-- Valor -->
+<div class="form-group col-sm-6">
+    {!! Form::label('valor', 'Valor (CLP):') !!}
+    {!! Form::number('valor', null, [
+        'class' => 'form-control',
+        'min' => 0,
+        'step' => 1
+    ]) !!}
+</div>
+
+<!-- Fecha -->
+<div class="form-group col-sm-6">
+    {!! Form::label('fecha', 'Fecha de servicio:') !!}
+    {!! Form::date('fecha', isset($ot) && $ot->fecha ? $ot->fecha : null, [
+        'class' => 'form-control'
+    ]) !!}
+</div>
+
+<!-- Solicitante -->
+<div class="form-group col-sm-6">
+    {!! Form::label('solicitante', 'Solicitante:') !!}
+    {!! Form::text('solicitante', null, ['class' => 'form-control']) !!}
+</div>
+
+<!-- Conductor -->
 <div class="form-group col-sm-6">
     {!! Form::label('conductor', 'Conductor:') !!}
-    {!! Form::text('conductor', null, ['class' => 'form-control']) !!}
+    {!! Form::select('conductor', $conductores, null, [
+        'class' => 'form-control',
+        'placeholder' => 'Seleccione un conductor'
+    ]) !!}
 </div>
 
-<!-- Patente Camion Field -->
+<!-- Patente Camión -->
 <div class="form-group col-sm-6">
-    {!! Form::label('patente_camion', 'Patente Camion:') !!}
+    {!! Form::label('patente_camion', 'Patente camión:') !!}
     {!! Form::text('patente_camion', null, ['class' => 'form-control']) !!}
 </div>
 
-<!-- Patente Remolque Field -->
-<div class="form-group col-sm-6">
-    {!! Form::label('patente_remolque', 'Patente Remolque:') !!}
-    {!! Form::text('patente_remolque', null, ['class' => 'form-control']) !!}
-</div>
-
-<!-- Estado Field -->
+<!-- Estado -->
 <div class="form-group col-sm-6">
     {!! Form::label('estado', 'Estado:') !!}
-    {!! Form::select('estado', [], null, ['class' => 'form-control custom-select']) !!}
+    {!! Form::select('estado', [
+        'inicio_carga' => 'Inicio de carga',
+        'en_transito'  => 'En tránsito',
+        'entregada'    => 'Entregada',
+    ], null, ['class' => 'form-control custom-select']) !!}
 </div>
 
-<!-- Created At Field -->
-<div class="form-group col-sm-6">
-    {!! Form::label('created_at', 'Created At:') !!}
-    {!! Form::text('created_at', null, ['class' => 'form-control']) !!}
-</div>
-
-<!-- Updated At Field -->
-<div class="form-group col-sm-6">
-    {!! Form::label('updated_at', 'Updated At:') !!}
-    {!! Form::text('updated_at', null, ['class' => 'form-control']) !!}
+<!-- Observaciones -->
+<div class="form-group col-sm-12">
+    {!! Form::label('observaciones', 'Observaciones:') !!}
+    {!! Form::textarea('observaciones', null, [
+        'class' => 'form-control',
+        'rows'  => 3
+    ]) !!}
 </div>

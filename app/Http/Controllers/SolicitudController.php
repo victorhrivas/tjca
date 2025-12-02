@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateSolicitudRequest;
 use App\Http\Controllers\AppBaseController;
 use App\Repositories\SolicitudRepository;
 use App\Models\Cliente;
+use App\Models\Cotizacion;
 use Illuminate\Http\Request;
 use Flash;
 
@@ -25,11 +26,50 @@ class SolicitudController extends AppBaseController
      */
     public function index(Request $request)
     {
-        $solicituds = $this->solicitudRepository->paginate(10);
+        $clientes = \App\Models\Cliente::orderBy('razon_social')->pluck('razon_social', 'id');
 
-        return view('solicituds.index')
-            ->with('solicituds', $solicituds);
+        $query = \App\Models\Solicitud::with('cliente')->orderBy('id', 'desc');
+
+        // Texto libre
+        if ($request->q) {
+            $q = $request->q;
+            $query->where(function($w) use ($q) {
+                $w->where('origen', 'like', "%$q%")
+                ->orWhere('destino', 'like', "%$q%")
+                ->orWhere('notas', 'like', "%$q%")
+                ->orWhere('carga', 'like', "%$q%")
+                ->orWhere('canal', 'like', "%$q%")
+                ->orWhereHas('cliente', function($c) use ($q) {
+                    $c->where('razon_social', 'like', "%$q%");
+                });
+
+                if (ctype_digit($q)) {
+                    $w->orWhere('id', $q);
+                }
+            });
+        }
+
+        // Filtro por cliente
+        if ($request->cliente_id) {
+            $query->where('cliente_id', $request->cliente_id);
+        }
+
+        // Filtro por estado
+        if ($request->estado) {
+            $query->where('estado', $request->estado);
+        }
+
+        // Filtro por fecha exacta de creación
+        if ($request->fecha) {
+            $query->whereDate('created_at', $request->fecha);
+        }
+
+        // Paginación con filtros persistentes
+        $solicituds = $query->paginate(10)->appends($request->all());
+
+        return view('solicituds.index', compact('solicituds', 'clientes'));
     }
+
 
     /**
      * Show the form for creating a new Solicitud.
@@ -47,12 +87,16 @@ class SolicitudController extends AppBaseController
     {
         $input = $request->all();
 
+        // Si no viene en $request, lo autocompleta con el usuario conectado
+        $input['solicitante'] = $input['solicitante'] ?? auth()->user()->name;
+
         $solicitud = $this->solicitudRepository->create($input);
 
-        Flash::success('Solicitudse guardó correctamente.');
+        Flash::success('Solicitud se guardó correctamente.');
 
         return redirect(route('solicituds.index'));
     }
+
 
     /**
      * Display the specified Solicitud.
@@ -185,5 +229,58 @@ class SolicitudController extends AppBaseController
         }));
     }
 
+    public function aprobar($id)
+    {
+        $solicitud = $this->solicitudRepository->find($id);
+
+        if (empty($solicitud)) {
+            Flash::error('Solicitud no encontrada.');
+            return redirect()->route('solicituds.index');
+        }
+
+        if ($solicitud->estado === 'aprobada') {
+            Flash::warning('Esta solicitud ya fue aprobada.');
+            return redirect()->route('solicituds.index');
+        }
+
+        // Crear cotización "congelando" los datos de la solicitud
+        Cotizacion::create([
+            'solicitud_id' => $solicitud->id,
+            'solicitante'  => $solicitud->solicitante ?? auth()->user()->name, // NUEVO
+            'estado'       => 'enviada',
+            'monto'        => $solicitud->monto ?? $solicitud->valor ?? 0,     // ajusta según tu campo real
+            'origen'       => $solicitud->origen,
+            'destino'      => $solicitud->destino,
+            'cliente'      => $solicitud->cliente,                             // ya debería ser string “congelado”
+            'carga'        => $solicitud->carga,
+        ]);
+
+        // Marcar solicitud como aprobada
+        $solicitud->update(['estado' => 'aprobada']);
+
+        Flash::success('Solicitud aprobada y cotización generada.');
+        return redirect()->route('solicituds.index');
+    }
+    
+    public function fallida($id)
+    {
+        $solicitud = $this->solicitudRepository->find($id);
+
+        if (empty($solicitud)) {
+            Flash::error('Solicitud no encontrada.');
+            return redirect()->route('solicituds.index');
+        }
+
+        // Si ya está aprobada, NO puede fallar
+        if ($solicitud->estado === 'aprobada') {
+            Flash::warning('No puedes marcar como fallida una solicitud aprobada.');
+            return redirect()->route('solicituds.index');
+        }
+
+        $solicitud->update(['estado' => 'fallida']);
+
+        Flash::success('Solicitud marcada como fallida.');
+        return redirect()->route('solicituds.index');
+    }
 
 }

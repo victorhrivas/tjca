@@ -7,11 +7,16 @@ use App\Http\Requests\UpdateCotizacionRequest;
 use App\Http\Controllers\AppBaseController;
 use App\Repositories\CotizacionRepository;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Flash;
+use App\Models\Ot;
+use App\Models\Solicitud;
+use App\Models\Cotizacion;
+use App\Models\Cliente;
 
 class CotizacionController extends AppBaseController
 {
-    /** @var CotizacionRepository $cotizacionRepository*/
+    /** @var CotizacionRepository $cotizacionRepository */
     private $cotizacionRepository;
 
     public function __construct(CotizacionRepository $cotizacionRepo)
@@ -20,14 +25,80 @@ class CotizacionController extends AppBaseController
     }
 
     /**
-     * Display a listing of the Cotizacion.
+     * Listado con filtros.
      */
     public function index(Request $request)
     {
-        $cotizacions = $this->cotizacionRepository->paginate(10);
+        $clientes = Cliente::orderBy('razon_social')->pluck('razon_social', 'id');
 
-        return view('cotizacions.index')
-            ->with('cotizacions', $cotizacions);
+        $query = Cotizacion::with(['solicitud.cliente', 'ot'])
+            ->orderByDesc('id');
+
+        // ---------------------------
+        // Búsqueda de texto libre
+        // ---------------------------
+        if ($request->q) {
+            $q = trim($request->q);
+
+            $query->where(function ($w) use ($q) {
+                // Si es número: buscar por id y monto exacto
+                if (ctype_digit($q)) {
+                    $w->orWhere('id', (int) $q)
+                      ->orWhere('monto', (int) $q);
+                }
+
+                // Búsqueda parcial en monto (se castea a string)
+                $w->orWhere('monto', 'like', "%$q%");
+
+                // Por solicitud (origen/destino/notas)
+                $w->orWhereHas('solicitud', function ($s) use ($q) {
+                    $s->where('origen',  'like', "%$q%")
+                      ->orWhere('destino','like', "%$q%")
+                      ->orWhere('notas',  'like', "%$q%");
+                });
+
+                // Por cliente
+                $w->orWhereHas('solicitud.cliente', function ($c) use ($q) {
+                    $c->where('razon_social', 'like', "%$q%");
+                });
+            });
+        }
+
+        // ---------------------------
+        // Filtro por cliente
+        // ---------------------------
+        if ($request->cliente_id) {
+            $query->whereHas('solicitud', function ($s) use ($request) {
+                $s->where('cliente_id', $request->cliente_id);
+            });
+        }
+
+        // ---------------------------
+        // Filtro por estado de cotización
+        // ---------------------------
+        if ($request->estado) {
+            $query->where('estado', $request->estado);
+        }
+
+        // ---------------------------
+        // Filtro por fecha de creación
+        // ---------------------------
+        if ($request->fecha) {
+            $query->whereDate('created_at', $request->fecha);
+        }
+
+        // ---------------------------
+        // Filtro por OT (con / sin)
+        // ---------------------------
+        if ($request->ot === 'con') {
+            $query->whereHas('ot');
+        } elseif ($request->ot === 'sin') {
+            $query->whereDoesntHave('ot');
+        }
+
+        $cotizacions = $query->paginate(10)->appends($request->all());
+
+        return view('cotizacions.index', compact('cotizacions', 'clientes'));
     }
 
     /**
@@ -35,7 +106,10 @@ class CotizacionController extends AppBaseController
      */
     public function create()
     {
-        return view('cotizacions.create');
+        $solicitudes = Solicitud::orderBy('id', 'desc')->get();
+        return view('cotizacions.create', compact(
+            'solicitudes'
+        ));
     }
 
     /**
@@ -45,9 +119,21 @@ class CotizacionController extends AppBaseController
     {
         $input = $request->all();
 
+        // Tomamos la solicitud relacionada
+        $solicitud = Solicitud::with('cliente')->findOrFail($request->solicitud_id);
+
+        // Asignar automáticamente el solicitante si no viene del formulario
+        $input['solicitante'] = $input['solicitante'] ?? $solicitud->solicitante ?? auth()->user()->name;
+
+        // Asegurar cliente como string siempre
+        $input['cliente'] = $request->input(
+            'cliente',
+            optional($solicitud->cliente)->razon_social
+        );
+
         $cotizacion = $this->cotizacionRepository->create($input);
 
-        Flash::success('Cotizacionse guardó correctamente.');
+        Flash::success('Cotización se guardó correctamente.');
 
         return redirect(route('cotizacions.index'));
     }
@@ -57,11 +143,10 @@ class CotizacionController extends AppBaseController
      */
     public function show($id)
     {
-        $cotizacion = $this->cotizacionRepository->find($id);
+        $cotizacion = Cotizacion::with(['solicitud.cliente', 'ot'])->find($id);
 
         if (empty($cotizacion)) {
-            Flash::error('Cotizacion not found');
-
+            Flash::error('Cotización no encontrada.');
             return redirect(route('cotizacions.index'));
         }
 
@@ -76,7 +161,7 @@ class CotizacionController extends AppBaseController
         $cotizacion = $this->cotizacionRepository->find($id);
 
         if (empty($cotizacion)) {
-            Flash::error('Cotizacion not found');
+            Flash::error('Cotización no encontrada.');
 
             return redirect(route('cotizacions.index'));
         }
@@ -92,14 +177,14 @@ class CotizacionController extends AppBaseController
         $cotizacion = $this->cotizacionRepository->find($id);
 
         if (empty($cotizacion)) {
-            Flash::error('Cotizacion not found');
+            Flash::error('Cotización no encontrada.');
 
             return redirect(route('cotizacions.index'));
         }
 
-        $cotizacion = $this->cotizacionRepository->update($request->all(), $id);
+        $this->cotizacionRepository->update($request->all(), $id);
 
-        Flash::success('Cotizacion updated successfully.');
+        Flash::success('Cotización actualizada correctamente.');
 
         return redirect(route('cotizacions.index'));
     }
@@ -114,15 +199,92 @@ class CotizacionController extends AppBaseController
         $cotizacion = $this->cotizacionRepository->find($id);
 
         if (empty($cotizacion)) {
-            Flash::error('Cotizacion not found');
+            Flash::error('Cotización no encontrada.');
 
             return redirect(route('cotizacions.index'));
         }
 
         $this->cotizacionRepository->delete($id);
 
-        Flash::success('Cotizacion deleted successfully.');
+        Flash::success('Cotización eliminada correctamente.');
 
         return redirect(route('cotizacions.index'));
     }
+
+    public function pdf($id)
+    {
+        $cotizacion = Cotizacion::with(['solicitud', 'ot'])->findOrFail($id);
+
+        $pdf = Pdf::loadView('cotizacions.pdf', [
+            'cotizacion' => $cotizacion,
+        ])->setPaper('A4', 'portrait');
+
+        $fileName = 'cotizacion_' . $cotizacion->id . '.pdf';
+
+        // Puedes usar stream() si quieres abrir en el navegador
+        return $pdf->stream($fileName);
+
+        //return $pdf->download($fileName);
+    }
+
+    /**
+     * Generar OT desde una cotización.
+     */
+    public function generarOt($id)
+    {
+        // Traemos la cotización con su cadena completa
+        $cotizacion = Cotizacion::with(['solicitud.cliente', 'ot'])->find($id);
+
+        if (!$cotizacion) {
+            Flash::error('Cotización no encontrada.');
+            return redirect()->route('cotizacions.index');
+        }
+
+        // Evitar duplicar OT
+        if ($cotizacion->ot) {
+            Flash::warning('Esta cotización ya tiene una OT asociada.');
+            return redirect()->route('cotizacions.index');
+        }
+
+        // Solo 'pendiente' o 'enviada' pueden generar OT
+        if (!in_array($cotizacion->estado, ['pendiente', 'enviada'])) {
+            Flash::warning('Solo cotizaciones Pendientes o Enviadas pueden generar una OT.');
+            return redirect()->route('cotizacions.index');
+        }
+
+        $solicitud = $cotizacion->solicitud;
+        $cliente   = optional($solicitud)->cliente;
+
+        // Fecha coherente
+        $fechaBase = $solicitud && $solicitud->created_at
+            ? $solicitud->created_at->copy()->addDays(2)
+            : now();
+
+        // Cambiar estado a aceptada
+        $cotizacion->estado = 'aceptada';
+        $cotizacion->save();
+
+        // Crear OT
+        Ot::create([
+            'cotizacion_id'    => $cotizacion->id,
+            'equipo'           => $solicitud?->carga ?? 'Servicio de carga',
+            'origen'           => $solicitud?->origen ?? null,
+            'destino'          => $solicitud?->destino ?? null,
+            'cliente'          => $cliente?->razon_social ?? 'Cliente sin nombre',
+            'valor'            => $cotizacion->monto,
+            'fecha'            => $fechaBase->toDateString(),
+            'solicitante'      => $cliente?->razon_social ?? 'Sin solicitante',
+            'conductor'        => null,
+            'patente_camion'   => null,
+            'estado'           => 'inicio_carga',
+            'observaciones'    => 'OT generada automáticamente desde la cotización #'.$cotizacion->id,
+        ]);
+
+        Flash::success('OT generada correctamente. La cotización pasó a estado "aceptada".');
+
+        // ✔️ Redirigir al INDEX
+        return redirect()->route('ots.index');
+    }
+
+
 }

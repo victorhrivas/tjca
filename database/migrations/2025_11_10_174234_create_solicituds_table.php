@@ -16,6 +16,7 @@ return new class extends Migration
         Schema::create('solicituds', function (Blueprint $table) {
             $table->id();
             $table->integer('cliente_id')->unsigned();
+            $table->string('solicitante');
             $table->string('canal');
             $table->string('origen');
             $table->string('destino');

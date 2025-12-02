@@ -3,21 +3,22 @@
         <table class="table" id="solicituds-table">
             <thead>
             <tr>
-                <th>Cliente Id</th>
+                <th>Cliente</th>
                 <th>Canal</th>
                 <th>Origen</th>
                 <th>Destino</th>
                 <th>Carga</th>
                 <th>Notas</th>
-                <th>Created At</th>
-                <th>Updated At</th>
-                <th colspan="3">Action</th>
+                <th>Creada</th>
+                <th>Actualizada</th>
+                <th>Estado</th>
+                <th colspan="3">Acciones</th>
             </tr>
             </thead>
             <tbody>
             @foreach($solicituds as $solicitud)
                 <tr>
-                    <td>{{ $solicitud->cliente_id }}</td>
+                    <td>{{ optional($solicitud->cliente)->razon_social ?? 'Sin cliente' }}</td>
                     <td>{{ $solicitud->canal }}</td>
                     <td>{{ $solicitud->origen }}</td>
                     <td>{{ $solicitud->destino }}</td>
@@ -25,20 +26,110 @@
                     <td>{{ $solicitud->notas }}</td>
                     <td>{{ $solicitud->created_at ? $solicitud->created_at->format('d/m/y H:i') : '' }}</td>
                     <td>{{ $solicitud->updated_at ? $solicitud->updated_at->format('d/m/y H:i') : '' }}</td>
-                    <td  style="width: 120px">
-                        {!! Form::open(['route' => ['solicituds.destroy', $solicitud->id], 'method' => 'delete']) !!}
+                    <td>
+                        @if($solicitud->estado === 'pendiente')
+                            <span class="badge bg-warning text-dark"
+                                style="font-size: 11px; padding: 4px 8px; border-radius: 6px;">
+                                Pendiente
+                            </span>
+
+                        @elseif($solicitud->estado === 'aprobada')
+                            <span class="badge bg-success"
+                                style="font-size: 11px; padding: 4px 8px; border-radius: 6px;">
+                                Aprobada
+                            </span>
+
+                        @elseif($solicitud->estado === 'fallida')
+                            <span class="badge bg-danger"
+                                style="font-size: 11px; padding: 4px 8px; border-radius: 6px;">
+                                Fallida
+                            </span>
+                        @endif
+                    </td>
+
+                    <td style="width: 150px">
+                        {{-- Formularios ocultos --}}
+                        <form id="aprobar-{{ $solicitud->id }}"
+                            action="{{ route('solicituds.aprobar', $solicitud->id) }}"
+                            method="POST"
+                            style="display:none;">
+                            @csrf
+                        </form>
+
+                        <form id="eliminar-{{ $solicitud->id }}"
+                            action="{{ route('solicituds.destroy', $solicitud->id) }}"
+                            method="POST"
+                            style="display:none;">
+                            @csrf
+                            @method('DELETE')
+                        </form>
+
                         <div class='btn-group'>
-                            <a href="{{ route('solicituds.show', [$solicitud->id]) }}"
-                               class='btn btn-default btn-xs'>
+                            {{-- Aprobar / Ver cotización --}}
+                            @if(!$solicitud->cotizacion)
+                                <a href="#"
+                                class="btn btn-success btn-xs"
+                                title="Aprobar"
+                                onclick="event.preventDefault();
+                                            if (confirm('¿Aprobar la solicitud y generar una cotización?')) {
+                                                document.getElementById('aprobar-{{ $solicitud->id }}').submit();
+                                            }">
+                                    <i class="fas fa-check"></i>
+                                </a>
+                            @else
+                                <a href="{{ route('cotizacions.show', $solicitud->cotizacion->id) }}"
+                                class="btn btn-success btn-xs"
+                                title="Ver cotización">
+                                    <i class="fas fa-file-invoice-dollar"></i>
+                                </a>
+                            @endif
+
+                            {{-- Fallida --}}
+                            @if($solicitud->estado !== 'aprobada')
+                                <a href="#"
+                                class="btn btn-warning btn-xs"
+                                title="Marcar como fallida"
+                                onclick="event.preventDefault();
+                                            if (confirm('¿Marcar esta solicitud como fallida?')) {
+                                                document.getElementById('fallida-{{ $solicitud->id }}').submit();
+                                            }">
+                                    <i class="fas fa-times"></i>
+                                </a>
+
+                                <form id="fallida-{{ $solicitud->id }}"
+                                    action="{{ route('solicituds.fallida', $solicitud->id) }}"
+                                    method="POST"
+                                    style="display:none;">
+                                    @csrf
+                                </form>
+                            @endif
+
+                            {{-- Ver --}}
+                            <a href="{{ route('solicituds.show', $solicitud->id) }}"
+                            class="btn btn-default btn-xs"
+                            title="Ver">
                                 <i class="far fa-eye"></i>
                             </a>
-                            <a href="{{ route('solicituds.edit', [$solicitud->id]) }}"
-                               class='btn btn-default btn-xs'>
+
+                            {{-- Editar --}}
+                            <a href="{{ route('solicituds.edit', $solicitud->id) }}"
+                            class="btn btn-default btn-xs"
+                            title="Editar">
                                 <i class="far fa-edit"></i>
                             </a>
-                            {!! Form::button('<i class="far fa-trash-alt"></i>', ['type' => 'submit', 'class' => 'btn btn-danger btn-xs', 'onclick' => "return confirm('Are you sure?')"]) !!}
+
+                            {{-- Eliminar --}}
+                            <a href="#"
+                            class="btn btn-danger btn-xs"
+                            title="Eliminar"
+                            onclick="event.preventDefault();
+                                        if (confirm('¿Eliminar esta solicitud?')) {
+                                            document.getElementById('eliminar-{{ $solicitud->id }}').submit();
+                                        }">
+                                <i class="far fa-trash-alt"></i>
+                            </a>
+
                         </div>
-                        {!! Form::close() !!}
                     </td>
                 </tr>
             @endforeach

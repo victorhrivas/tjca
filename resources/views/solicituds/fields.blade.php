@@ -23,6 +23,15 @@
     ]) !!}
 </div>
 
+<div class="form-group col-sm-6">
+    {!! Form::label('solicitante', 'Nombre solicitante / vendedor:') !!}
+    {!! Form::text('solicitante', old('solicitante', $solicitud->solicitante ?? $cotizacion->solicitante ?? null), [
+        'class' => 'form-control',
+        'placeholder' => 'Nombre del vendedor o solicitante',
+        'required'
+    ]) !!}
+</div>
+
 <!-- Origen Field -->
 <div class="form-group col-sm-6">
     {!! Form::label('origen', 'Origen:') !!}

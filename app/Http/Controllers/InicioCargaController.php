@@ -1,0 +1,151 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Requests\CreateInicioCargaRequest;
+use App\Http\Requests\UpdateInicioCargaRequest;
+use App\Http\Controllers\AppBaseController;
+use App\Repositories\InicioCargaRepository;
+use Illuminate\Http\Request;
+use App\Models\InicioCarga;
+use App\Models\Ot;
+use Flash;
+
+class InicioCargaController extends AppBaseController
+{
+    /** @var InicioCargaRepository $inicioCargaRepository*/
+    private $inicioCargaRepository;
+
+    public function __construct(InicioCargaRepository $inicioCargaRepo)
+    {
+        $this->inicioCargaRepository = $inicioCargaRepo;
+    }
+
+    /**
+     * Display a listing of the InicioCarga.
+     */
+    public function index(Request $request)
+    {
+        $inicioCargas = $this->inicioCargaRepository->paginate(10);
+
+        return view('inicio_cargas.index')
+            ->with('inicioCargas', $inicioCargas);
+    }
+
+    /**
+     * Show the form for creating a new InicioCarga.
+     */
+    public function create(Request $request)
+    {
+        // Traemos las OT con info para autocompletar
+        $ots = Ot::orderBy('id', 'desc')->get();
+
+        // Para permitir preselección (?ot=ID)
+        $otId = $request->query('ot');
+        $ot   = $otId ? $ots->firstWhere('id', $otId) : null;
+
+        return view('inicio_cargas.create', compact('ots', 'ot'));
+    }
+
+    /**
+     * Store a newly created InicioCarga in storage.
+     */
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'ot_id'            => ['required', 'integer'],
+            'cliente'          => ['required', 'string', 'max:255'],
+            'contacto'         => ['nullable', 'string', 'max:255'],
+            'telefono_contacto'=> ['nullable', 'string', 'max:50'],
+            'correo_contacto'  => ['nullable', 'string', 'max:255'],
+            'origen'           => ['required', 'string', 'max:255'],
+            'destino'          => ['required', 'string', 'max:255'],
+            'tipo_carga'       => ['nullable', 'string', 'max:255'],
+            'peso_aproximado'  => ['nullable', 'string', 'max:255'],
+            'fecha_carga'      => ['nullable', 'date'],
+            'hora_presentacion'=> ['nullable', 'string', 'max:50'],
+            'conductor'        => ['nullable', 'string', 'max:255'],
+            'observaciones'    => ['nullable', 'string'],
+        ]);
+
+        $inicioCarga = InicioCarga::create($data);
+
+        // Si quieres redirigir a alguna vista pública simple:
+        return view('inicio_cargas\success')
+            ->with('success', 'Inicio de carga registrado correctamente.');
+    }
+
+    /**
+     * Display the specified InicioCarga.
+     */
+    public function show($id)
+    {
+        $inicioCarga = $this->inicioCargaRepository->find($id);
+
+        if (empty($inicioCarga)) {
+            Flash::error('Inicio Carga not found');
+
+            return redirect(route('inicioCargas.index'));
+        }
+
+        return view('inicio_cargas.show')->with('inicioCarga', $inicioCarga);
+    }
+
+    /**
+     * Show the form for editing the specified InicioCarga.
+     */
+    public function edit($id)
+    {
+        $inicioCarga = $this->inicioCargaRepository->find($id);
+
+        if (empty($inicioCarga)) {
+            Flash::error('Inicio Carga not found');
+
+            return redirect(route('inicioCargas.index'));
+        }
+
+        return view('inicio_cargas.edit')->with('inicioCarga', $inicioCarga);
+    }
+
+    /**
+     * Update the specified InicioCarga in storage.
+     */
+    public function update($id, UpdateInicioCargaRequest $request)
+    {
+        $inicioCarga = $this->inicioCargaRepository->find($id);
+
+        if (empty($inicioCarga)) {
+            Flash::error('Inicio Carga not found');
+
+            return redirect(route('inicioCargas.index'));
+        }
+
+        $inicioCarga = $this->inicioCargaRepository->update($request->all(), $id);
+
+        Flash::success('Inicio Carga updated successfully.');
+
+        return redirect(route('inicioCargas.index'));
+    }
+
+    /**
+     * Remove the specified InicioCarga from storage.
+     *
+     * @throws \Exception
+     */
+    public function destroy($id)
+    {
+        $inicioCarga = $this->inicioCargaRepository->find($id);
+
+        if (empty($inicioCarga)) {
+            Flash::error('Inicio Carga not found');
+
+            return redirect(route('inicioCargas.index'));
+        }
+
+        $this->inicioCargaRepository->delete($id);
+
+        Flash::success('Inicio Carga deleted successfully.');
+
+        return redirect(route('inicioCargas.index'));
+    }
+}

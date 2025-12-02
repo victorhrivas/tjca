@@ -14,13 +14,52 @@ return new class extends Migration
     public function up()
     {
         Schema::create('ots', function (Blueprint $table) {
-            $table->integer('cotizacion_id')->unsigned();
-            $table->string('conductor');
-            $table->string('patente_camion');
-            $table->string('patente_remolque');
-            $table->enum('estado', ['inicio_carga', 'en_transito', 'entregada'])->default('inicio_carga');
+            $table->id();
+
+            // Relación con la cotización
+            $table->unsignedBigInteger('cotizacion_id');
+
+            // Datos operativos de la OT
+            $table->string('equipo')->nullable();            // Tipo de carga / equipo
+            $table->string('origen')->nullable();
+            $table->string('destino')->nullable();
+
+            // Cliente (nombre libre; si quieres podemos luego agregar cliente_id)
+            $table->string('cliente')->nullable();
+
+            // Valor / monto de la OT
+            $table->integer('valor')->nullable();            // o bigInteger/decimal si lo prefieres
+
+            // Fecha de la OT (fecha programada o de servicio)
+            $table->date('fecha')->nullable();
+
+            // Quién pidió el servicio
+            $table->string('solicitante')->nullable();
+
+            // Conductor asignado
+            $table->string('conductor')->nullable();
+
+            // Patentes (que hoy te están fallando)
+            $table->string('patente_camion')->nullable();
+
+            // Estado de la OT
+            $table->enum('estado', [
+                'inicio_carga',
+                'en_transito',
+                'entregada',
+            ])->default('inicio_carga');
+
+            // Observaciones generales
+            $table->text('observaciones')->nullable();
+
             $table->timestamps();
+
+            // Opcional: llave foránea
+            // $table->foreign('cotizacion_id')
+            //       ->references('id')->on('cotizacions')
+            //       ->onDelete('cascade');
         });
+
     }
 
     /**
@@ -30,6 +69,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::drop('ots');
+        Schema::dropIfExists('ots');
     }
 };

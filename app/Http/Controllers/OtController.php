@@ -6,7 +6,10 @@ use App\Http\Requests\CreateOtRequest;
 use App\Http\Requests\UpdateOtRequest;
 use App\Http\Controllers\AppBaseController;
 use App\Repositories\OtRepository;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use App\Models\Conductor;
+use App\Models\Ot;
 use Flash;
 
 class OtController extends AppBaseController
@@ -24,18 +27,23 @@ class OtController extends AppBaseController
      */
     public function index(Request $request)
     {
-        $ots = $this->otRepository->paginate(10);
-
-        return view('ots.index')
-            ->with('ots', $ots);
+        $ots = \App\Models\Ot::with('cotizacion.solicitud.cliente')->paginate(10);
+        return view('ots.index', compact('ots'));
     }
+
 
     /**
      * Show the form for creating a new Ot.
      */
     public function create()
     {
-        return view('ots.create');
+        // Trae solo los conductores activos, ordenados alfabéticamente
+        $conductores = Conductor::where('activo', true)
+            ->orderBy('nombre')
+            ->pluck('nombre', 'nombre'); 
+            // clave y valor = nombre, porque tu OT usa un string como conductor
+
+        return view('ots.create', compact('conductores'));
     }
 
     /**
@@ -68,6 +76,20 @@ class OtController extends AppBaseController
         return view('ots.show')->with('ot', $ot);
     }
 
+    public function pdf($id)
+    {
+        $ot = Ot::with('cotizacion')->findOrFail($id);
+
+        $pdf = Pdf::loadView('ots.pdf', [
+            'ot' => $ot,
+        ])->setPaper('A4', 'portrait');
+
+        $fileName = 'ot_' . $ot->id . '.pdf';
+
+        return $pdf->download($fileName);
+        // o ->stream($fileName) si prefieres abrirlo en el navegador
+    }
+
     /**
      * Show the form for editing the specified Ot.
      */
@@ -76,12 +98,17 @@ class OtController extends AppBaseController
         $ot = $this->otRepository->find($id);
 
         if (empty($ot)) {
-            Flash::error('Ot not found');
+            Flash::error('OT no encontrada');
 
             return redirect(route('ots.index'));
         }
 
-        return view('ots.edit')->with('ot', $ot);
+        // Conductores activos para el select
+        $conductores = Conductor::where('activo', true)
+            ->orderBy('nombre')
+            ->pluck('nombre', 'nombre'); // clave y valor = nombre
+
+        return view('ots.edit', compact('ot', 'conductores'));
     }
 
     /**
