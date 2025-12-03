@@ -6,7 +6,7 @@
             <div class="row mb-2">
                 <div class="col-sm-12">
                     <h1>
-                        Edit Inicio Carga
+                        Edit Tarifa Ruta
                     </h1>
                 </div>
             </div>
@@ -19,17 +19,17 @@
 
         <div class="card">
 
-            {!! Form::model($inicioCarga, ['route' => ['inicioCargas.update', $inicioCarga->id], 'method' => 'patch']) !!}
+            {!! Form::model($tarifaRuta, ['route' => ['tarifaRutas.update', $tarifaRuta->id], 'method' => 'patch']) !!}
 
             <div class="card-body">
                 <div class="row">
-                    @include('inicio_cargas.fields')
+                    @include('tarifa_rutas.fields')
                 </div>
             </div>
 
             <div class="card-footer">
                 {!! Form::submit('Save', ['class' => 'btn btn-primary']) !!}
-                <a href="{{ route('operacion.inicio-carga.index') }}" class="btn btn-default"> Cancel </a>
+                <a href="{{ route('tarifaRutas.index') }}" class="btn btn-default"> Cancel </a>
             </div>
 
             {!! Form::close() !!}

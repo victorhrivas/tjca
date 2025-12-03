@@ -14,6 +14,7 @@ return new class extends Migration
     public function up()
     {
         Schema::create('checklist_camions', function (Blueprint $table) {
+            $table->id();
             $table->string('nombre_conductor');
             $table->string('patente');
             $table->string('kilometraje');

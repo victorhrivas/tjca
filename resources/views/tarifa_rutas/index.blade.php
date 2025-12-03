@@ -5,7 +5,13 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1>Entregas</h1>
+                    <h1>Tarifa Rutas</h1>
+                </div>
+                <div class="col-sm-6">
+                    <a class="btn btn-primary float-right"
+                       href="{{ route('tarifaRutas.create') }}">
+                        Add New
+                    </a>
                 </div>
             </div>
         </div>
@@ -18,7 +24,7 @@
         <div class="clearfix"></div>
 
         <div class="card">
-            @include('entregas.table')
+            @include('tarifa_rutas.table')
         </div>
     </div>
 

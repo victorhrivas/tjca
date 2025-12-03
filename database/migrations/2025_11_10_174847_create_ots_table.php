@@ -27,6 +27,11 @@ return new class extends Migration
             // Cliente (nombre libre; si quieres podemos luego agregar cliente_id)
             $table->string('cliente')->nullable();
 
+            $table->string('contacto_origen')->nullable();
+            $table->string('contacto_destino')->nullable();
+
+            $table->string('link_mapa')->nullable();
+
             // Valor / monto de la OT
             $table->integer('valor')->nullable();            // o bigInteger/decimal si lo prefieres
 

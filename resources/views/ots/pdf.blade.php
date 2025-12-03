@@ -238,23 +238,41 @@
                 <td class="value">{{ $ot->patente_camion ?: 'No registrada' }}</td>
             </tr>
             <tr>
-                <td class="label">Patente remolque:</td>
-                <td class="value">{{ $ot->patente_remolque ?: 'No registrada' }}</td>
+                <td class="label">Link Google Maps:</td>
+                <td class="value">
+                    @if(!empty($ot->link_mapa))
+                        <a href="{{ $ot->link_mapa }}" target="_blank" style="color:#007BFF; text-decoration:underline;">
+                            Ver ubicación en Google Maps
+                        </a>
+                    @else
+                        Sin información
+                    @endif
+                </td>
             </tr>
         </table>
     </div>
 
-    {{-- Información económica --}}
+    {{-- Contacto --}}
     <div class="section">
-        <div class="section-title">Información económica</div>
+        <div class="section-title">Información de Contacto</div>
         <table class="info-table">
             <tr>
-                <td class="label">Cotización asociada:</td>
+                <td class="label">Contacto de Origen:</td>
                 <td class="value">
-                    @if($ot->cotizacion)
-                        Cotización #{{ $ot->cotizacion->id }}
+                    @if($ot->contacto_origen)
+                        {{ $ot->contacto_origen }}
                     @else
-                        Sin cotización asociada
+                        Sin Información
+                    @endif
+                </td>
+            </tr>
+            <tr>
+                <td class="label">Contacto de Destino:</td>
+                <td class="value">
+                    @if($ot->contacto_destino)
+                        {{ $ot->contacto_destino }}
+                    @else
+                        Sin Información
                     @endif
                 </td>
             </tr>

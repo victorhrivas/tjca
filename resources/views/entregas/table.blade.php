@@ -8,7 +8,7 @@
                 <th>Lugar Entrega</th>
                 <th>Fecha Entrega</th>
                 <th>Conforme</th>
-                <th colspan="3">Action</th>
+                <th colspan="3">Acción</th>
             </tr>
             </thead>
             <tbody>
@@ -19,18 +19,21 @@
                     <td>{{ $entrega->lugar_entrega }}</td>
                     <td>{{ $entrega->fecha_entrega }}</td>
                     <td>{{ $entrega->conforme }}</td>
-                    <td  style="width: 120px">
-                        {!! Form::open(['route' => ['entregas.destroy', $entrega->id], 'method' => 'delete']) !!}
+                    <td style="width: 120px">
+                        {!! Form::open([
+                            'route'  => ['operacion.entrega.destroy', $entrega->id],
+                            'method' => 'delete'
+                        ]) !!}
                         <div class='btn-group'>
-                            <a href="{{ route('entregas.show', [$entrega->id]) }}"
-                               class='btn btn-default btn-xs'>
+                            <a href="{{ route('operacion.entrega.show', $entrega->id) }}"
+                            class='btn btn-default btn-xs'>
                                 <i class="far fa-eye"></i>
                             </a>
-                            <a href="{{ route('entregas.edit', [$entrega->id]) }}"
-                               class='btn btn-default btn-xs'>
-                                <i class="far fa-edit"></i>
-                            </a>
-                            {!! Form::button('<i class="far fa-trash-alt"></i>', ['type' => 'submit', 'class' => 'btn btn-danger btn-xs', 'onclick' => "return confirm('Are you sure?')"]) !!}
+                            {!! Form::button('<i class="far fa-trash-alt"></i>', [
+                                'type'    => 'submit',
+                                'class'   => 'btn btn-danger btn-xs',
+                                'onclick' => "return confirm('Are you sure?')"
+                            ]) !!}
                         </div>
                         {!! Form::close() !!}
                     </td>

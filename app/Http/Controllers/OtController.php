@@ -86,8 +86,8 @@ class OtController extends AppBaseController
 
         $fileName = 'ot_' . $ot->id . '.pdf';
 
-        return $pdf->download($fileName);
-        // o ->stream($fileName) si prefieres abrirlo en el navegador
+        return $pdf->stream($fileName);
+        // o ->download($fileName) si se quiere descargar al tiro
     }
 
     /**

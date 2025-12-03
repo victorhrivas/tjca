@@ -7,12 +7,6 @@
                 <div class="col-sm-6">
                     <h1>Inicio Cargas</h1>
                 </div>
-                <div class="col-sm-6">
-                    <a class="btn btn-primary float-right"
-                       href="{{ route('inicioCargas.create') }}">
-                        Add New
-                    </a>
-                </div>
             </div>
         </div>
     </section>

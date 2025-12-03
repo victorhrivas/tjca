@@ -1,10 +1,14 @@
 {{-- resources/views/layouts/menu.blade.php --}}
 
+{{-- DASHBOARD --}}
 <li class="nav-item">
     <a href="{{ route('home') }}" class="nav-link {{ Request::is('home') ? 'active' : '' }}">
         <i class="nav-icon fas fa-home"></i><p>Inicio</p>
     </a>
 </li>
+
+{{-- GESTIÓN COMERCIAL --}}
+<li class="nav-header">GESTIÓN COMERCIAL</li>
 
 <li class="nav-item">
     <a href="{{ route('solicituds.index') }}" class="nav-link {{ Request::is('solicitudes*') ? 'active' : '' }}">
@@ -24,6 +28,9 @@
     </a>
 </li>
 
+{{-- OPERACIÓN --}}
+<li class="nav-header">OPERACIÓN</li>
+
 <li class="nav-item has-treeview {{ Request::is('operacion/*') ? 'menu-open' : '' }}">
     <a href="#" class="nav-link {{ Request::is('operacion/*') ? 'active' : '' }}">
         <i class="nav-icon fas fa-truck-loading"></i>
@@ -37,8 +44,8 @@
             </a>
         </li>
         <li class="nav-item">
-            <a href="{{ route('operacion.en-transito.index') }}"
-               class="nav-link {{ Request::is('operacion/en-transito*') ? 'active' : '' }}">
+            <a href="{{ route('operacion.checklist.index') }}"
+               class="nav-link {{ Request::is('operacion/checklist*') ? 'active' : '' }}">
                 <i class="far fa-circle nav-icon"></i><p>En tránsito</p>
             </a>
         </li>
@@ -57,6 +64,9 @@
     </a>
 </li>
 
+{{-- ADMINISTRACIÓN --}}
+<li class="nav-header">ADMINISTRACIÓN</li>
+
 <li class="nav-item">
     <a href="{{ route('clientes.index') }}" class="nav-link {{ Request::is('clientes*') ? 'active' : '' }}">
         <i class="nav-icon fas fa-user-friends"></i><p>Clientes</p>
@@ -65,7 +75,18 @@
 
 <li class="nav-item">
     <a href="{{ route('conductors.index') }}" class="nav-link {{ Request::is('conductors*') ? 'active' : '' }}">
-        <i class="nav-icon fas fa-truck-moving"></i>
-        <p>Conductores</p>
+        <i class="nav-icon fas fa-id-card-alt"></i><p>Conductores</p>
+    </a>
+</li>
+
+<li class="nav-item">
+    <a href="{{ route('vehiculos.index') }}" class="nav-link {{ Request::is('vehiculos*') ? 'active' : '' }}">
+        <i class="nav-icon fas fa-truck"></i><p>Vehículos</p>
+    </a>
+</li>
+
+<li class="nav-item">
+    <a href="{{ route('tarifaRutas.index') }}" class="nav-link {{ Request::is('tarifaRutas*') ? 'active' : '' }}">
+        <i class="nav-icon fas fa-route"></i><p>Tarifa Rutas</p>
     </a>
 </li>

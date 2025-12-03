@@ -85,7 +85,7 @@ class InicioCargaController extends AppBaseController
         if (empty($inicioCarga)) {
             Flash::error('Inicio Carga not found');
 
-            return redirect(route('inicioCargas.index'));
+            return redirect(route('operacion.inicio-carga.index'));
         }
 
         return view('inicio_cargas.show')->with('inicioCarga', $inicioCarga);
@@ -101,7 +101,7 @@ class InicioCargaController extends AppBaseController
         if (empty($inicioCarga)) {
             Flash::error('Inicio Carga not found');
 
-            return redirect(route('inicioCargas.index'));
+            return redirect(route('operacion.inicio-carga.index'));
         }
 
         return view('inicio_cargas.edit')->with('inicioCarga', $inicioCarga);
@@ -117,14 +117,14 @@ class InicioCargaController extends AppBaseController
         if (empty($inicioCarga)) {
             Flash::error('Inicio Carga not found');
 
-            return redirect(route('inicioCargas.index'));
+            return redirect(route('operacion.inicio-carga.index'));
         }
 
         $inicioCarga = $this->inicioCargaRepository->update($request->all(), $id);
 
         Flash::success('Inicio Carga updated successfully.');
 
-        return redirect(route('inicioCargas.index'));
+        return redirect(route('operacion.inicio-carga.index'));
     }
 
     /**
@@ -139,13 +139,13 @@ class InicioCargaController extends AppBaseController
         if (empty($inicioCarga)) {
             Flash::error('Inicio Carga not found');
 
-            return redirect(route('inicioCargas.index'));
+            return redirect(route('operacion.inicio-carga.index'));
         }
 
         $this->inicioCargaRepository->delete($id);
 
         Flash::success('Inicio Carga deleted successfully.');
 
-        return redirect(route('inicioCargas.index'));
+        return redirect(route('operacion.inicio-carga.index'));
     }
 }

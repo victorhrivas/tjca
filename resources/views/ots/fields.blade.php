@@ -65,6 +65,33 @@
     ]) !!}
 </div>
 
+<!-- Contacto Origen -->
+<div class="form-group col-sm-6">
+    {!! Form::label('contacto_origen', 'Contacto en origen:') !!}
+    {!! Form::text('contacto_origen', null, [
+        'class' => 'form-control',
+        'placeholder' => 'Persona y teléfono de contacto en origen'
+    ]) !!}
+</div>
+
+<!-- Contacto Destino -->
+<div class="form-group col-sm-6">
+    {!! Form::label('contacto_destino', 'Contacto en destino:') !!}
+    {!! Form::text('contacto_destino', null, [
+        'class' => 'form-control',
+        'placeholder' => 'Persona y teléfono de contacto en destino'
+    ]) !!}
+</div>
+
+<!-- Link Google Maps Destino -->
+<div class="form-group col-sm-6">
+    {!! Form::label('link_mapa', 'Ubicación destino (Google Maps):') !!}
+    {!! Form::text('link_mapa', null, [
+        'class' => 'form-control',
+        'placeholder' => 'Pegue aquí el enlace de Google Maps'
+    ]) !!}
+</div>
+
 <!-- Patente Camión -->
 <div class="form-group col-sm-6">
     {!! Form::label('patente_camion', 'Patente camión:') !!}

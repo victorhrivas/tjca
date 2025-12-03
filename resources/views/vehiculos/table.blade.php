@@ -1,0 +1,46 @@
+<div class="card-body p-0">
+    <div class="table-responsive">
+        <table class="table" id="vehiculos-table">
+            <thead>
+            <tr>
+                <th>Marca</th>
+                <th>Modelo</th>
+                <th>Anio</th>
+                <th>Patente</th>
+                <th colspan="3">Action</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach($vehiculos as $vehiculo)
+                <tr>
+                    <td>{{ $vehiculo->marca }}</td>
+                    <td>{{ $vehiculo->modelo }}</td>
+                    <td>{{ $vehiculo->anio }}</td>
+                    <td>{{ $vehiculo->patente }}</td>
+                    <td  style="width: 120px">
+                        {!! Form::open(['route' => ['vehiculos.destroy', $vehiculo->id], 'method' => 'delete']) !!}
+                        <div class='btn-group'>
+                            <a href="{{ route('vehiculos.show', [$vehiculo->id]) }}"
+                               class='btn btn-default btn-xs'>
+                                <i class="far fa-eye"></i>
+                            </a>
+                            <a href="{{ route('vehiculos.edit', [$vehiculo->id]) }}"
+                               class='btn btn-default btn-xs'>
+                                <i class="far fa-edit"></i>
+                            </a>
+                            {!! Form::button('<i class="far fa-trash-alt"></i>', ['type' => 'submit', 'class' => 'btn btn-danger btn-xs', 'onclick' => "return confirm('Are you sure?')"]) !!}
+                        </div>
+                        {!! Form::close() !!}
+                    </td>
+                </tr>
+            @endforeach
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card-footer clearfix">
+        <div class="float-right">
+            @include('adminlte-templates::common.paginate', ['records' => $vehiculos])
+        </div>
+    </div>
+</div>

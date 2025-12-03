@@ -6,7 +6,7 @@
             <div class="row mb-2">
                 <div class="col-sm-12">
                     <h1>
-                        Edit Inicio Carga
+                    Create Vehiculos
                     </h1>
                 </div>
             </div>
@@ -19,17 +19,19 @@
 
         <div class="card">
 
-            {!! Form::model($inicioCarga, ['route' => ['inicioCargas.update', $inicioCarga->id], 'method' => 'patch']) !!}
+            {!! Form::open(['route' => 'vehiculos.store']) !!}
 
             <div class="card-body">
+
                 <div class="row">
-                    @include('inicio_cargas.fields')
+                    @include('vehiculos.fields')
                 </div>
+
             </div>
 
             <div class="card-footer">
                 {!! Form::submit('Save', ['class' => 'btn btn-primary']) !!}
-                <a href="{{ route('operacion.inicio-carga.index') }}" class="btn btn-default"> Cancel </a>
+                <a href="{{ route('vehiculos.index') }}" class="btn btn-default"> Cancel </a>
             </div>
 
             {!! Form::close() !!}

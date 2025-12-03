@@ -22,6 +22,7 @@ use App\Http\Controllers\InicioCargaController;
 use App\Http\Controllers\EnTransitoController;
 use App\Http\Controllers\EntregaController;
 use App\Http\Controllers\ChecklistCamionController;
+use App\Http\Controllers\TarifaRutaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -75,12 +76,17 @@ Route::middleware(['auth.redirect'])->group(function () {
         [CotizacionController::class, 'generarOt']
     )->name('cotizacions.generarOt');
 
-    // Operación logística interna (panel)
     Route::prefix('operacion')->name('operacion.')->group(function () {
-        Route::resource('inicio-carga', InicioCargaController::class)->only(['index','store','show']);
-        Route::resource('en-transito', EnTransitoController::class)->only(['index','store','show']);
-        Route::resource('entrega', EntregaController::class)->only(['index','store','show']);
+        Route::resource('inicio-carga', InicioCargaController::class)
+            ->only(['index','show','store','edit','update','destroy']);
+
+        Route::resource('entrega', EntregaController::class)
+            ->only(['index','show','store','edit','update','destroy']);
+
+        Route::resource('checklist', ChecklistCamionController::class)
+            ->only(['index','show','store','edit','update','destroy']);
     });
+
 
     // Otros módulos internos
     Route::resource('puentes', PuenteController::class)->only(['index','create','store','show']);
@@ -93,6 +99,8 @@ Route::resource('cotizacions', CotizacionController::class);
 Route::resource('ots', OtController::class);
 Route::resource('evento-operacions', EventoOperacionController::class);
 Route::resource('puentes', PuenteController::class);
+Route::resource('tarifaRutas', TarifaRutaController::class);
+Route::resource('vehiculos', VehiculoController::class);
 
 /*
 |--------------------------------------------------------------------------
@@ -103,3 +111,6 @@ Route::resource('puentes', PuenteController::class);
 Route::resource('inicio-cargas', InicioCargaController::class)->only(['create','store','show']);
 Route::resource('entregas', EntregaController::class)->only(['create','store','show']);
 Route::resource('checklist-camions', ChecklistCamionController::class)->only(['create','store','show']);
+
+Route::resource('tarifa-rutas', App\Http\Controllers\TarifaRutaController::class);
+Route::resource('vehiculos', App\Http\Controllers\VehiculoController::class);

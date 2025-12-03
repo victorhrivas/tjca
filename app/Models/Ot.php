@@ -11,6 +11,9 @@ class Ot extends Model
     public $fillable = [
         'cotizacion_id',
         'conductor',
+        'contacto_origen',
+        'contacto_destino',
+        'link_mapa',
         'patente_camion',
         'patente_remolque',
         'estado',
@@ -21,6 +24,9 @@ class Ot extends Model
     protected $casts = [
         'cotizacion_id'    => 'integer',
         'conductor'        => 'string',
+        'contacto_origen'  => 'string',
+        'contacto_destino' => 'string',
+        'link_mapa' => 'string',
         'patente_camion'   => 'string',
         'patente_remolque' => 'string',
         'estado'           => 'string',
