@@ -16,6 +16,7 @@ use App\Http\Controllers\OtController;
 use App\Http\Controllers\EventoOperacionController;
 use App\Http\Controllers\PuenteController;
 use App\Http\Controllers\ConductorController;
+use App\Http\Controllers\UserController;
 
 // Controladores de fases operativas internas (panel)
 use App\Http\Controllers\InicioCargaController;
@@ -53,6 +54,11 @@ Route::middleware(['auth.redirect'])->group(function () {
     Route::resource('cotizaciones', CotizacionController::class)->only(['index','create','store','show']);
     Route::resource('ots', OtController::class)->only(['index','create','store','show','update','destroy','edit']);
     Route::resource('conductors', ConductorController::class);
+
+    Route::middleware('auth')->group(function () {
+        Route::get('/mi-perfil', [UserController::class, 'edit'])->name('users.edit');
+        Route::put('/mi-perfil', [UserController::class, 'update'])->name('users.update');
+    });
 
     Route::patch('ots/{ot}/estado', [OtController::class, 'updateEstado'])
         ->name('ots.updateEstado');

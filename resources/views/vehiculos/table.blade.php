@@ -5,7 +5,7 @@
             <tr>
                 <th>Marca</th>
                 <th>Modelo</th>
-                <th>Anio</th>
+                <th>Año</th>
                 <th>Patente</th>
                 <th colspan="3">Action</th>
             </tr>

@@ -12,7 +12,7 @@
 
 <!-- Anio Field -->
 <div class="col-sm-12">
-    {!! Form::label('anio', 'Anio:') !!}
+    {!! Form::label('anio', 'Año:') !!}
     <p>{{ $vehiculo->anio }}</p>
 </div>
 

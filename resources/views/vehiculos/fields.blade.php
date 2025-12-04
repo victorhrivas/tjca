@@ -12,7 +12,7 @@
 
 <!-- Anio Field -->
 <div class="form-group col-sm-6">
-    {!! Form::label('anio', 'Anio:') !!}
+    {!! Form::label('anio', 'Año:') !!}
     {!! Form::number('anio', null, ['class' => 'form-control', 'required']) !!}
 </div>
 

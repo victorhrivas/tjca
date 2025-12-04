@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('modelo');
             $table->integer('anio');
             $table->string('patente');
-            $table->text('informacion_general');
+            $table->text('informacion_general')->nullable();
             $table->timestamps();
         });
     }
