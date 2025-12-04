@@ -54,6 +54,9 @@ Route::middleware(['auth.redirect'])->group(function () {
     Route::resource('ots', OtController::class)->only(['index','create','store','show','update','destroy','edit']);
     Route::resource('conductors', ConductorController::class);
 
+    Route::patch('ots/{ot}/estado', [OtController::class, 'updateEstado'])
+        ->name('ots.updateEstado');
+
     // PDFs
     Route::get('cotizacions/{cotizacion}/pdf', [CotizacionController::class, 'pdf'])
         ->name('cotizacions.pdf');

@@ -1,0 +1,61 @@
+=========================================
+  DEPLOY – PROYECTO TJCA (AWS – APACHE)
+=========================================
+
+# 1) Conectarse a la EC2 (si aún no estás dentro)
+ssh ubuntu@TU_IP_O_DOMINIO_EC2
+
+
+# 2) Entrar al proyecto
+cd /var/www/pirca/tjca
+
+
+# 3) (Solo si alguna vez vuelve a aparecer error “dubious ownership”)
+git config --global --add safe.directory /var/www/pirca/tjca
+
+
+# 4) Bajar últimos cambios del repositorio
+git pull
+
+
+# -------------------------------------------------------
+# SOLO SI SE MODIFICARON COMPOSER.JSON O DEPENDENCIAS PHP
+# -------------------------------------------------------
+composer install --no-dev --optimize-autoloader
+
+
+# -------------------------------------------------------
+# SOLO SI SE MODIFICARON ARCHIVOS JS/CSS (Vite)
+# -------------------------------------------------------
+npm ci          # o npm install si no hay package-lock actualizado
+npm run build
+
+
+# -------------------------------------------------------
+# SOLO SI SE AGREGA O CAMBIA UNA MIGRACIÓN
+# -------------------------------------------------------
+php artisan migrate --force
+
+
+# -------------------------------------------------------
+# RECONSTRUIR CACHÉS DE LARAVEL (opcional pero recomendado)
+# -------------------------------------------------------
+php artisan config:clear
+php artisan cache:clear
+php artisan route:clear
+php artisan view:clear
+php artisan config:cache
+
+
+# -------------------------------------------------------
+# REINICIAR O RECARGAR APACHE (si cambiaste config del server)
+# -------------------------------------------------------
+sudo systemctl reload apache2
+# Si algo no funciona bien:
+# sudo systemctl restart apache2
+
+
+=========================================
+Listo. Visitar:
+https://tjca.pircasolutions.cl
+=========================================

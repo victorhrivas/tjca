@@ -41,24 +41,28 @@ class Ot extends Model
         return $this->belongsTo(\App\Models\Cotizacion::class);
     }
 
-    // Colores según estado típico: inicio_carga, en_transito, entregada
-    public function getEstadoBadgeClassAttribute()
-    {
-        switch ($this->estado) {
-            case 'entregada':
-                return 'badge-success';
-            case 'en_transito':
-                return 'badge-warning';
-            case 'inicio_carga':
-                return 'badge-info';
-            default:
-                return 'badge-secondary';
-        }
-    }
-
     public function getEstadoLabelAttribute()
     {
-        // Reemplaza guiones bajos por espacio y capitaliza
-        return ucwords(str_replace('_', ' ', $this->estado));
+        return match ($this->estado) {
+            'pendiente'       => 'Pendiente',
+            'inicio_carga'    => 'Inicio de carga',
+            'en_transito'     => 'En tránsito',
+            'entregada'       => 'Entregada',
+            'con_incidencia'  => 'Con incidencia',
+            default           => ucfirst((string) $this->estado),
+        };
     }
+
+    public function getEstadoBadgeClassAttribute()
+    {
+        return match ($this->estado) {
+            'pendiente'       => 'badge-warning',  // amarillo
+            'inicio_carga'    => 'badge-info',     // celeste
+            'en_transito'     => 'badge-primary',  // azul
+            'entregada'       => 'badge-success',  // verde
+            'con_incidencia'  => 'badge-danger',   // rojo
+            default           => 'badge-secondary',
+        };
+    }
+
 }

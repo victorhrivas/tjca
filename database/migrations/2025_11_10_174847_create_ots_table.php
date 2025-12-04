@@ -48,11 +48,7 @@ return new class extends Migration
             $table->string('patente_camion')->nullable();
 
             // Estado de la OT
-            $table->enum('estado', [
-                'inicio_carga',
-                'en_transito',
-                'entregada',
-            ])->default('inicio_carga');
+            $table->string('estado')->default('endiente');
 
             // Observaciones generales
             $table->text('observaciones')->nullable();

@@ -25,11 +25,46 @@ class OtController extends AppBaseController
     /**
      * Display a listing of the Ot.
      */
+
     public function index(Request $request)
     {
-        $ots = \App\Models\Ot::with('cotizacion.solicitud.cliente')->paginate(10);
+        $query = Ot::query();
+
+        // Texto libre: busca en varios campos
+        if ($request->filled('q')) {
+            $q = $request->get('q');
+            $query->where(function ($sub) use ($q) {
+                $sub->where('cliente', 'like', "%{$q}%")
+                    ->orWhere('origen', 'like', "%{$q}%")
+                    ->orWhere('destino', 'like', "%{$q}%")
+                    ->orWhere('conductor', 'like', "%{$q}%")
+                    ->orWhere('equipo', 'like', "%{$q}%");
+            });
+        }
+
+        // Cliente (string)
+        if ($request->filled('cliente')) {
+            $query->where('cliente', 'like', '%' . $request->cliente . '%');
+        }
+
+        // Estado
+        if ($request->filled('estado')) {
+            $query->where('estado', $request->estado);
+        }
+
+        // Fecha servicio
+        if ($request->filled('fecha')) {
+            $query->whereDate('fecha', $request->fecha);
+        }
+
+        $ots = $query
+            ->orderByDesc('id')
+            ->paginate(15)
+            ->appends($request->all()); // mantiene filtros en la paginación
+
         return view('ots.index', compact('ots'));
     }
+
 
 
     /**
@@ -53,9 +88,12 @@ class OtController extends AppBaseController
     {
         $input = $request->all();
 
+        // Fuerza estado por defecto
+        $input['estado'] = $input['estado'] ?? 'pendiente';
+
         $ot = $this->otRepository->create($input);
 
-        Flash::success('Otse guardó correctamente.');
+        Flash::success('OT se guardó correctamente.');
 
         return redirect(route('ots.index'));
     }
@@ -130,6 +168,21 @@ class OtController extends AppBaseController
 
         return redirect(route('ots.index'));
     }
+
+    public function updateEstado(Request $request, Ot $ot)
+    {
+        $request->validate([
+            'estado' => 'required|in:pendiente,inicio_carga,en_transito,entregada,con_incidencia',
+        ]);
+
+        $ot->estado = $request->estado;
+        $ot->save();
+
+        return redirect()
+            ->route('ots.index')
+            ->with('success', "Estado de la OT #{$ot->id} actualizado a {$ot->estado_label}.");
+    }
+
 
     /**
      * Remove the specified Ot from storage.

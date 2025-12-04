@@ -44,15 +44,15 @@
             </a>
         </li>
         <li class="nav-item">
-            <a href="{{ route('operacion.checklist.index') }}"
-               class="nav-link {{ Request::is('operacion/checklist*') ? 'active' : '' }}">
-                <i class="far fa-circle nav-icon"></i><p>En tránsito</p>
-            </a>
-        </li>
-        <li class="nav-item">
             <a href="{{ route('operacion.entrega.index') }}"
                class="nav-link {{ Request::is('operacion/entrega*') ? 'active' : '' }}">
                 <i class="far fa-circle nav-icon"></i><p>Entrega de carga</p>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{{ route('operacion.checklist.index') }}"
+               class="nav-link {{ Request::is('operacion/checklist*') ? 'active' : '' }}">
+                <i class="far fa-circle nav-icon"></i><p>Checklist Camiones</p>
             </a>
         </li>
     </ul>
