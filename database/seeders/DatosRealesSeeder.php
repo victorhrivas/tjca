@@ -25,6 +25,27 @@ class DatosRealesSeeder extends Seeder
         );
 
         // ===========================
+        // USUARIOS TJCA (MISMA CLAVE)
+        // ===========================
+        $passwordTjca = Hash::make('TJCA2025');
+
+        $usuariosTjca = [
+            ['name' => 'Felipe Henott',  'email' => 'fhenott@tjca.cl'],
+            ['name' => 'Jorge Contador', 'email' => 'jgcontador@tjca.cl'],
+            ['name' => 'Jessica Pinto',  'email' => 'jpinto@tjca.cl'],
+        ];
+
+        foreach ($usuariosTjca as $u) {
+            User::updateOrCreate(
+                ['email' => $u['email']],
+                [
+                    'name'     => $u['name'],
+                    'password' => $passwordTjca,
+                ]
+            );
+        }
+
+        // ===========================
         // CONDUCTORES (REALS)
         // ===========================
         $conductoresData = [
