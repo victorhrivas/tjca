@@ -83,9 +83,6 @@
                 </div>
 
                 <div class="card-footer">
-                    <small>
-                        Personaliza este tablero en <code>resources/views/home.blade.php</code>.
-                    </small>
                 </div>
             </div>
         </div>
