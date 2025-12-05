@@ -17,33 +17,30 @@
                 font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif;
             }
 
-            /* Capa con la imagen de fondo */
             body.login-page::before {
                 content: "";
                 position: absolute;
                 inset: 0;
-                background: 
+                background:
                     linear-gradient(to right, rgba(16,17,20,0.98) 0%, rgba(16,17,20,0.7) 40%, rgba(16,17,20,0.3) 60%, rgba(16,17,20,0) 75%),
                     url('{{ url("/images/truck.png") }}') center right / cover no-repeat;
                 z-index: 0;
                 opacity: 0.9;
             }
 
-            /* Contenedor principal */
             .auth-wrap {
                 position: relative;
                 z-index: 1;
                 max-width: 900px;
                 max-height: 700px;
-                margin: 40px auto 40px auto; /* centrado horizontalmente */
-                margin-right: 10%;           /* mantiene la inclinación a la derecha */
+                margin: 40px auto 40px auto;
+                margin-right: 10%;
                 padding: 24px;
                 background: linear-gradient(180deg, var(--bg-2), var(--bg-1));
                 border: 1px solid var(--line);
                 border-radius: 18px;
                 box-shadow: var(--shadow);
             }
-
 
             .auth-head{display:flex;align-items:center;gap:16px;background:linear-gradient(90deg,var(--accent),#f8dc3b);color:var(--accent-ink);border-radius:12px;padding:10px 14px;margin-bottom:18px}
             .auth-head img{height:100px;filter:none}
@@ -61,22 +58,18 @@
             .btn-accent:hover{background:var(--accent-hover);border-color:var(--accent-hover);box-shadow:0 10px 24px rgba(246,199,0,.28);transform:translateY(-1px)}
             .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
             .btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
-            .help-row{display:flex;justify-content:space-between;align-items:center;gap:12px;color:var(--muted);font-size:.92rem}
-            .help-row a{color:var(--accent)}
-            .help-row a:hover{color:var(--accent-hover);text-decoration:underline}
             .divider{display:flex;align-items:center;gap:12px;color:var(--muted);margin:12px 0}
             .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line)}
 
-            /* Sección de acciones rápidas (check-in / check-out) */
             .action-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
             .action-tile{display:flex;align-items:center;justify-content:center;gap:10px;height:56px;border:1px solid var(--line);background:var(--bg-2);border-radius:12px;color:var(--ink);cursor:pointer;transition:.15s ease}
             .action-tile:hover{border-color:var(--accent);color:var(--accent)}
             .action-tile i{font-size:1.1rem}
 
-            /* Checklist camión */
             .checklist{display:grid;grid-template-columns:1fr 1fr;gap:10px}
             .check-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg-2);border:1px solid var(--line);border-radius:10px}
             .check-item input{accent-color:var(--accent)}
+
             @media (max-width: 640px){
                 .action-grid{grid-template-columns:1fr}
                 .checklist{grid-template-columns:1fr}
@@ -85,57 +78,48 @@
 
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
-        /* Tablet y abajo */
         @media (max-width: 992px){
-        /* Fondo: más oscuro y centrado para que no corte el camión */
-        body.login-page::before{
-            background:
-            linear-gradient(to bottom, rgba(16,17,20,0.95) 0%, rgba(16,17,20,0.85) 35%, rgba(16,17,20,0.75) 100%),
-            url('{{ url("/images/truck.png") }}') center / cover no-repeat;
-            opacity: 1;
+            body.login-page::before{
+                background:
+                linear-gradient(to bottom, rgba(16,17,20,0.95) 0%, rgba(16,17,20,0.85) 35%, rgba(16,17,20,0.75) 100%),
+                url('{{ url("/images/truck.png") }}') center / cover no-repeat;
+                opacity: 1;
+            }
+
+            .auth-wrap{
+                max-width: 720px;
+                margin: 32px auto;
+                padding: 20px;
+            }
+
+            .auth-head{ padding: 10px 12px; gap: 12px; }
+            .auth-head img{ height: 72px; }
+            .auth-head .title{ font-size: 0.95rem; }
+            .auth-head .subtitle{ display:none; }
         }
 
-        /* Card centrado */
-        .auth-wrap{
-            max-width: 720px;
-            margin: 32px auto;      /* centra horizontal */
-            padding: 20px;
-        }
-
-        /* Encabezado compacto */
-        .auth-head{ padding: 10px 12px; gap: 12px; }
-        .auth-head img{ height: 72px; }
-        .auth-head .title{ font-size: 0.95rem; }
-        .auth-head .subtitle{ display:none; } /* limpia texto en pantallas chicas */
-        }
-
-        /* Móvil */
         @media (max-width: 576px){
-        .auth-wrap{
-            max-width: 540px;
-            width: calc(100% - 24px);
-            margin: 20px auto;
-            border-radius: 14px;
+            .auth-wrap{
+                max-width: 540px;
+                width: calc(100% - 24px);
+                margin: 20px auto;
+                border-radius: 14px;
+            }
+
+            .card-section{ padding: 16px; }
+            .card-section.alt{ padding: 16px; }
+
+            .form-control{ height: 48px; }
+            .btn{ height: 48px; }
+
+            .action-grid{ grid-template-columns: 1fr; gap: 10px; }
+
+            .auth-head{ gap: 10px; }
+            .auth-head img{ height: 56px; }
         }
 
-        .card-section{ padding: 16px; }
-        .card-section.alt{ padding: 16px; }
-
-        /* Inputs y botones cómodos al tacto */
-        .form-control{ height: 48px; }
-        .btn{ height: 48px; }
-
-        /* Grids a una sola columna */
-        .action-grid{ grid-template-columns: 1fr; gap: 10px; }
-
-        /* Cabecera aún más mínima */
-        .auth-head{ gap: 10px; }
-        .auth-head img{ height: 56px; }
-        }
-
-        /* Ultra-compacto (por si hay notch o teclado abierto) */
         @media (max-height: 640px){
-        .auth-wrap{ margin: 12px auto; }
+            .auth-wrap{ margin: 12px auto; }
         }
         </style>
 
@@ -216,11 +200,180 @@
                             <i class="fas fa-list-check"></i>
                             <span>Checklist camión</span>
                         </a>
+
+                        {{-- Seguimiento OT --}}
+                        <button type="button"
+                                class="action-tile"
+                                data-toggle="modal"
+                                data-target="#modalSeguimientoOT">
+                            <i class="fas fa-route"></i>
+                            <span>Seguimiento</span>
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</body>
+    </body>
+
+    {{-- Modal Seguimiento OT --}}
+    <div class="modal fade" id="modalSeguimientoOT" tabindex="-1" role="dialog" aria-labelledby="modalSeguimientoOTLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content bg-dark text-light">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalSeguimientoOTLabel">Seguimiento de OT</h5>
+                    <button type="button" class="close text-light" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                {{-- NO queremos que el form haga submit normal --}}
+                <form id="formSeguimientoOT" onsubmit="return false;">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="numero_ot">Folio de OT</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="numero_ot"
+                                   name="numero_ot"
+                                   placeholder="Ej: 202512/001"
+                                   required>
+                        </div>
+
+                        <div id="seguimientoResultado" class="mt-3" style="display: none;">
+                            <hr>
+                            <h6 class="mb-2">Estado actual</h6>
+                            <p class="mb-1">
+                                <strong>Folio:</strong> <span id="res_ot"></span><br>
+                                <strong>Estado:</strong> <span id="res_estado" class="badge badge-info"></span>
+                            </p>
+                            <small id="res_detalle" class="text-muted"></small>
+                        </div>
+
+                        <div id="seguimientoLoading" class="mt-3" style="display: none;">
+                            Consultando estado…
+                        </div>
+
+                        <div id="seguimientoError" class="mt-3 text-danger" style="display: none;"></div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                        {{-- IMPORTANTE: type="button" para NO enviar el form --}}
+                        <button type="button" id="btnConsultarSeguimiento" class="btn btn-primary">Consultar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {{-- Script directo, sin depender de @push ni de jQuery --}}
+    <script>
+        (function() {
+            const modal    = document.getElementById('modalSeguimientoOT');
+            const inputOT  = document.getElementById('numero_ot');
+            const resBox   = document.getElementById('seguimientoResultado');
+            const resOT    = document.getElementById('res_ot');
+            const resEstado= document.getElementById('res_estado');
+            const resDetalle = document.getElementById('res_detalle');
+            const loading  = document.getElementById('seguimientoLoading');
+            const errBox   = document.getElementById('seguimientoError');
+            const btnConsultar = document.getElementById('btnConsultarSeguimiento');
+
+            // Limpia el modal cada vez que se abre (Bootstrap dispara este evento)
+            if (modal) {
+                modal.addEventListener('shown.bs.modal', function () {
+                    if (inputOT) inputOT.value = '';
+                    if (resBox)  resBox.style.display = 'none';
+                    if (errBox) {
+                        errBox.style.display = 'none';
+                        errBox.textContent = '';
+                    }
+                    if (loading) loading.style.display = 'none';
+                    if (inputOT) inputOT.focus();
+                });
+            }
+
+            function consultarSeguimiento() {
+                if (!inputOT) return;
+
+                const folio = inputOT.value.trim();
+                if (!folio) return;
+
+                // Reset visual
+                if (resBox)  resBox.style.display = 'none';
+                if (errBox) {
+                    errBox.style.display = 'none';
+                    errBox.textContent = '';
+                }
+                if (loading) loading.style.display = 'block';
+
+                fetch("{{ route('seguimiento-ot.consultar') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ numero_ot: folio })
+                })
+                .then(async response => {
+                    const data = await response.json().catch(() => ({}));
+
+                    if (!response.ok) {
+                        throw new Error(data.message || 'Error en la consulta');
+                    }
+
+                    if (loading) loading.style.display = 'none';
+
+                    if (data.found) {
+                        if (resOT)     resOT.textContent = data.folio || '';
+                        if (resEstado) resEstado.textContent = data.estado || '';
+
+                        const partes = [];
+                        if (data.cliente)   partes.push('Cliente: ' + data.cliente);
+                        if (data.origen)    partes.push('Origen: ' + data.origen);
+                        if (data.destino)   partes.push('Destino: ' + data.destino);
+                        if (data.conductor) partes.push('Conductor: ' + data.conductor);
+                        if (data.fecha)     partes.push('Fecha: ' + data.fecha);
+
+                        if (resDetalle) resDetalle.textContent = partes.join(' • ');
+
+                        if (resBox) resBox.style.display = 'block';
+                    } else {
+                        if (errBox) {
+                            errBox.textContent = data.message || 'No se encontró una OT con ese folio.';
+                            errBox.style.display = 'block';
+                        }
+                    }
+                })
+                .catch(err => {
+                    if (loading) loading.style.display = 'none';
+                    if (errBox) {
+                        errBox.textContent = 'Ocurrió un error al consultar el seguimiento. Intenta nuevamente.';
+                        errBox.style.display = 'block';
+                    }
+                    console.error(err);
+                });
+            }
+
+            if (btnConsultar) {
+                btnConsultar.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    consultarSeguimiento();
+                });
+            }
+
+            // Por seguridad, bloqueamos cualquier submit estándar del formulario
+            const form = document.getElementById('formSeguimientoOT');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    return false;
+                });
+            }
+        })();
+    </script>
 
 </x-laravel-ui-adminlte::adminlte-layout>

@@ -224,7 +224,7 @@
                                         {{ $ot->id === $otItem->id ? 'selected' : '' }}
                                     @endisset
                                 >
-                                    OT #{{ $otItem->id }}
+                                    OT #{{ $otItem->folio }}
                                     @if($otItem->cliente)
                                         · {{ $otItem->cliente }}
                                     @endif

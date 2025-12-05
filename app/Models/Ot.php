@@ -3,12 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 class Ot extends Model
 {
     public $table = 'ots';
 
     public $fillable = [
+        'folio',
         'cotizacion_id',
         'conductor',
         'contacto_origen',
@@ -35,6 +37,31 @@ class Ot extends Model
     public static array $rules = [
         'cotizacion_id' => 'required',
     ];
+
+
+
+    /**
+     * Genera un folio para una fecha dada.
+     * Formato: AAAAMM/NNN (ej: 202512/001).
+     */
+    public static function generarFolioParaFecha(Carbon $fecha): string
+    {
+        if (! $fecha instanceof Carbon) {
+            $fecha = Carbon::parse($fecha);
+        }
+
+        // Prefijo del período: 202512
+        $periodo = $fecha->format('Ym');
+
+        // Contar cuántas OTs ya tienen folio en ese período
+        // Ej: todos los que empiezan con "202512/"
+        $cantidadMes = self::where('folio', 'like', $periodo . '/%')->count() + 1;
+
+        // 001, 002, 003...
+        $correlativo = str_pad($cantidadMes, 3, '0', STR_PAD_LEFT);
+
+        return "{$periodo}/{$correlativo}";
+    }
 
     public function cotizacion()
     {

@@ -243,19 +243,18 @@ class SolicitudController extends AppBaseController
             return redirect()->route('solicituds.index');
         }
 
-        // Crear cotización "congelando" los datos de la solicitud
         Cotizacion::create([
             'solicitud_id' => $solicitud->id,
-            'solicitante'  => $solicitud->solicitante ?? auth()->user()->name, // NUEVO
+            'user_id'      => auth()->id(), // <--- NUEVO
+            'solicitante'  => $solicitud->solicitante ?? auth()->user()->name,
             'estado'       => 'enviada',
-            'monto'        => $solicitud->monto ?? $solicitud->valor ?? 0,     // ajusta según tu campo real
+            'monto'        => $solicitud->monto ?? $solicitud->valor ?? 0,
             'origen'       => $solicitud->origen,
             'destino'      => $solicitud->destino,
-            'cliente'      => $solicitud->cliente,                             // ya debería ser string “congelado”
+            'cliente'      => $solicitud->cliente_id,  // string “congelado”
             'carga'        => $solicitud->carga,
         ]);
 
-        // Marcar solicitud como aprobada
         $solicitud->update(['estado' => 'aprobada']);
 
         Flash::success('Solicitud aprobada y cotización generada.');

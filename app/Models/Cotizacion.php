@@ -10,6 +10,7 @@ class Cotizacion extends Model
 
     public $fillable = [
         'solicitud_id',
+        'user_id',          // <--- NUEVO
         'solicitante',
         'estado',
         'monto',
@@ -23,6 +24,7 @@ class Cotizacion extends Model
 
     protected $casts = [
         'solicitud_id' => 'integer',
+        'user_id'      => 'integer',   // <--- NUEVO
         'solicitante'  => 'string',
         'estado'       => 'string',
         'monto'        => 'integer',
@@ -34,6 +36,7 @@ class Cotizacion extends Model
 
     public static array $rules = [
         'solicitud_id' => 'required',
+        'user_id'      => 'required|exists:users,id', // <--- NUEVO
         'origen'       => 'required',
         'destino'      => 'required',
         'cliente'      => 'required',
@@ -44,10 +47,16 @@ class Cotizacion extends Model
         return $this->belongsTo(\App\Models\Solicitud::class);
     }
 
+    public function user()
+    {
+        return $this->belongsTo(\App\Models\User::class);
+    }
+
     public function ot()
     {
         return $this->hasOne(\App\Models\Ot::class);
     }
+
 
     // Badge según tus estados reales (enviada, aceptada, rechazada)
     public function getEstadoBadgeClassAttribute()

@@ -14,6 +14,8 @@ return new class extends Migration
             // Relación con solicitud
             $table->unsignedBigInteger('solicitud_id');
 
+            $table->unsignedBigInteger('user_id');
+
             // Datos “congelados” desde solicitud
             $table->string('solicitante');
             $table->string('origen');

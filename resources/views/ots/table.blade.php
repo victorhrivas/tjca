@@ -4,16 +4,12 @@
             <thead>
             <tr>
                 <th>OT</th>
-                <th>Cotización</th>
                 <th>Cliente</th>
                 <th>Origen</th>
                 <th>Destino</th>
                 <th>Conductor</th>
                 <th>Pat. Camión</th>
-                <th>Pat. Remolque</th>
                 <th>Estado</th>
-                <th>Creada</th>
-                <th>Actualizada</th>
                 <th colspan="3">Acciones</th>
             </tr>
             </thead>
@@ -35,15 +31,12 @@
                 @endphp
 
                 <tr>
-                    {{-- OT --}}
-                    <td>#{{ $ot->id }}</td>
-
-                    {{-- Cotización --}}
+                    {{-- OT (folio visible + id interno en pequeño) --}}
                     <td>
-                        @if($ot->cotizacion)
-                            #{{ $ot->cotizacion->id }}
+                        @if($ot->folio)
+                            <strong>{{ $ot->folio }}</strong><br>
                         @else
-                            -
+                            #{{ $ot->id }}
                         @endif
                     </td>
 
@@ -59,7 +52,6 @@
                     {{-- Conductor / Patentes --}}
                     <td>{{ $ot->conductor ?: '-' }}</td>
                     <td>{{ $ot->patente_camion ?: '-' }}</td>
-                    <td>{{ $ot->patente_remolque ?: '-' }}</td>
 
                     {{-- ESTADO: badge + dropdown para cambiar, pero visualmente igual que Cotizaciones --}}
                     <td>
@@ -97,10 +89,6 @@
                             </div>
                         </div>
                     </td>
-
-                    {{-- Fechas --}}
-                    <td>{{ $ot->created_at ? $ot->created_at->format('d/m/y H:i') : '' }}</td>
-                    <td>{{ $ot->updated_at ? $ot->updated_at->format('d/m/y H:i') : '' }}</td>
 
                     {{-- ACCIONES: mismo estilo que Cotizaciones --}}
                     <td style="width: 150px">

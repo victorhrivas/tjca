@@ -10,8 +10,9 @@ use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Flash;
 use App\Models\Ot;
-use App\Models\Solicitud;
+use Carbon\Carbon;
 use App\Models\Cotizacion;
+use App\Models\Solicitud;
 use App\Models\Cliente;
 
 class CotizacionController extends AppBaseController
@@ -119,11 +120,16 @@ class CotizacionController extends AppBaseController
     {
         $input = $request->all();
 
+        // Siempre el usuario logueado como dueño de la cotización
+        $input['user_id'] = auth()->id();
+
         // Tomamos la solicitud relacionada
         $solicitud = Solicitud::with('cliente')->findOrFail($request->solicitud_id);
 
         // Asignar automáticamente el solicitante si no viene del formulario
-        $input['solicitante'] = $input['solicitante'] ?? $solicitud->solicitante ?? auth()->user()->name;
+        $input['solicitante'] = $input['solicitante']
+            ?? $solicitud->solicitante
+            ?? auth()->user()->name;
 
         // Asegurar cliente como string siempre
         $input['cliente'] = $request->input(
@@ -137,6 +143,7 @@ class CotizacionController extends AppBaseController
 
         return redirect(route('cotizacions.index'));
     }
+
 
     /**
      * Display the specified Cotizacion.
@@ -213,7 +220,8 @@ class CotizacionController extends AppBaseController
 
     public function pdf($id)
     {
-        $cotizacion = Cotizacion::with(['solicitud', 'ot'])->findOrFail($id);
+        $cotizacion = Cotizacion::with(['solicitud.cliente', 'ot', 'user'])
+            ->findOrFail($id);
 
         $pdf = Pdf::loadView('cotizacions.pdf', [
             'cotizacion' => $cotizacion,
@@ -221,11 +229,9 @@ class CotizacionController extends AppBaseController
 
         $fileName = 'cotizacion_' . $cotizacion->id . '.pdf';
 
-        // Puedes usar stream() si quieres abrir en el navegador
         return $pdf->stream($fileName);
-
-        //return $pdf->download($fileName);
     }
+
 
     /**
      * Generar OT desde una cotización.
@@ -255,17 +261,21 @@ class CotizacionController extends AppBaseController
         $solicitud = $cotizacion->solicitud;
         $cliente   = optional($solicitud)->cliente;
 
-        // Fecha coherente
+        // Fecha coherente para el servicio
         $fechaBase = $solicitud && $solicitud->created_at
             ? $solicitud->created_at->copy()->addDays(2)
-            : now();
+            : Carbon::now();
 
         // Cambiar estado a aceptada
         $cotizacion->estado = 'aceptada';
         $cotizacion->save();
 
-        // Crear OT
-        Ot::create([
+        // Generar folio usando la fecha de servicio
+        $folio = Ot::generarFolioParaFecha($fechaBase);
+
+        // Crear OT con folio incluido
+        $ot = Ot::create([
+            'folio'            => $folio,
             'cotizacion_id'    => $cotizacion->id,
             'equipo'           => $solicitud?->carga ?? 'Servicio de carga',
             'origen'           => $solicitud?->origen ?? null,
@@ -276,15 +286,13 @@ class CotizacionController extends AppBaseController
             'solicitante'      => $cliente?->razon_social ?? 'Sin solicitante',
             'conductor'        => null,
             'patente_camion'   => null,
-            'estado'           => 'inicio_carga',
+            'estado'           => 'pendiente',
             'observaciones'    => 'OT generada automáticamente desde la cotización #'.$cotizacion->id,
         ]);
 
         Flash::success('OT generada correctamente. La cotización pasó a estado "aceptada".');
 
-        // ✔️ Redirigir al INDEX
         return redirect()->route('ots.index');
     }
-
 
 }

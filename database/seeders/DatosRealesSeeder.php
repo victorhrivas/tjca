@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Cliente;
 use App\Models\Conductor;
 use App\Models\TarifaRuta;
+use App\Models\Vehiculo; // <-- IMPORTANTE
 
 class DatosRealesSeeder extends Seeder
 {
@@ -20,7 +21,7 @@ class DatosRealesSeeder extends Seeder
             ['email' => 'vhrivas.c@gmail.com'],
             [
                 'name'     => 'Víctor Rivas',
-                'password' => Hash::make('admin'), // cámbialo luego en producción
+                'password' => Hash::make('admin'),
             ]
         );
 
@@ -116,7 +117,6 @@ class DatosRealesSeeder extends Seeder
             $rut = $data['rut'];
 
             if (empty($rut)) {
-                // Ejemplo de RUT genérico único: 99.000.001-K, 99.000.002-K, etc.
                 $rut = sprintf('99.000.%03d-K', $rutGenericoCorrelativo);
                 $rutGenericoCorrelativo++;
             }
@@ -133,7 +133,69 @@ class DatosRealesSeeder extends Seeder
         }
 
         // ===========================
-        // TARIFAS RUTA (OPCIONAL, PERO SON REALES)
+        // VEHÍCULOS (REALS)
+        // ===========================
+        $vehiculosData = [
+            [
+                'marca'               => 'IVECO',
+                'modelo'              => 'S WAY 6X4 INTARDER',
+                'anio'                => 2024,
+                'patente'             => 'TVXF-64',
+                'informacion_general' => 'Tracto IVECO S WAY 6x4 Intarder año 2024.'
+            ],
+            [
+                'marca'               => 'VOLKSWAGEN',
+                'modelo'              => 'CONSTELLATION 19.330',
+                'anio'                => 2015,
+                'patente'             => 'HHWG-18',
+                'informacion_general' => 'Volkswagen Constellation 19.330 año 2015.'
+            ],
+            [
+                'marca'               => 'MACK',
+                'modelo'              => 'CXU613E',
+                'anio'                => 2014,
+                'patente'             => 'GTXC-28',
+                'informacion_general' => 'Mack CXU613E año 2014.'
+            ],
+            [
+                'marca'               => 'VOLKSWAGEN',
+                'modelo'              => 'CONSTELLATION 17.280',
+                'anio'                => 2016,
+                'patente'             => 'HXYB-55',
+                'informacion_general' => 'Volkswagen Constellation 17.280 año 2016.'
+            ],
+            [
+                'marca'               => 'INTERNATIONAL',
+                'modelo'              => '9200',
+                'anio'                => 2012,
+                'patente'             => 'DBXD-91',
+                'informacion_general' => 'International 9200 año 2012.'
+            ],
+            [
+                'marca'               => 'DAF',
+                'modelo'              => 'XF480',
+                'anio'                => 2024,
+                'patente'             => 'VGLK-97',
+                'informacion_general' => 'DAF XF480 año 2024.'
+            ],
+            [
+                'marca'               => 'DAF',
+                'modelo'              => 'XF480',
+                'anio'                => 2024,
+                'patente'             => 'VGLL-17',
+                'informacion_general' => 'DAF XF480 año 2024.'
+            ],
+        ];
+
+        foreach ($vehiculosData as $v) {
+            Vehiculo::updateOrCreate(
+                ['patente' => $v['patente']],
+                $v
+            );
+        }
+
+        // ===========================
+        // TARIFAS RUTA
         // ===========================
         $tarifas = [
             [

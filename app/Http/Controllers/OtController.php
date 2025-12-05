@@ -9,6 +9,7 @@ use App\Repositories\OtRepository;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use App\Models\Conductor;
+use Carbon\Carbon;
 use App\Models\Ot;
 use Flash;
 
@@ -65,8 +66,6 @@ class OtController extends AppBaseController
         return view('ots.index', compact('ots'));
     }
 
-
-
     /**
      * Show the form for creating a new Ot.
      */
@@ -82,21 +81,94 @@ class OtController extends AppBaseController
     }
 
     /**
+     * Genera y asigna el folio a una OT recién creada.
+     * Formato: AAAAMM/NNN (ej: 202512/001).
+     */
+    private function asignarFolio(Ot $ot): void
+    {
+        // Usamos la fecha de servicio si existe; si no, la fecha de creación
+        $fechaBase = $ot->fecha ? Carbon::parse($ot->fecha) : $ot->created_at;
+
+        // Ejemplo: 202512
+        $periodo = $fechaBase->format('Ym');
+
+        // Cantidad de OTs creadas en ese año/mes (incluida la actual)
+        $cantidadMes = Ot::whereYear('created_at', $fechaBase->year)
+            ->whereMonth('created_at', $fechaBase->month)
+            ->count();
+
+        // Correlativo con 3 dígitos: 001, 002, 003...
+        $correlativo = str_pad($cantidadMes, 3, '0', STR_PAD_LEFT);
+
+        $ot->folio = "{$periodo}/{$correlativo}";
+        $ot->save();
+    }
+
+    public function seguimiento(Request $request)
+    {
+        $request->validate([
+            'numero_ot' => 'required|string',
+        ]);
+
+        // El cliente ingresa el FOLIO, ej: 202512/001
+        $folio = trim($request->numero_ot);
+
+        // Buscar OT por folio
+        $ot = Ot::where('folio', $folio)->first();
+
+        if (! $ot) {
+            return response()->json([
+                'found'   => false,
+                'message' => 'No se encontró una OT con ese folio.',
+            ]);
+        }
+
+        // Cliente asociado (misma lógica que en tus tablas)
+        $clienteNombre = optional(optional(optional($ot->cotizacion)->solicitud)->cliente)->razon_social
+            ?? $ot->cliente
+            ?? '-';
+
+        return response()->json([
+            'found'       => true,
+            'folio'       => $ot->folio,
+            'estado'      => $ot->estado_label,        // texto bonito
+            'estado_raw'  => $ot->estado,              // valor crudo
+            'badge_class' => $ot->estado_badge_class,  // por si quieres usar clases CSS
+            'cliente'     => $clienteNombre,
+            'origen'      => $ot->origen,
+            'destino'     => $ot->destino,
+            'conductor'   => $ot->conductor,
+            'fecha'       => optional($ot->fecha)->format('d-m-Y') ?? null,
+        ]);
+    }
+
+
+
+    /**
      * Store a newly created Ot in storage.
      */
     public function store(CreateOtRequest $request)
     {
         $input = $request->all();
 
-        // Fuerza estado por defecto
+        // Estado por defecto si no viene
         $input['estado'] = $input['estado'] ?? 'pendiente';
 
+        // Fecha base: la que venga en el formulario o hoy
+        $fechaBase = $request->filled('fecha')
+            ? Carbon::parse($request->fecha)
+            : Carbon::now();
+
+        $input['folio'] = Ot::generarFolioParaFecha($fechaBase);
+
+        // Crear OT con folio incluido
         $ot = $this->otRepository->create($input);
 
         Flash::success('OT se guardó correctamente.');
 
         return redirect(route('ots.index'));
     }
+
 
     /**
      * Display the specified Ot.

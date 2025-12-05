@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('origen');
             $table->string('destino');
             $table->string('carga');
-            $table->text('notas');
+            $table->text('notas')->nullable();
             $table->timestamps();
         });
     }

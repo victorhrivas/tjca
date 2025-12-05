@@ -188,10 +188,15 @@
         ?? optional(optional($cotizacion->solicitud)->cliente)->contacto
         ?? '—';
 
-    // Datos del ejecutivo (estáticos según tu Excel)
-    $ejecutivoNombre   = 'JORGE CONTADOR';
-    $ejecutivoTelefono = '9 71097698';
-    $ejecutivoEmail    = 'JGCONTADOR@TJCA.CL';
+    // Datos del ejecutivo desde el usuario de la cotización
+    $ejecutivo     = $cotizacion->user;
+    $ejecutivoNombre   = $ejecutivo->name  ?? '—';
+    $ejecutivoEmail    = $ejecutivo->email ?? '—';
+
+    // Si no tienes teléfono en la tabla users, puedes dejarlo fijo o vacío
+    $ejecutivoTelefono = method_exists($ejecutivo, 'phone')
+        ? ($ejecutivo->phone ?? '—')
+        : '—';
 
     $condicionMoneda = 'CLP';
     $pais            = 'CHILE';
@@ -245,7 +250,7 @@
         </td>
         <td>
             <div class="empresa-nombre">
-                Soc. De Transportes y Gruas Jorge Contador Ltda.
+                Transportes TJCA
             </div>
             <div class="empresa-extra">
                 Direccion: Av. Los Pescadores #4639, Coquimbo.<br>

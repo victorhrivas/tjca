@@ -35,17 +35,53 @@ class InicioCargaController extends AppBaseController
     /**
      * Show the form for creating a new InicioCarga.
      */
+
     public function create(Request $request)
     {
-        // Traemos las OT con info para autocompletar
-        $ots = Ot::orderBy('id', 'desc')->get();
+        $ots = Ot::with(['cotizacion.solicitud.cliente'])
+            // si quieres filtrar solo OT abiertas, etc., lo haces acá
+            ->orderBy('id', 'desc')
+            ->get()
+            ->map(function ($ot) {
 
-        // Para permitir preselección (?ot=ID)
-        $otId = $request->query('ot');
-        $ot   = $otId ? $ots->firstWhere('id', $otId) : null;
+                // Cliente: si la columna cliente de la OT viene null,
+                // la tomamos desde la relación
+                if (is_null($ot->cliente)) {
+                    $ot->cliente = optional(
+                        optional(
+                            optional($ot->cotizacion)->solicitud
+                        )->cliente
+                    )->razon_social;
+                }
+
+                // Origen / destino: AJUSTA estos campos a como los tengas realmente
+                if (is_null($ot->origen)) {
+                    $ot->origen = optional($ot->cotizacion)->origen;
+                }
+
+                if (is_null($ot->destino)) {
+                    $ot->destino = optional($ot->cotizacion)->destino;
+                }
+
+                // Conductor: si tienes relación o columna en cotización, ajusta acá
+                if (is_null($ot->conductor)) {
+                    // Ejemplo: si la cotización tiene un campo 'conductor'
+                    $ot->conductor = optional($ot->cotizacion)->conductor;
+                    // o si fuera otra relación/nombre, lo cambias
+                }
+
+                return $ot;
+            });
+
+        $ot = null;
+        if ($request->has('ot_id')) {
+            $ot = Ot::find($request->get('ot_id'));
+        }
 
         return view('inicio_cargas.create', compact('ots', 'ot'));
     }
+
+
 
     /**
      * Store a newly created InicioCarga in storage.

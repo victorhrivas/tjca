@@ -32,6 +32,30 @@
     @endif
 </div>
 
+{{-- Ejecutivo (User dueño de la cotización) --}}
+<div class="form-group col-sm-6">
+    {!! Form::label('ejecutivo', 'Ejecutivo') !!}
+
+    @php
+        $ejecutivoNombre = isset($cotizacion)
+            ? optional($cotizacion->user)->name
+            : auth()->user()->name;
+
+        $ejecutivoId = isset($cotizacion)
+            ? $cotizacion->user_id
+            : auth()->id();
+    @endphp
+
+    {{-- Campo visible solo lectura con el nombre del usuario --}}
+    <input type="text"
+           class="form-control"
+           value="{{ $ejecutivoNombre }}"
+           readonly>
+
+    {{-- Campo oculto que realmente se envía al formulario --}}
+    <input type="hidden" name="user_id" value="{{ $ejecutivoId }}">
+</div>
+
 <div class="form-group col-sm-6">
     {!! Form::label('solicitante', 'Nombre solicitante / vendedor:') !!}
     {!! Form::text('solicitante', old('solicitante', $cotizacion->solicitante ?? null), [

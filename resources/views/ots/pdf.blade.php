@@ -131,9 +131,8 @@
                         Transportes TJCA
                     </div>
                     <div class="company-extra">
-                        RUT 76.123.456-7<br>
-                        Dirección corporativa<br>
-                        Tel: +56 2 XXXX XXXX · www.ejemplo.cl
+                        Direccion: Av. Los Pescadores #4639, Coquimbo.<br>
+                        Telefono: 971097698
                     </div>
                 </td>
             </tr>

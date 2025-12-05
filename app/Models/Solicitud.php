@@ -38,6 +38,17 @@ class Solicitud extends Model
         'destino'    => 'required'
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saving(function ($solicitud) {
+            if (empty($solicitud->notas)) {
+                $solicitud->notas = 'Sin información adicional';
+            }
+        });
+    }
+
     public function cliente()
     {
         return $this->belongsTo(\App\Models\Cliente::class);

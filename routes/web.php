@@ -121,5 +121,14 @@ Route::resource('inicio-cargas', InicioCargaController::class)->only(['create','
 Route::resource('entregas', EntregaController::class)->only(['create','store','show']);
 Route::resource('checklist-camions', ChecklistCamionController::class)->only(['create','store','show']);
 
+Route::post('/seguimiento-ot', [OtController::class, 'consultar'])
+    ->name('seguimiento-ot.consultar');
+
+
+Route::post('/seguimiento-ot', [OtController::class, 'seguimiento'])
+    ->name('seguimiento-ot.consultar');
+
+
+
 Route::resource('tarifa-rutas', App\Http\Controllers\TarifaRutaController::class);
 Route::resource('vehiculos', App\Http\Controllers\VehiculoController::class);

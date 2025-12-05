@@ -53,5 +53,5 @@
 <!-- Notas Field -->
 <div class="form-group col-sm-12 col-lg-12">
     {!! Form::label('notas', 'Notas:') !!}
-    {!! Form::textarea('notas', null, ['class' => 'form-control']) !!}
+    {!! Form::textarea('notas', $ot->notas ?? 'Sin información adicional', ['class' => 'form-control']) !!}
 </div>
