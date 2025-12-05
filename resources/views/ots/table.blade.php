@@ -28,6 +28,20 @@
 
                     $estadoActual = $ot->estado ?? 'pendiente';
                     $cfg = $estadosDisponibles[$estadoActual] ?? $estadosDisponibles['pendiente'];
+
+                    // Fallback para compatibilidad hacia atrás:
+                    // si el campo en OT viene nulo, usamos lo de la solicitud/cotización.
+                    $clienteNombre = $ot->cliente
+                        ?? optional(optional(optional($ot->cotizacion)->solicitud)->cliente)->razon_social
+                        ?? '-';
+
+                    $origen = $ot->origen
+                        ?? optional(optional($ot->cotizacion)->solicitud)->origen
+                        ?? '-';
+
+                    $destino = $ot->destino
+                        ?? optional(optional($ot->cotizacion)->solicitud)->destino
+                        ?? '-';
                 @endphp
 
                 <tr>
@@ -40,20 +54,18 @@
                         @endif
                     </td>
 
-                    {{-- Cliente --}}
-                    <td>
-                        {{ optional(optional(optional($ot->cotizacion)->solicitud)->cliente)->razon_social ?? '-' }}
-                    </td>
+                    {{-- Cliente (AHORA desde OT, con fallback a solicitud) --}}
+                    <td>{{ $clienteNombre }}</td>
 
-                    {{-- Origen / Destino --}}
-                    <td>{{ optional(optional($ot->cotizacion)->solicitud)->origen ?? '-' }}</td>
-                    <td>{{ optional(optional($ot->cotizacion)->solicitud)->destino ?? '-' }}</td>
+                    {{-- Origen / Destino (AHORA desde OT, con fallback a solicitud) --}}
+                    <td>{{ $origen }}</td>
+                    <td>{{ $destino }}</td>
 
-                    {{-- Conductor / Patentes --}}
+                    {{-- Conductor / Patentes (ya venían desde OT) --}}
                     <td>{{ $ot->conductor ?: '-' }}</td>
                     <td>{{ $ot->patente_camion ?: '-' }}</td>
 
-                    {{-- ESTADO: badge + dropdown para cambiar, pero visualmente igual que Cotizaciones --}}
+                    {{-- ESTADO: badge + dropdown para cambiar --}}
                     <td>
                         <div class="btn-group">
                             <button type="button"
@@ -90,7 +102,7 @@
                         </div>
                     </td>
 
-                    {{-- ACCIONES: mismo estilo que Cotizaciones --}}
+                    {{-- ACCIONES --}}
                     <td style="width: 150px">
                         {!! Form::open(['route' => ['ots.destroy', $ot->id], 'method' => 'delete']) !!}
                         <div class="btn-group">
