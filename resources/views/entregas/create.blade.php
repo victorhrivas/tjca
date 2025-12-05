@@ -91,11 +91,12 @@
                             @foreach($ots as $otItem)
                                 <option
                                     value="{{ $otItem->id }}"
-                                    data-cliente="{{ $otItem->cotizacion->cliente ?? '' }}"
+                                    data-cliente="{{ $otItem->cotizacion->solicitud->cliente->razon_social ?? '' }}"
+                                    data-origen="{{ $otItem->cotizacion->origen ?? '' }}"
                                     data-destino="{{ $otItem->cotizacion->destino ?? '' }}"
-                                    {{ (string)$otIdDefault === (string)$otItem->id ? 'selected' : '' }}
+                                    data-conductor="{{ $otItem->conductor ?? ($otItem->cotizacion->conductor ?? '') }}"
                                 >
-                                    OT #{{ $otItem->id }}
+                                    OT #{{ $otItem->folio ?? $otItem->id }}
                                     @if($otItem->cotizacion)
                                         · {{ $otItem->cotizacion->cliente ?? '' }}
                                         @if($otItem->cotizacion->origen || $otItem->cotizacion->destino)
@@ -273,36 +274,42 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const otSelect      = document.getElementById('ot_id');
-            const clienteInput  = document.getElementById('cliente_ot');
-            const lugarInput    = document.getElementById('lugar_entrega');
 
-            if (!otSelect || !clienteInput || !lugarInput) return;
+        const otSelect       = document.getElementById('ot_id');
+        const clienteInput   = document.getElementById('cliente_ot');
+        const lugarInput     = document.getElementById('lugar_entrega');
 
-            function syncFromOt() {
-                const option = otSelect.options[otSelect.selectedIndex];
-                if (!option) {
-                    clienteInput.value = '';
-                    lugarInput.value   = '';
-                    return;
-                }
+        function syncFromOt() {
+            const opt = otSelect.options[otSelect.selectedIndex];
+            if (!opt) return;
 
-                const cliente = option.getAttribute('data-cliente')  || '';
-                const destino = option.getAttribute('data-destino')  || '';
+            const cliente   = opt.getAttribute('data-cliente')   || '';
+            const destino   = opt.getAttribute('data-destino')   || '';
+            const origen    = opt.getAttribute('data-origen')    || '';
+            const conductor = opt.getAttribute('data-conductor') || '';
 
-                clienteInput.value = cliente;
-                // Lugar de entrega desde el destino de la OT
-                if (!lugarInput.value) {
-                    // si quieres siempre sobreescribir, elimina el if
-                    lugarInput.value = destino;
-                }
+            // Cliente OT visual
+            clienteInput.value = cliente;
+
+            // Cargar destino como lugar de entrega (se puede editar)
+            if (!lugarInput.value || lugarInput.value.length === 0) {
+                lugarInput.value = destino;
             }
 
-            otSelect.addEventListener('change', syncFromOt);
+            // Seleccionar conductor automáticamente si coincide
+            const conductorSelect = document.querySelector('select[name="conductor_id"]');
+            if (conductorSelect && conductor) {
+                [...conductorSelect.options].forEach(opt => {
+                    if (opt.text.trim() === conductor.trim()) {
+                        opt.selected = true;
+                    }
+                });
+            }
+        }
 
-            // Inicial por si viene una OT preseleccionada
-            syncFromOt();
-        });
+        otSelect.addEventListener('change', syncFromOt);
+        syncFromOt(); // inicial
+    });
     </script>
     </body>
 </x-laravel-ui-adminlte::adminlte-layout>

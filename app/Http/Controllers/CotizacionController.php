@@ -232,13 +232,11 @@ class CotizacionController extends AppBaseController
         return $pdf->stream($fileName);
     }
 
-
     /**
      * Generar OT desde una cotización.
      */
     public function generarOt($id)
     {
-        // Traemos la cotización con su cadena completa
         $cotizacion = Cotizacion::with(['solicitud.cliente', 'ot'])->find($id);
 
         if (!$cotizacion) {
@@ -246,13 +244,11 @@ class CotizacionController extends AppBaseController
             return redirect()->route('cotizacions.index');
         }
 
-        // Evitar duplicar OT
         if ($cotizacion->ot) {
             Flash::warning('Esta cotización ya tiene una OT asociada.');
             return redirect()->route('cotizacions.index');
         }
 
-        // Solo 'pendiente' o 'enviada' pueden generar OT
         if (!in_array($cotizacion->estado, ['pendiente', 'enviada'])) {
             Flash::warning('Solo cotizaciones Pendientes o Enviadas pueden generar una OT.');
             return redirect()->route('cotizacions.index');
@@ -261,7 +257,7 @@ class CotizacionController extends AppBaseController
         $solicitud = $cotizacion->solicitud;
         $cliente   = optional($solicitud)->cliente;
 
-        // Fecha coherente para el servicio
+        // Fecha base para servicio
         $fechaBase = $solicitud && $solicitud->created_at
             ? $solicitud->created_at->copy()->addDays(2)
             : Carbon::now();
@@ -270,22 +266,45 @@ class CotizacionController extends AppBaseController
         $cotizacion->estado = 'aceptada';
         $cotizacion->save();
 
-        // Generar folio usando la fecha de servicio
+        // Datos “congelados” preferidos desde la cotización,
+        // y si están vacíos, usamos la solicitud como respaldo
+        $clienteNombre = $cotizacion->cliente
+            ?? $cliente->razon_social
+            ?? 'Cliente sin nombre';
+
+        $origen = $cotizacion->origen
+            ?? optional($solicitud)->origen
+            ?? null;
+
+        $destino = $cotizacion->destino
+            ?? optional($solicitud)->destino
+            ?? null;
+
+        $carga = $cotizacion->carga
+            ?? optional($solicitud)->carga
+            ?? 'Servicio de carga';
+
+        $solicitanteNombre = $cotizacion->solicitante
+            ?? $clienteNombre
+            ?? 'Sin solicitante';
+
+        // Generar folio
         $folio = Ot::generarFolioParaFecha($fechaBase);
 
-        // Crear OT con folio incluido
+        // Crear OT con todos los datos llenos
         $ot = Ot::create([
             'folio'            => $folio,
             'cotizacion_id'    => $cotizacion->id,
-            'equipo'           => $solicitud?->carga ?? 'Servicio de carga',
-            'origen'           => $solicitud?->origen ?? null,
-            'destino'          => $solicitud?->destino ?? null,
-            'cliente'          => $cliente?->razon_social ?? 'Cliente sin nombre',
-            'valor'            => $cotizacion->monto,
+            'equipo'           => $carga,
+            'origen'           => $origen,
+            'destino'          => $destino,
+            'cliente'          => $clienteNombre,
+            'valor'            => $cotizacion->monto ?? 0,
             'fecha'            => $fechaBase->toDateString(),
-            'solicitante'      => $cliente?->razon_social ?? 'Sin solicitante',
+            'solicitante'      => $solicitanteNombre,
             'conductor'        => null,
             'patente_camion'   => null,
+            'patente_remolque' => null,
             'estado'           => 'pendiente',
             'observaciones'    => 'OT generada automáticamente desde la cotización #'.$cotizacion->id,
         ]);

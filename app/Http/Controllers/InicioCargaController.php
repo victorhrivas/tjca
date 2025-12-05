@@ -39,22 +39,18 @@ class InicioCargaController extends AppBaseController
     public function create(Request $request)
     {
         $ots = Ot::with(['cotizacion.solicitud.cliente'])
-            // si quieres filtrar solo OT abiertas, etc., lo haces acá
             ->orderBy('id', 'desc')
             ->get()
             ->map(function ($ot) {
 
-                // Cliente: si la columna cliente de la OT viene null,
-                // la tomamos desde la relación
+                $cliente = optional(optional(optional($ot->cotizacion)->solicitud)->cliente);
+
+                // Cliente (nombre)
                 if (is_null($ot->cliente)) {
-                    $ot->cliente = optional(
-                        optional(
-                            optional($ot->cotizacion)->solicitud
-                        )->cliente
-                    )->razon_social;
+                    $ot->cliente = $cliente?->razon_social;
                 }
 
-                // Origen / destino: AJUSTA estos campos a como los tengas realmente
+                // Origen / Destino: ajusta a tus columnas reales
                 if (is_null($ot->origen)) {
                     $ot->origen = optional($ot->cotizacion)->origen;
                 }
@@ -63,12 +59,15 @@ class InicioCargaController extends AppBaseController
                     $ot->destino = optional($ot->cotizacion)->destino;
                 }
 
-                // Conductor: si tienes relación o columna en cotización, ajusta acá
+                // Conductor
                 if (is_null($ot->conductor)) {
-                    // Ejemplo: si la cotización tiene un campo 'conductor'
                     $ot->conductor = optional($ot->cotizacion)->conductor;
-                    // o si fuera otra relación/nombre, lo cambias
                 }
+
+                // Datos de contacto (para InicioCarga)
+                $ot->contacto          = $cliente?->razon_social;          // o contact-name específico si lo tienes
+                $ot->telefono_contacto = $cliente?->telefono ?? '';
+                $ot->correo_contacto   = $cliente?->correo   ?? '';
 
                 return $ot;
             });
@@ -80,8 +79,6 @@ class InicioCargaController extends AppBaseController
 
         return view('inicio_cargas.create', compact('ots', 'ot'));
     }
-
-
 
     /**
      * Store a newly created InicioCarga in storage.
@@ -104,19 +101,26 @@ class InicioCargaController extends AppBaseController
             'observaciones'     => ['nullable', 'string'],
         ]);
 
+        // Crear inicio de carga
         $inicioCarga = InicioCarga::create($data);
 
-        // OPCIÓN A: mostrar vista de éxito
+        // Cambiar estado de la OT a "en_transito"
+        $ot = Ot::find($data['ot_id']);
+        if ($ot) {
+            $ot->estado = 'en_transito';
+            $ot->save();
+        }
+
+        // Vista de éxito
         return view('inicio_cargas.success', [
-            'success'      => 'Inicio de carga registrado correctamente.',
-            'inicioCarga'  => $inicioCarga,
+            'success'     => 'Inicio de carga registrado correctamente.',
+            'inicioCarga' => $inicioCarga,
         ]);
 
-        // OPCIÓN B (si prefieres): redirigir con flash
+        // Si prefieres redirigir:
         // Flash::success('Inicio de carga registrado correctamente.');
         // return redirect()->route('login');
     }
-
 
     /**
      * Display the specified InicioCarga.

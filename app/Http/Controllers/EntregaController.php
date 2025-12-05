@@ -74,11 +74,18 @@ class EntregaController extends AppBaseController
             $data['conductor'] = Conductor::find($request->conductor_id)?->nombre;
         }
 
-        $this->entregaRepository->create($data);
+        // Crear entrega
+        $entrega = $this->entregaRepository->create($data);
 
-        // Puedes cambiar esto por redirect al panel si quieres
-        return view('entregas.success')
-            ->with('success', 'Entrega registrada correctamente.');
+        // Cambiar estado de la OT a entregada
+        $ot->estado = 'entregada';
+        $ot->save();
+
+        // Vista de éxito
+        return view('entregas.success')->with([
+            'success' => 'Entrega registrada correctamente.',
+            'entrega' => $entrega,
+        ]);
     }
 
     /**

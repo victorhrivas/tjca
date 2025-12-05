@@ -217,6 +217,9 @@
                                 <option
                                     value="{{ $otItem->id }}"
                                     data-cliente="{{ $otItem->cliente }}"
+                                    data-contacto="{{ $otItem->contacto }}"
+                                    data-telefono="{{ $otItem->telefono_contacto }}"
+                                    data-correo="{{ $otItem->correo_contacto }}"
                                     data-origen="{{ $otItem->origen }}"
                                     data-destino="{{ $otItem->destino }}"
                                     data-conductor="{{ $otItem->conductor }}"
@@ -232,6 +235,7 @@
                                         · {{ $otItem->origen }} → {{ $otItem->destino }}
                                     @endif
                                 </option>
+
                             @endforeach
                         </select>
                     </div>
@@ -408,6 +412,11 @@
             const $destino    = $('#destino');
             const $conductor  = $('#conductor');
 
+            // nuevos campos
+            const $contacto   = $('input[name="contacto"]');
+            const $tel        = $('input[name="telefono_contacto"]');
+            const $correo     = $('input[name="correo_contacto"]');
+
             // --- Select2 OT + autocompletado de campos ---
             if ($otSelect.length) {
                 $otSelect.select2({
@@ -424,11 +433,17 @@
                     }
 
                     const cliente   = $opt.data('cliente')   || '';
+                    const contacto  = $opt.data('contacto')  || '';
+                    const telefono  = $opt.data('telefono')  || '';
+                    const correo    = $opt.data('correo')    || '';
                     const origen    = $opt.data('origen')    || '';
                     const destino   = $opt.data('destino')   || '';
                     const conductor = $opt.data('conductor') || '';
 
                     $cliente.val(cliente);
+                    $contacto.val(contacto);
+                    $tel.val(telefono);
+                    $correo.val(correo);
                     $origen.val(origen);
                     $destino.val(destino);
                     $conductor.val(conductor);

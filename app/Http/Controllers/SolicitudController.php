@@ -145,7 +145,7 @@ class SolicitudController extends AppBaseController
 
         $solicitud = $this->solicitudRepository->update($request->all(), $id);
 
-        Flash::success('Solicitud updated successfully.');
+        Flash::success('Solicitud ACtualizada Correctamente.');
 
         return redirect(route('solicituds.index'));
     }
@@ -243,16 +243,31 @@ class SolicitudController extends AppBaseController
             return redirect()->route('solicituds.index');
         }
 
+        $cliente = optional($solicitud->cliente); // relación solicitud->cliente
+
         Cotizacion::create([
             'solicitud_id' => $solicitud->id,
-            'user_id'      => auth()->id(), // <--- NUEVO
-            'solicitante'  => $solicitud->solicitante ?? auth()->user()->name,
+            'user_id'      => auth()->id(),
+
+            // Si la solicitud trae solicitante, usamos eso; si no, el nombre del cliente;
+            // como última opción, el usuario logueado
+            'solicitante'  => $solicitud->solicitante
+                            ?? $cliente->razon_social
+                            ?? auth()->user()->name,
+
             'estado'       => 'enviada',
             'monto'        => $solicitud->monto ?? $solicitud->valor ?? 0,
+
+            // Copiamos tal cual desde Solicitud
             'origen'       => $solicitud->origen,
             'destino'      => $solicitud->destino,
-            'cliente'      => $solicitud->cliente_id,  // string “congelado”
             'carga'        => $solicitud->carga,
+
+            // String “congelado” del cliente
+            'cliente'      => $cliente->razon_social
+                            ?? $solicitud->cliente_nombre
+                            ?? $solicitud->cliente_id
+                            ?? 'Cliente sin nombre',
         ]);
 
         $solicitud->update(['estado' => 'aprobada']);

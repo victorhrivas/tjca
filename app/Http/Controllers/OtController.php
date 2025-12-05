@@ -236,7 +236,7 @@ class OtController extends AppBaseController
 
         $ot = $this->otRepository->update($request->all(), $id);
 
-        Flash::success('Ot updated successfully.');
+        Flash::success('Ot Actualizada Correctamente.');
 
         return redirect(route('ots.index'));
     }

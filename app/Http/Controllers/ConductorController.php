@@ -99,7 +99,7 @@ class ConductorController extends AppBaseController
 
         $conductor = $this->conductorRepository->update($request->all(), $id);
 
-        Flash::success('Conductor updated successfully.');
+        Flash::success('Conductor Actualizado Correctamente.');
 
         return redirect(route('conductors.index'));
     }

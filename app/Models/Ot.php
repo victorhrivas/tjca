@@ -9,9 +9,15 @@ class Ot extends Model
 {
     public $table = 'ots';
 
-    public $fillable = [
-        'folio',
+    protected $fillable = [
         'cotizacion_id',
+        'equipo',
+        'origen',
+        'destino',
+        'cliente',
+        'valor',
+        'fecha',
+        'solicitante',
         'conductor',
         'contacto_origen',
         'contacto_destino',
@@ -19,6 +25,8 @@ class Ot extends Model
         'patente_camion',
         'patente_remolque',
         'estado',
+        'observaciones',
+        'folio',
         'created_at',
         'updated_at',
     ];
