@@ -89,27 +89,34 @@ class InicioCargaController extends AppBaseController
     public function store(Request $request)
     {
         $data = $request->validate([
-            'ot_id'            => ['required', 'integer'],
-            'cliente'          => ['required', 'string', 'max:255'],
-            'contacto'         => ['nullable', 'string', 'max:255'],
-            'telefono_contacto'=> ['nullable', 'string', 'max:50'],
-            'correo_contacto'  => ['nullable', 'string', 'max:255'],
-            'origen'           => ['required', 'string', 'max:255'],
-            'destino'          => ['required', 'string', 'max:255'],
-            'tipo_carga'       => ['nullable', 'string', 'max:255'],
-            'peso_aproximado'  => ['nullable', 'string', 'max:255'],
-            'fecha_carga'      => ['nullable', 'date'],
-            'hora_presentacion'=> ['nullable', 'string', 'max:50'],
-            'conductor'        => ['nullable', 'string', 'max:255'],
-            'observaciones'    => ['nullable', 'string'],
+            'ot_id'             => ['required', 'integer'],
+            'cliente'           => ['required', 'string', 'max:255'],
+            'contacto'          => ['nullable', 'string', 'max:255'],
+            'telefono_contacto' => ['nullable', 'string', 'max:50'],
+            'correo_contacto'   => ['nullable', 'string', 'max:255'],
+            'origen'            => ['required', 'string', 'max:255'],
+            'destino'           => ['required', 'string', 'max:255'],
+            'tipo_carga'        => ['nullable', 'string', 'max:255'],
+            'peso_aproximado'   => ['nullable', 'string', 'max:255'],
+            'fecha_carga'       => ['nullable', 'date'],
+            'hora_presentacion' => ['nullable', 'string', 'max:50'],
+            'conductor'         => ['nullable', 'string', 'max:255'],
+            'observaciones'     => ['nullable', 'string'],
         ]);
 
         $inicioCarga = InicioCarga::create($data);
 
-        // Si quieres redirigir a alguna vista pública simple:
-        return view('inicio_cargas\success')
-            ->with('success', 'Inicio de carga registrado correctamente.');
+        // OPCIÓN A: mostrar vista de éxito
+        return view('inicio_cargas.success', [
+            'success'      => 'Inicio de carga registrado correctamente.',
+            'inicioCarga'  => $inicioCarga,
+        ]);
+
+        // OPCIÓN B (si prefieres): redirigir con flash
+        // Flash::success('Inicio de carga registrado correctamente.');
+        // return redirect()->route('login');
     }
+
 
     /**
      * Display the specified InicioCarga.
