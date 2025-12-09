@@ -204,7 +204,7 @@
         </div>
 
         <div class="card-section">
-            <form method="POST" action="{{ route('inicio-cargas.store') }}">
+            <form method="POST" action="{{ route('inicio-cargas.store') }}" enctype="multipart/form-data">
                 @csrf
 
                 <div class="row">
@@ -378,6 +378,22 @@
                         <label>Conductor</label>
                         <input type="text" name="conductor" id="conductor" class="form-control"
                                value="{{ old('conductor') }}" placeholder="Nombre del conductor">
+                    </div>
+
+                    <div class="col-md-12 mb-3">
+                        <label>Fotos de la carga (opcional)</label>
+                        <div class="mb-2">
+                            <input type="file" name="foto_1" class="form-control">
+                        </div>
+                        <div class="mb-2">
+                            <input type="file" name="foto_2" class="form-control">
+                        </div>
+                        <div class="mb-2">
+                            <input type="file" name="foto_3" class="form-control">
+                        </div>
+                        <small class="text-muted" style="color: var(--muted);">
+                            Formatos permitidos: JPG, PNG. Máx 4 MB por archivo.
+                        </small>
                     </div>
 
                     <div class="col-md-12 mb-3">

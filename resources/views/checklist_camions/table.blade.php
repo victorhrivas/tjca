@@ -17,18 +17,22 @@
                     <td>{{ $checklistCamion->patente }}</td>
                     <td>{{ $checklistCamion->luces_altas_bajas }}</td>
                     <td>{{ $checklistCamion->extintor }}</td>
-                    <td  style="width: 120px">
-                        {!! Form::open(['route' => ['checklistCamions.destroy', $checklistCamion->id], 'method' => 'delete']) !!}
+                    <td style="width: 120px">
+                        {!! Form::open(['route' => ['operacion.checklist.destroy', $checklistCamion->id], 'method' => 'delete']) !!}
                         <div class='btn-group'>
-                            <a href="{{ route('checklistCamions.show', [$checklistCamion->id]) }}"
-                               class='btn btn-default btn-xs'>
+                            <a href="{{ route('operacion.checklist.show', $checklistCamion->id) }}"
+                            class='btn btn-default btn-xs'>
                                 <i class="far fa-eye"></i>
                             </a>
-                            <a href="{{ route('checklistCamions.edit', [$checklistCamion->id]) }}"
-                               class='btn btn-default btn-xs'>
+                            <a href="{{ route('operacion.checklist.edit', $checklistCamion->id) }}"
+                            class='btn btn-default btn-xs'>
                                 <i class="far fa-edit"></i>
                             </a>
-                            {!! Form::button('<i class="far fa-trash-alt"></i>', ['type' => 'submit', 'class' => 'btn btn-danger btn-xs', 'onclick' => "return confirm('Are you sure?')"]) !!}
+                            {!! Form::button('<i class="far fa-trash-alt"></i>', [
+                                'type' => 'submit',
+                                'class' => 'btn btn-danger btn-xs',
+                                'onclick' => "return confirm('¿Seguro que deseas eliminar este checklist?')"
+                            ]) !!}
                         </div>
                         {!! Form::close() !!}
                     </td>

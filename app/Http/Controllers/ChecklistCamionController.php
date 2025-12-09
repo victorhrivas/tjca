@@ -12,9 +12,9 @@ class ChecklistCamionController extends Controller
      */
     public function index()
     {
-        $checklists = ChecklistCamion::orderBy('id', 'desc')->paginate(10);
+        $checklistCamions = ChecklistCamion::orderBy('id', 'desc')->paginate(10);
 
-        return view('checklist_camions.index', compact('checklists'));
+        return view('checklist_camions.index', compact('checklistCamions'));
     }
 
     /**
@@ -35,33 +35,38 @@ class ChecklistCamionController extends Controller
             'patente'            => ['required', 'string', 'max:50'],
             'kilometraje'        => ['nullable', 'string', 'max:50'],
 
-            'nivel_aceite'       => ['nullable', 'string', 'max:50'],
-            'luces_altas_bajas'  => ['nullable', 'in:buen_estado,mal_estado'],
-            'intermitentes'      => ['nullable', 'in:buen_estado,mal_estado'],
-            'luces_posicion'     => ['nullable', 'in:buen_estado,mal_estado'],
-            'luces_freno'        => ['nullable', 'in:buen_estado,mal_estado'],
-            'estado_neumaticos'  => ['nullable', 'string', 'max:50'],
-            'sistema_frenos'     => ['nullable', 'in:buen_estado,mal_estado'],
-            'estado_espejos'     => ['nullable', 'in:buen_estado,mal_estado'],
-            'parabrisas'         => ['nullable', 'in:buen_estado,mal_estado'],
-            'calefaccion_ac'     => ['nullable', 'in:buen_estado,mal_estado'],
+            'nivel_aceite'       => ['required', 'in:bajo,1,2,3,4,5,normal'],
+
+            'luces_altas_bajas'  => ['required', 'in:buen_estado,mal_estado'],
+            'intermitentes'      => ['required', 'in:buen_estado,mal_estado'],
+            'luces_posicion'     => ['required', 'in:buen_estado,mal_estado'],
+            'luces_freno'        => ['required', 'in:buen_estado,mal_estado'],
+            'estado_neumaticos'  => ['required', 'string', 'max:255'],
+            'sistema_frenos'     => ['required', 'in:buen_estado,mal_estado'],
+            'estado_espejos'     => ['required', 'in:buen_estado,mal_estado'],
+            'parabrisas'         => ['required', 'in:buen_estado,mal_estado'],
+            'calefaccion_ac'     => ['required', 'in:buen_estado,mal_estado'],
             'estado_tablones'    => ['nullable', 'in:buen_estado,mal_estado'],
-            'acumulacion_aire'   => ['nullable', 'in:buen_estado,mal_estado'],
-            'extintor'           => ['nullable', 'in:vigente,vencido'],
-            'neumatico_repuesto' => ['nullable', 'in:buen_estado,mal_estado'],
-            'asiento_conductor'  => ['nullable', 'in:buen_estado,mal_estado'],
-            'conos_cunas'        => ['nullable', 'in:buen_estado,mal_estado'],
-            'trinquetes_cadenas' => ['nullable', 'in:buen_estado,mal_estado'],
+            'acumulacion_aire'   => ['required', 'in:buen_estado,mal_estado'],
+            'extintor'           => ['required', 'in:vigente,vencido'],
+            'neumatico_repuesto' => ['required', 'in:buen_estado,mal_estado'],
+            'asiento_conductor'  => ['required', 'in:buen_estado,mal_estado'],
+            'conos_cunas'        => ['required', 'in:buen_estado,mal_estado'],
+            'trinquetes_cadenas' => ['required', 'in:buen_estado,mal_estado'],
+
             'ruidos_motor'       => ['nullable', 'string', 'max:255'],
             'detalle_mal_estado' => ['nullable', 'string'],
         ]);
 
+        // Se setea automáticamente en el servidor
+        $data['fecha_checklist'] = now();
+
         $checklist = ChecklistCamion::create($data);
 
-        // Redirigimos al show "público"; si quieres usar el del panel, cambia a operacion.checklist.show
-        return redirect()
-            ->route('checklist-camions.show', $checklist->id)
-            ->with('success', 'Checklist registrado correctamente.');
+        return view('checklist_camions.success')->with([
+            'success'   => 'Checklist registrada correctamente.',
+            'checklist' => $checklist,
+        ]);
     }
 
     /**
@@ -96,23 +101,25 @@ class ChecklistCamionController extends Controller
             'patente'            => ['required', 'string', 'max:50'],
             'kilometraje'        => ['nullable', 'string', 'max:50'],
 
-            'nivel_aceite'       => ['nullable', 'string', 'max:50'],
-            'luces_altas_bajas'  => ['nullable', 'in:buen_estado,mal_estado'],
-            'intermitentes'      => ['nullable', 'in:buen_estado,mal_estado'],
-            'luces_posicion'     => ['nullable', 'in:buen_estado,mal_estado'],
-            'luces_freno'        => ['nullable', 'in:buen_estado,mal_estado'],
-            'estado_neumaticos'  => ['nullable', 'string', 'max:50'],
-            'sistema_frenos'     => ['nullable', 'in:buen_estado,mal_estado'],
-            'estado_espejos'     => ['nullable', 'in:buen_estado,mal_estado'],
-            'parabrisas'         => ['nullable', 'in:buen_estado,mal_estado'],
-            'calefaccion_ac'     => ['nullable', 'in:buen_estado,mal_estado'],
+            'nivel_aceite'       => ['required', 'in:bajo,1,2,3,4,5,normal'],
+
+            'luces_altas_bajas'  => ['required', 'in:buen_estado,mal_estado'],
+            'intermitentes'      => ['required', 'in:buen_estado,mal_estado'],
+            'luces_posicion'     => ['required', 'in:buen_estado,mal_estado'],
+            'luces_freno'        => ['required', 'in:buen_estado,mal_estado'],
+            'estado_neumaticos'  => ['required', 'string', 'max:255'],
+            'sistema_frenos'     => ['required', 'in:buen_estado,mal_estado'],
+            'estado_espejos'     => ['required', 'in:buen_estado,mal_estado'],
+            'parabrisas'         => ['required', 'in:buen_estado,mal_estado'],
+            'calefaccion_ac'     => ['required', 'in:buen_estado,mal_estado'],
             'estado_tablones'    => ['nullable', 'in:buen_estado,mal_estado'],
-            'acumulacion_aire'   => ['nullable', 'in:buen_estado,mal_estado'],
-            'extintor'           => ['nullable', 'in:vigente,vencido'],
-            'neumatico_repuesto' => ['nullable', 'in:buen_estado,mal_estado'],
-            'asiento_conductor'  => ['nullable', 'in:buen_estado,mal_estado'],
-            'conos_cunas'        => ['nullable', 'in:buen_estado,mal_estado'],
-            'trinquetes_cadenas' => ['nullable', 'in:buen_estado,mal_estado'],
+            'acumulacion_aire'   => ['required', 'in:buen_estado,mal_estado'],
+            'extintor'           => ['required', 'in:vigente,vencido'],
+            'neumatico_repuesto' => ['required', 'in:buen_estado,mal_estado'],
+            'asiento_conductor'  => ['required', 'in:buen_estado,mal_estado'],
+            'conos_cunas'        => ['required', 'in:buen_estado,mal_estado'],
+            'trinquetes_cadenas' => ['required', 'in:buen_estado,mal_estado'],
+
             'ruidos_motor'       => ['nullable', 'string', 'max:255'],
             'detalle_mal_estado' => ['nullable', 'string'],
         ]);

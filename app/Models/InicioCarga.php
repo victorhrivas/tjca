@@ -22,6 +22,9 @@ class InicioCarga extends Model
         'hora_presentacion',
         'conductor',
         'observaciones',
+        'foto_1',
+        'foto_2',
+        'foto_3',
     ];
 
     protected $casts = [

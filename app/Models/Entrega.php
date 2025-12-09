@@ -8,7 +8,7 @@ class Entrega extends Model
 {
     public $table = 'entregas';
 
-    public $fillable = [
+    protected $fillable = [
         'ot_id',
         'cliente',
         'nombre_receptor',
@@ -21,27 +21,17 @@ class Entrega extends Model
         'numero_guia',
         'numero_interno',
         'conforme',
-        'conductor',       // NUEVO
+        'conductor',
         'observaciones',
-        'fotos',
+        'foto_1',
+        'foto_2',
+        'foto_3',
     ];
 
     protected $casts = [
-        'ot_id'            => 'integer',
-        'nombre_receptor'  => 'string',
-        'cliente'          => 'string',
-        'rut_receptor'     => 'string',
-        'telefono_receptor'=> 'string',
-        'correo_receptor'  => 'string',
-        'lugar_entrega'    => 'string',
-        'fecha_entrega'    => 'date',
-        'hora_entrega'     => 'string',
-        'numero_guia'      => 'string',
-        'numero_interno'   => 'string',
-        'conforme'         => 'boolean',
-        'conductor'        => 'string',
-        'observaciones'    => 'string',
-        'fotos'            => 'string',
+        'ot_id'             => 'integer',
+        'fecha_entrega'     => 'date',
+        'conforme'          => 'boolean',
     ];
 
     public static array $rules = [

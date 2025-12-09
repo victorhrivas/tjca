@@ -59,19 +59,30 @@ class EntregaController extends AppBaseController
             'numero_interno'    => ['nullable', 'string', 'max:50'],
             'conforme'          => ['nullable', 'boolean'],
             'observaciones'     => ['nullable', 'string'],
-            'fotos'             => ['nullable', 'string'],
+
+            // 3 fotos opcionales, máximo ~3MB cada una
+            'foto_1' => ['nullable', 'image', 'max:10240'], // 10MB
+            'foto_2' => ['nullable', 'image', 'max:10240'], // 10MB
+            'foto_3' => ['nullable', 'image', 'max:10240'], // 10MB
         ]);
 
-        // Normalización de boolean
+        // Normalizar boolean
         $data['conforme'] = $request->has('conforme') ? (bool) $request->conforme : null;
 
-        // Cliente desde OT / Cotización
+        // Cliente desde OT / cotización
         $ot = Ot::with('cotizacion')->findOrFail($request->ot_id);
         $data['cliente'] = $ot->cotizacion->cliente ?? 'SIN CLIENTE';
 
         // Nombre conductor opcional
         if ($request->filled('conductor_id')) {
             $data['conductor'] = Conductor::find($request->conductor_id)?->nombre;
+        }
+
+        // Guardar fotos en storage/app/public/entregas
+        foreach (['foto_1', 'foto_2', 'foto_3'] as $campo) {
+            if ($request->hasFile($campo) && $request->file($campo)->isValid()) {
+                $data[$campo] = $request->file($campo)->store('entregas', 'public');
+            }
         }
 
         // Crear entrega
@@ -81,7 +92,6 @@ class EntregaController extends AppBaseController
         $ot->estado = 'entregada';
         $ot->save();
 
-        // Vista de éxito
         return view('entregas.success')->with([
             'success' => 'Entrega registrada correctamente.',
             'entrega' => $entrega,
@@ -132,7 +142,6 @@ class EntregaController extends AppBaseController
 
         if (empty($entrega)) {
             Flash::error('Entrega no encontrada');
-
             return redirect()->route('operacion.entrega.index');
         }
 
@@ -149,7 +158,10 @@ class EntregaController extends AppBaseController
             'numero_interno'    => ['nullable', 'string', 'max:50'],
             'conforme'          => ['nullable', 'boolean'],
             'observaciones'     => ['nullable', 'string'],
-            'fotos'             => ['nullable', 'string'],
+
+            'foto_1' => ['nullable', 'image', 'max:3072'],
+            'foto_2' => ['nullable', 'image', 'max:3072'],
+            'foto_3' => ['nullable', 'image', 'max:3072'],
         ]);
 
         $data['conforme'] = $request->has('conforme') ? (bool) $request->conforme : null;
@@ -159,6 +171,15 @@ class EntregaController extends AppBaseController
 
         if ($request->filled('conductor_id')) {
             $data['conductor'] = Conductor::find($request->conductor_id)?->nombre;
+        }
+
+        // Mantener fotos antiguas si no se sube una nueva
+        foreach (['foto_1', 'foto_2', 'foto_3'] as $campo) {
+            if ($request->hasFile($campo) && $request->file($campo)->isValid()) {
+                $data[$campo] = $request->file($campo)->store('entregas', 'public');
+            } else {
+                $data[$campo] = $entrega->$campo;
+            }
         }
 
         $this->entregaRepository->update($data, $id);

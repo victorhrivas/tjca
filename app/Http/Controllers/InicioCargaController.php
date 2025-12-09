@@ -99,7 +99,25 @@ class InicioCargaController extends AppBaseController
             'hora_presentacion' => ['nullable', 'string', 'max:50'],
             'conductor'         => ['nullable', 'string', 'max:255'],
             'observaciones'     => ['nullable', 'string'],
+
+            // NUEVO: validación de imágenes (máx 4 MB cada una)
+            'foto_1'            => ['nullable', 'image', 'max:4096'],
+            'foto_2'            => ['nullable', 'image', 'max:4096'],
+            'foto_3'            => ['nullable', 'image', 'max:4096'],
         ]);
+
+        // Manejo de archivos (disco 'public')
+        if ($request->hasFile('foto_1')) {
+            $data['foto_1'] = $request->file('foto_1')->store('inicio_cargas', 'public');
+        }
+
+        if ($request->hasFile('foto_2')) {
+            $data['foto_2'] = $request->file('foto_2')->store('inicio_cargas', 'public');
+        }
+
+        if ($request->hasFile('foto_3')) {
+            $data['foto_3'] = $request->file('foto_3')->store('inicio_cargas', 'public');
+        }
 
         // Crear inicio de carga
         $inicioCarga = InicioCarga::create($data);
@@ -111,16 +129,12 @@ class InicioCargaController extends AppBaseController
             $ot->save();
         }
 
-        // Vista de éxito
         return view('inicio_cargas.success', [
             'success'     => 'Inicio de carga registrado correctamente.',
             'inicioCarga' => $inicioCarga,
         ]);
-
-        // Si prefieres redirigir:
-        // Flash::success('Inicio de carga registrado correctamente.');
-        // return redirect()->route('login');
     }
+
 
     /**
      * Display the specified InicioCarga.

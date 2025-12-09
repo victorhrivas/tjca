@@ -1,3 +1,4 @@
+{{-- resources/views/checklist_camions/create.blade.php --}}
 <x-laravel-ui-adminlte::adminlte-layout>
     <head>
         <link rel="shortcut icon" href="{{ asset('images/logo.png') }}" type="image/png">
@@ -51,6 +52,9 @@
             .back-link a{color:var(--accent);}
             .section-title{font-size:0.8rem;text-transform:uppercase;color:var(--muted);letter-spacing:.6px;margin:12px 0 4px;}
             .divider-line{border-top:1px solid var(--line);margin:8px 0 12px;}
+            .helper-text{font-size:0.75rem;color:var(--muted);margin-top:4px;}
+            .radio-inline label{margin-right:12px;}
+            .req{color:#f66;margin-left:3px;}
         </style>
     </head>
 
@@ -64,11 +68,32 @@
             </div>
         </div>
 
+        @if ($errors->any())
+            <div class="alert alert-danger">
+                <strong>Ocurrieron errores al enviar el formulario:</strong>
+                <ul class="mb-0">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <div class="card-section">
             @php
                 $estadoSimple = [
                     'buen_estado' => 'Buen estado',
                     'mal_estado'  => 'Mal estado',
+                ];
+
+                $conductoresFijos = [
+                    'Elvis Corona',
+                    'Bernardo Melendez',
+                    'Luis Guerrero',
+                    'Rodrigo Valenzuela',
+                    'Juan Carlos Cuello',
+                    'Juan Carlos Gonzalez',
+                    'Francisco León',
                 ];
             @endphp
 
@@ -76,23 +101,61 @@
                 @csrf
 
                 <div class="row">
-                    {{-- Datos generales --}}
+                    {{-- DATOS GENERALES --}}
                     <div class="col-12">
                         <div class="section-title">Datos generales</div>
                         <div class="divider-line"></div>
                     </div>
 
-                    <div class="col-md-6 mb-3">
-                        <label>Nombre del conductor</label>
+                    <div class="col-md-4 mb-3">
+                        <label>Fecha y hora checklist</label>
                         <input type="text"
-                               name="nombre_conductor"
-                               class="form-control"
-                               value="{{ old('nombre_conductor') }}"
-                               required>
+                            class="form-control"
+                            style="background:#2a2f38;border:1px solid var(--line);color:var(--ink);border-radius:10px;"
+                            value="{{ now()->format('d/m/Y H:i') }}"
+                            readonly>
+
+                        <small class="helper-text">
+                            Se registra automáticamente al guardar el checklist.
+                        </small>
+
+                        {{-- Hidden igual estilizado (aunque no se ve, por consistencia) --}}
+                        <input type="hidden"
+                            name="fecha_checklist"
+                            value="{{ now()->format('Y-m-d H:i:s') }}">
+                    </div>
+
+
+                    {{-- Nombre conductor (select + otro) --}}
+                    <div class="col-md-6 mb-3">
+                        <label>Nombre del conductor <span class="req">*</span></label>
+                        <select id="nombre_conductor_select" class="form-control">
+                            <option value="">Selecciona conductor...</option>
+                            @foreach($conductoresFijos as $nombre)
+                                <option value="{{ $nombre }}"
+                                    {{ old('nombre_conductor') === $nombre ? 'selected' : '' }}>
+                                    {{ $nombre }}
+                                </option>
+                            @endforeach
+                            <option value="__otro__"
+                                {{ old('nombre_conductor') && !in_array(old('nombre_conductor'), $conductoresFijos) ? 'selected' : '' }}>
+                                Otro
+                            </option>
+                        </select>
+                        <input type="text"
+                               id="nombre_conductor_otro"
+                               class="form-control mt-2"
+                               placeholder="Especificar otro conductor"
+                               value="{{ (!in_array(old('nombre_conductor'), $conductoresFijos) ? old('nombre_conductor') : '') }}"
+                               style="{{ (!in_array(old('nombre_conductor'), $conductoresFijos) && old('nombre_conductor')) ? '' : 'display:none;' }}">
+                        {{-- campo real que se envía --}}
+                        <input type="hidden" name="nombre_conductor" id="nombre_conductor_hidden"
+                               value="{{ old('nombre_conductor') }}">
+                        <div class="helper-text">Selecciona un conductor o escribe otro nombre.</div>
                     </div>
 
                     <div class="col-md-3 mb-3">
-                        <label>Patente</label>
+                        <label>Patente <span class="req">*</span></label>
                         <input type="text"
                                name="patente"
                                class="form-control"
@@ -109,15 +172,41 @@
                                placeholder="Ej: 120.500 km">
                     </div>
 
-                    {{-- Iluminación y frenos --}}
+                    {{-- NIVEL DE ACEITE --}}
+                    <div class="col-12 mt-2">
+                        <div class="section-title">Nivel de aceite <span class="req">*</span></div>
+                        <div class="divider-line"></div>
+                    </div>
+
+                    <div class="col-12 mb-3">
+                        <div class="radio-inline">
+                            @php
+                                $nivelesAceite = ['bajo' => 'Bajo', '1' => '1', '2'=>'2', '3'=>'3', '4'=>'4', '5'=>'5', 'normal'=>'Normal'];
+                                $oldNivel = old('nivel_aceite');
+                            @endphp
+                            @foreach($nivelesAceite as $value => $labelText)
+                                <label class="mr-3">
+                                    <input type="radio"
+                                           name="nivel_aceite"
+                                           value="{{ $value }}"
+                                           {{ $oldNivel === $value ? 'checked' : '' }}
+                                           required>
+                                    {{ $labelText }}
+                                </label>
+                            @endforeach
+                        </div>
+                        <div class="helper-text">Escala desde “Bajo” hasta “Normal”.</div>
+                    </div>
+
+                    {{-- ILUMINACIÓN Y FRENOS --}}
                     <div class="col-12 mt-2">
                         <div class="section-title">Iluminación y frenos</div>
                         <div class="divider-line"></div>
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label>Luces altas / bajas</label>
-                        <select name="luces_altas_bajas" class="form-control">
+                        <label>Luces altas y bajas <span class="req">*</span></label>
+                        <select name="luces_altas_bajas" class="form-control" required>
                             <option value="">Seleccionar...</option>
                             @foreach($estadoSimple as $val => $label)
                                 <option value="{{ $val }}" {{ old('luces_altas_bajas') === $val ? 'selected' : '' }}>
@@ -128,8 +217,8 @@
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label>Intermitentes</label>
-                        <select name="intermitentes" class="form-control">
+                        <label>Intermitentes <span class="req">*</span></label>
+                        <select name="intermitentes" class="form-control" required>
                             <option value="">Seleccionar...</option>
                             @foreach($estadoSimple as $val => $label)
                                 <option value="{{ $val }}" {{ old('intermitentes') === $val ? 'selected' : '' }}>
@@ -140,8 +229,8 @@
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label>Luces de posición</label>
-                        <select name="luces_posicion" class="form-control">
+                        <label>Luces de posición <span class="req">*</span></label>
+                        <select name="luces_posicion" class="form-control" required>
                             <option value="">Seleccionar...</option>
                             @foreach($estadoSimple as $val => $label)
                                 <option value="{{ $val }}" {{ old('luces_posicion') === $val ? 'selected' : '' }}>
@@ -152,8 +241,8 @@
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label>Luces de freno</label>
-                        <select name="luces_freno" class="form-control">
+                        <label>Luces de freno <span class="req">*</span></label>
+                        <select name="luces_freno" class="form-control" required>
                             <option value="">Seleccionar...</option>
                             @foreach($estadoSimple as $val => $label)
                                 <option value="{{ $val }}" {{ old('luces_freno') === $val ? 'selected' : '' }}>
@@ -164,8 +253,8 @@
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label>Sistema de frenos</label>
-                        <select name="sistema_frenos" class="form-control">
+                        <label>Sistema de frenos <span class="req">*</span></label>
+                        <select name="sistema_frenos" class="form-control" required>
                             <option value="">Seleccionar...</option>
                             @foreach($estadoSimple as $val => $label)
                                 <option value="{{ $val }}" {{ old('sistema_frenos') === $val ? 'selected' : '' }}>
@@ -175,66 +264,24 @@
                         </select>
                     </div>
 
-                    {{-- Seguridad y visibilidad --}}
-                    <div class="col-12 mt-2">
-                        <div class="section-title">Seguridad y visibilidad</div>
-                        <div class="divider-line"></div>
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label>Espejos</label>
-                        <select name="estado_espejos" class="form-control">
-                            <option value="">Seleccionar...</option>
-                            @foreach($estadoSimple as $val => $label)
-                                <option value="{{ $val }}" {{ old('estado_espejos') === $val ? 'selected' : '' }}>
-                                    {{ $label }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label>Parabrisas</label>
-                        <select name="parabrisas" class="form-control">
-                            <option value="">Seleccionar...</option>
-                            @foreach($estadoSimple as $val => $label)
-                                <option value="{{ $val }}" {{ old('parabrisas') === $val ? 'selected' : '' }}>
-                                    {{ $label }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label>Calefacción / A.C.</label>
-                        <select name="calefaccion_ac" class="form-control">
-                            <option value="">Seleccionar...</option>
-                            @foreach($estadoSimple as $val => $label)
-                                <option value="{{ $val }}" {{ old('calefaccion_ac') === $val ? 'selected' : '' }}>
-                                    {{ $label }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    {{-- Neumáticos y estructura --}}
+                    {{-- NEUMÁTICOS --}}
                     <div class="col-12 mt-2">
                         <div class="section-title">Neumáticos y estructura</div>
                         <div class="divider-line"></div>
                     </div>
 
-                    <div class="col-md-6 mb-3">
-                        <label>Estado neumáticos</label>
-                        <input type="text"
-                               name="estado_neumaticos"
-                               class="form-control"
-                               value="{{ old('estado_neumaticos') }}"
-                               placeholder="Descripción general">
+                    <div class="col-md-12 mb-3">
+                        <label>Estado general de neumáticos <span class="req">*</span></label>
+                        <textarea name="estado_neumaticos"
+                                  class="form-control"
+                                  rows="2"
+                                  placeholder="Buenos o con detalles, indicar en cuál o cuáles"
+                                  required>{{ old('estado_neumaticos') }}</textarea>
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label>Neumático de repuesto</label>
-                        <select name="neumatico_repuesto" class="form-control">
+                        <label>Neumático de repuesto <span class="req">*</span></label>
+                        <select name="neumatico_repuesto" class="form-control" required>
                             <option value="">Seleccionar...</option>
                             @foreach($estadoSimple as $val => $label)
                                 <option value="{{ $val }}" {{ old('neumatico_repuesto') === $val ? 'selected' : '' }}>
@@ -245,7 +292,7 @@
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label>Tablones</label>
+                        <label>Estado de los tablones (solo camas bajas)</label>
                         <select name="estado_tablones" class="form-control">
                             <option value="">Seleccionar...</option>
                             @foreach($estadoSimple as $val => $label)
@@ -256,9 +303,69 @@
                         </select>
                     </div>
 
+                    {{-- VISIBILIDAD / CABINA --}}
+                    <div class="col-12 mt-2">
+                        <div class="section-title">Visibilidad y cabina</div>
+                        <div class="divider-line"></div>
+                    </div>
+
                     <div class="col-md-6 mb-3">
-                        <label>Acumulación de aire</label>
-                        <select name="acumulacion_aire" class="form-control">
+                        <label>Estado espejos retrovisores <span class="req">*</span></label>
+                        <select name="estado_espejos" class="form-control" required>
+                            <option value="">Seleccionar...</option>
+                            @foreach($estadoSimple as $val => $label)
+                                <option value="{{ $val }}" {{ old('estado_espejos') === $val ? 'selected' : '' }}>
+                                    {{ $label }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label>Parabrisas <span class="req">*</span></label>
+                        <select name="parabrisas" class="form-control" required>
+                            <option value="">Seleccionar...</option>
+                            @foreach($estadoSimple as $val => $label)
+                                <option value="{{ $val }}" {{ old('parabrisas') === $val ? 'selected' : '' }}>
+                                    {{ $label }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label>Calefacción y aire acondicionado <span class="req">*</span></label>
+                        <select name="calefaccion_ac" class="form-control" required>
+                            <option value="">Seleccionar...</option>
+                            @foreach($estadoSimple as $val => $label)
+                                <option value="{{ $val }}" {{ old('calefaccion_ac') === $val ? 'selected' : '' }}>
+                                    {{ $label }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label>Asiento del conductor <span class="req">*</span></label>
+                        <select name="asiento_conductor" class="form-control" required>
+                            <option value="">Seleccionar...</option>
+                            @foreach($estadoSimple as $val => $label)
+                                <option value="{{ $val }}" {{ old('asiento_conductor') === $val ? 'selected' : '' }}>
+                                    {{ $label }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- SISTEMA DE AIRE Y SEGURIDAD --}}
+                    <div class="col-12 mt-2">
+                        <div class="section-title">Sistema de aire y elementos de seguridad</div>
+                        <div class="divider-line"></div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label>Funcionamiento acumulación sistema de aire <span class="req">*</span></label>
+                        <select name="acumulacion_aire" class="form-control" required>
                             <option value="">Seleccionar...</option>
                             @foreach($estadoSimple as $val => $label)
                                 <option value="{{ $val }}" {{ old('acumulacion_aire') === $val ? 'selected' : '' }}>
@@ -268,15 +375,9 @@
                         </select>
                     </div>
 
-                    {{-- Equipamiento de seguridad --}}
-                    <div class="col-12 mt-2">
-                        <div class="section-title">Equipamiento de seguridad</div>
-                        <div class="divider-line"></div>
-                    </div>
-
-                    <div class="col-md-4 mb-3">
-                        <label>Extintor</label>
-                        <select name="extintor" class="form-control">
+                    <div class="col-md-6 mb-3">
+                        <label>Extintor <span class="req">*</span></label>
+                        <select name="extintor" class="form-control" required>
                             <option value="">Seleccionar...</option>
                             <option value="vigente" {{ old('extintor') === 'vigente' ? 'selected' : '' }}>Vigente</option>
                             <option value="vencido" {{ old('extintor') === 'vencido' ? 'selected' : '' }}>Vencido</option>
@@ -284,8 +385,8 @@
                     </div>
 
                     <div class="col-md-4 mb-3">
-                        <label>Conos / cunas</label>
-                        <select name="conos_cunas" class="form-control">
+                        <label>Conos y cuñas de seguridad <span class="req">*</span></label>
+                        <select name="conos_cunas" class="form-control" required>
                             <option value="">Seleccionar...</option>
                             @foreach($estadoSimple as $val => $label)
                                 <option value="{{ $val }}" {{ old('conos_cunas') === $val ? 'selected' : '' }}>
@@ -296,8 +397,8 @@
                     </div>
 
                     <div class="col-md-4 mb-3">
-                        <label>Trinquetes / cadenas</label>
-                        <select name="trinquetes_cadenas" class="form-control">
+                        <label>Trinquetes y cadenas <span class="req">*</span></label>
+                        <select name="trinquetes_cadenas" class="form-control" required>
                             <option value="">Seleccionar...</option>
                             @foreach($estadoSimple as $val => $label)
                                 <option value="{{ $val }}" {{ old('trinquetes_cadenas') === $val ? 'selected' : '' }}>
@@ -307,49 +408,27 @@
                         </select>
                     </div>
 
-                    {{-- Cabina y motor --}}
+                    {{-- OTRO / RUIDOS / DETALLE MAL ESTADO --}}
                     <div class="col-12 mt-2">
-                        <div class="section-title">Cabina y motor</div>
+                        <div class="section-title">Observaciones del motor y detalles</div>
                         <div class="divider-line"></div>
                     </div>
 
-                    <div class="col-md-6 mb-3">
-                        <label>Asiento conductor</label>
-                        <select name="asiento_conductor" class="form-control">
-                            <option value="">Seleccionar...</option>
-                            @foreach($estadoSimple as $val => $label)
-                                <option value="{{ $val }}" {{ old('asiento_conductor') === $val ? 'selected' : '' }}>
-                                    {{ $label }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label>Nivel de aceite</label>
-                        <input type="text"
-                               name="nivel_aceite"
-                               class="form-control"
-                               value="{{ old('nivel_aceite') }}"
-                               placeholder="Dentro de rango, requiere cambio, etc.">
-                    </div>
-
                     <div class="col-md-12 mb-3">
-                        <label>Ruidos motor</label>
+                        <label>Ruidos en el motor (describir)</label>
                         <input type="text"
                                name="ruidos_motor"
                                class="form-control"
                                value="{{ old('ruidos_motor') }}"
-                               placeholder="Descripción de ruidos extraños (si aplica)">
+                               placeholder="Describa ruidos anormales si existen">
                     </div>
 
-                    {{-- Detalle mal estado --}}
                     <div class="col-md-12 mb-3">
-                        <label>Detalle de elementos en mal estado</label>
+                        <label>Describir los puntos seleccionados en “mal estado”</label>
                         <textarea name="detalle_mal_estado"
                                   rows="3"
                                   class="form-control"
-                                  placeholder="Detalla los puntos que requieren reparación o atención">{{ old('detalle_mal_estado') }}</textarea>
+                                  placeholder="Describa en detalle las observaciones asociadas a los puntos en mal estado">{{ old('detalle_mal_estado') }}</textarea>
                     </div>
                 </div>
 
@@ -364,5 +443,36 @@
             </form>
         </div>
     </div>
+
+    <script>
+        // Lógica para manejar conductor fijo / otro
+        document.addEventListener('DOMContentLoaded', function () {
+            const selectConductor = document.getElementById('nombre_conductor_select');
+            const inputOtro = document.getElementById('nombre_conductor_otro');
+            const hiddenNombre = document.getElementById('nombre_conductor_hidden');
+
+            function syncConductor() {
+                const val = selectConductor.value;
+                if (val === '__otro__') {
+                    inputOtro.style.display = '';
+                    hiddenNombre.value = inputOtro.value;
+                } else {
+                    inputOtro.style.display = 'none';
+                    hiddenNombre.value = val;
+                }
+            }
+
+            selectConductor.addEventListener('change', syncConductor);
+            inputOtro.addEventListener('input', function () {
+                if (selectConductor.value === '__otro__') {
+                    hiddenNombre.value = inputOtro.value;
+                }
+            });
+
+            // estado inicial
+            syncConductor();
+        });
+    </script>
+
     </body>
 </x-laravel-ui-adminlte::adminlte-layout>

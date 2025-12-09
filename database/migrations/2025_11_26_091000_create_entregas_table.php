@@ -6,44 +6,41 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
     public function up()
     {
         Schema::create('entregas', function (Blueprint $table) {
-            $table->id(); // recomendado
+            $table->id();
             $table->unsignedBigInteger('ot_id');
+
             $table->string('cliente')->nullable();
             $table->string('nombre_receptor');
             $table->string('rut_receptor')->nullable();
             $table->string('telefono_receptor')->nullable();
             $table->string('correo_receptor')->nullable();
+
             $table->string('lugar_entrega')->nullable();
             $table->date('fecha_entrega')->nullable();
-            $table->date('numero_guia')->nullable();
-            $table->date('numero_interno')->nullable();
             $table->string('hora_entrega')->nullable();
-            $table->boolean('conforme')->default(true);
-            $table->string('conductor')->nullable(); // NUEVO
-            $table->text('observaciones')->nullable();
-            $table->text('fotos')->nullable();
-            $table->timestamps();
 
-            // opcional FK:
-            // $table->foreign('ot_id')->references('id')->on('ots')->onDelete('cascade');
+            $table->string('numero_guia')->nullable();
+            $table->string('numero_interno')->nullable();
+
+            $table->boolean('conforme')->default(true);
+            $table->string('conductor')->nullable();
+            $table->text('observaciones')->nullable();
+
+            // Igual que inicio_cargas
+            $table->string('foto_1')->nullable();
+            $table->string('foto_2')->nullable();
+            $table->string('foto_3')->nullable();
+
+            $table->timestamps();
         });
+
     }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
     public function down()
     {
-        Schema::drop('entregas');
+        Schema::dropIfExists('entregas');
     }
 };

@@ -15,6 +15,8 @@ return new class extends Migration
     {
         Schema::create('checklist_camions', function (Blueprint $table) {
             $table->id();
+            $table->dateTime('fecha_checklist'); // NUEVO
+
             $table->string('nombre_conductor');
             $table->string('patente');
             $table->string('kilometraje');
@@ -28,15 +30,15 @@ return new class extends Migration
             $table->string('estado_espejos');
             $table->string('parabrisas');
             $table->string('calefaccion_ac');
-            $table->string('estado_tablones');
+            $table->string('estado_tablones')->nullable();
             $table->string('acumulacion_aire');
             $table->string('extintor');
             $table->string('neumatico_repuesto');
             $table->string('asiento_conductor');
             $table->string('conos_cunas');
             $table->string('trinquetes_cadenas');
-            $table->text('ruidos_motor');
-            $table->text('detalle_mal_estado');
+            $table->text('ruidos_motor')->nullable();
+            $table->text('detalle_mal_estado')->nullable();
             $table->timestamps();
         });
     }

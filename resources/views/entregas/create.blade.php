@@ -79,9 +79,18 @@
                 $otIdDefault = old('ot_id', isset($ot) ? $ot->id : '');
             @endphp
 
-            <form method="POST" action="{{ route('entregas.store') }}">
+            <form method="POST" action="{{ route('entregas.store') }}" enctype="multipart/form-data">
                 @csrf
-
+                @if ($errors->any())
+                    <div class="alert alert-danger">
+                        <strong>Ocurrieron errores al registrar la entrega:</strong>
+                        <ul class="mb-0">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
                 <div class="row">
                     {{-- OT asociada (SELECT) --}}
                     <div class="col-md-6 mb-3">
@@ -250,14 +259,36 @@
                                   placeholder="Comentarios adicionales de la entrega">{{ old('observaciones') }}</textarea>
                     </div>
 
-                    {{-- Fotos (texto libre por ahora) --}}
+                    {{-- Fotos (hasta 3 imágenes) --}}
                     <div class="col-md-12 mb-3">
-                        <label>Fotos (referencias)</label>
-                        <textarea name="fotos"
-                                  rows="2"
-                                  class="form-control"
-                                  placeholder="URLs o descripción de fotos asociadas (opcional)">{{ old('fotos') }}</textarea>
-                    </div>
+                        <label>Fotos de la entrega (opcional)</label>
+                        <div class="row">
+                            <div class="col-md-4 mb-2">
+                                <input type="file"
+                                    name="foto_1"
+                                    class="form-control"
+                                    accept="image/*">
+                                <small class="helper-text">Foto 1</small>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <input type="file"
+                                    name="foto_2"
+                                    class="form-control"
+                                    accept="image/*">
+                                <small class="helper-text">Foto 2</small>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <input type="file"
+                                    name="foto_3"
+                                    class="form-control"
+                                    accept="image/*">
+                                <small class="helper-text">Foto 3</small>
+                            </div>
+                        </div>
+                        <div class="helper-text">
+                            Las imágenes se almacenan como respaldo de la entrega (máx. ~3MB por foto).
+                        </div>
+                    </div>  
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center mt-3">

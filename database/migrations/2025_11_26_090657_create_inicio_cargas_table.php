@@ -14,7 +14,7 @@ return new class extends Migration
     public function up()
     {
         Schema::create('inicio_cargas', function (Blueprint $table) {
-            $table->id(); // recomendado
+            $table->id();
             $table->unsignedBigInteger('ot_id');
             $table->string('cliente');
             $table->string('contacto');
@@ -26,12 +26,15 @@ return new class extends Migration
             $table->string('peso_aproximado')->nullable();
             $table->date('fecha_carga')->nullable();
             $table->string('hora_presentacion')->nullable();
-            $table->string('conductor')->nullable(); // NUEVO
+            $table->string('conductor')->nullable();
             $table->text('observaciones')->nullable();
-            $table->timestamps();
 
-            // opcional, si quieres FK:
-            // $table->foreign('ot_id')->references('id')->on('ots')->onDelete('cascade');
+            // NUEVAS
+            $table->string('foto_1')->nullable();
+            $table->string('foto_2')->nullable();
+            $table->string('foto_3')->nullable();
+
+            $table->timestamps();
         });
     }
 

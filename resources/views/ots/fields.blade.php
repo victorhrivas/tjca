@@ -101,11 +101,16 @@
 <!-- Estado -->
 <div class="form-group col-sm-6">
     {!! Form::label('estado', 'Estado:') !!}
+
     {!! Form::select('estado', [
+        'pendiente'    => 'Pendiente',
         'inicio_carga' => 'Inicio de carga',
         'en_transito'  => 'En tránsito',
         'entregada'    => 'Entregada',
-    ], null, ['class' => 'form-control custom-select']) !!}
+    ],
+    // valor seleccionado (default: pendiente)
+    old('estado', $ot->estado ?? 'pendiente'),
+    ['class' => 'form-control custom-select']) !!}
 </div>
 
 <!-- Observaciones -->

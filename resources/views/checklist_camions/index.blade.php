@@ -5,13 +5,7 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1>Checklist Camions</h1>
-                </div>
-                <div class="col-sm-6">
-                    <a class="btn btn-primary float-right"
-                       href="{{ route('operacion.checklist.create') }}">
-                        Nuevo
-                    </a>
+                    <h1>Checklist Camiones</h1>
                 </div>
             </div>
         </div>
