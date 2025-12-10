@@ -125,19 +125,16 @@
                 border-color: var(--line);
             }
 
-            /* Opciones dentro del desplegable */
             select.form-control option {
                 background: #1c1f24;
                 color: var(--ink);
             }
 
-            /* Placeholder (primera opción) más apagado */
             select.form-control option[value=""],
             select.form-control option:first-child {
                 color: var(--muted);
             }
 
-            /* Caja principal del select (cerrado) */
             .select2-container--bootstrap4 .select2-selection--single {
                 background: #2a2f38 !important;
                 border-color: var(--line) !important;
@@ -145,51 +142,97 @@
                 border-radius: 10px !important;
             }
 
-            /* Texto seleccionado */
             .select2-container--bootstrap4 .select2-selection__rendered {
                 color: var(--ink) !important;
             }
 
-            /* Placeholder */
             .select2-container--bootstrap4 .select2-selection__placeholder {
                 color: var(--muted) !important;
             }
 
-            /* Dropdown completo */
             .select2-container--bootstrap4 .select2-dropdown {
                 background: #1c1f24 !important;
                 border-color: var(--line) !important;
             }
 
-            /* Lista de opciones */
             .select2-container--bootstrap4 .select2-results > .select2-results__options {
                 background: #1c1f24 !important;
             }
 
-            /* Cada opción */
             .select2-container--bootstrap4 .select2-results__option {
                 color: var(--ink) !important;
             }
 
-            /* Opción seleccionada */
             .select2-container--bootstrap4 .select2-results__option[aria-selected="true"] {
                 background: #2a2f38 !important;
                 color: var(--ink) !important;
             }
 
-            /* Opción bajo el hover/teclas (resaltada) */
             .select2-container--bootstrap4 .select2-results__option--highlighted[aria-selected] {
                 background: var(--accent) !important;
                 color: var(--accent-ink) !important;
             }
 
-            /* Input de búsqueda dentro del dropdown */
             .select2-container--bootstrap4 .select2-search__field {
                 background: #101114 !important;
                 color: var(--ink) !important;
                 border-color: var(--line) !important;
             }
 
+            /* --- Estilos fotos --- */
+            .photo-grid{
+                display:flex;
+                flex-wrap:wrap;
+                gap:16px;
+            }
+            .photo-card{
+                flex:1 1 0;
+                min-width:180px;
+                max-width:260px;
+                background:rgba(16,17,20,.7);
+                border-radius:12px;
+                border:1px dashed var(--line);
+                padding:12px;
+                display:flex;
+                flex-direction:column;
+                justify-content:space-between;
+                transition:.15s all ease-out;
+            }
+            .photo-card:hover{
+                border-style:solid;
+                border-color:var(--accent);
+                box-shadow:0 10px 24px rgba(0,0,0,.4);
+                transform:translateY(-1px);
+            }
+            .photo-upload-label{
+                cursor:pointer;
+                display:flex;
+                flex-direction:column;
+                align-items:center;
+                justify-content:center;
+                gap:8px;
+                text-align:center;
+                color:var(--muted);
+                min-height:130px;
+            }
+            .photo-upload-label i{
+                font-size:1.8rem;
+                color:var(--accent);
+            }
+            .photo-upload-label span{
+                font-size:.8rem;
+            }
+            .photo-preview{
+                margin-top:8px;
+                display:none;
+            }
+            .photo-preview img{
+                max-width:100%;
+                max-height:140px;
+                border-radius:10px;
+                object-fit:cover;
+                border:1px solid var(--line);
+            }
         </style>
     </head>
 
@@ -235,7 +278,6 @@
                                         · {{ $otItem->origen }} → {{ $otItem->destino }}
                                     @endif
                                 </option>
-
                             @endforeach
                         </select>
                     </div>
@@ -257,7 +299,6 @@
                         <input type="text" name="telefono_contacto" class="form-control"
                             value="{{ old('telefono_contacto') }}" placeholder="+56 9 xxxx xxxx" required>
                     </div>
-
 
                     <div class="col-md-6 mb-3">
                         <label>Correo de contacto</label>
@@ -306,8 +347,6 @@
                             <div class="row">
                                 @foreach($opcionesCarga as $opcion)
                                     @php
-                                        // Marcar checked si coincide con old('tipo_carga') o,
-                                        // si no hay valor previo, marcar la primera opción como default
                                         $checked = $valorTipoCarga === $opcion
                                             || (!$valorTipoCarga && !$esOtro && $loop->first);
                                     @endphp
@@ -380,17 +419,75 @@
                                value="{{ old('conductor') }}" placeholder="Nombre del conductor">
                     </div>
 
+                    {{-- Fotos con tarjetas + compresión --}}
                     <div class="col-md-12 mb-3">
                         <label>Fotos de la carga (opcional)</label>
-                        <div class="mb-2">
-                            <input type="file" name="foto_1" class="form-control">
+
+                        <div class="photo-grid">
+                            {{-- FOTO 1 --}}
+                            <div class="photo-card">
+                                <label class="photo-upload-label" for="foto_1">
+                                    <i class="fas fa-camera"></i>
+                                    <strong>Tomar / subir foto 1</strong>
+                                    <span>Toca aquí para abrir la cámara o la galería.</span>
+
+                                    <input type="file"
+                                        name="foto_1"
+                                        id="foto_1"
+                                        class="d-none"
+                                        accept="image/*"
+                                        capture="environment"
+                                        onchange="previewPhoto(this, 'preview_foto_1')">
+                                </label>
+
+                                <div id="preview_foto_1" class="photo-preview">
+                                    <img src="#" alt="Vista previa foto 1">
+                                </div>
+                            </div>
+
+                            {{-- FOTO 2 --}}
+                            <div class="photo-card">
+                                <label class="photo-upload-label" for="foto_2">
+                                    <i class="fas fa-camera"></i>
+                                    <strong>Tomar / subir foto 2</strong>
+                                    <span>Opcional, para más ángulos.</span>
+
+                                    <input type="file"
+                                        name="foto_2"
+                                        id="foto_2"
+                                        class="d-none"
+                                        accept="image/*"
+                                        capture="environment"
+                                        onchange="previewPhoto(this, 'preview_foto_2')">
+                                </label>
+
+                                <div id="preview_foto_2" class="photo-preview">
+                                    <img src="#" alt="Vista previa foto 2">
+                                </div>
+                            </div>
+
+                            {{-- FOTO 3 --}}
+                            <div class="photo-card">
+                                <label class="photo-upload-label" for="foto_3">
+                                    <i class="fas fa-camera"></i>
+                                    <strong>Tomar / subir foto 3</strong>
+                                    <span>Opcional.</span>
+
+                                    <input type="file"
+                                        name="foto_3"
+                                        id="foto_3"
+                                        class="d-none"
+                                        accept="image/*"
+                                        capture="environment"
+                                        onchange="previewPhoto(this, 'preview_foto_3')">
+                                </label>
+
+                                <div id="preview_foto_3" class="photo-preview">
+                                    <img src="#" alt="Vista previa foto 3">
+                                </div>
+                            </div>
                         </div>
-                        <div class="mb-2">
-                            <input type="file" name="foto_2" class="form-control">
-                        </div>
-                        <div class="mb-2">
-                            <input type="file" name="foto_3" class="form-control">
-                        </div>
+
                         <small class="text-muted" style="color: var(--muted);">
                             Formatos permitidos: JPG, PNG. Máx 4 MB por archivo.
                         </small>
@@ -428,7 +525,6 @@
             const $destino    = $('#destino');
             const $conductor  = $('#conductor');
 
-            // nuevos campos
             const $contacto   = $('input[name="contacto"]');
             const $tel        = $('input[name="telefono_contacto"]');
             const $correo     = $('input[name="correo_contacto"]');
@@ -465,7 +561,6 @@
                     $conductor.val(conductor);
                 });
 
-                // Si viene una OT preseleccionada, disparamos el change
                 if ($otSelect.val()) {
                     $otSelect.trigger('change');
                 }
@@ -487,8 +582,6 @@
                         $hidden.val($checked.val());
                     }
                 } else {
-                    // Si por alguna razón no hay radio marcado pero el hidden tiene valor,
-                    // intenta marcar el radio correspondiente:
                     if ($hidden.val()) {
                         $radios.each(function () {
                             if (this.value === $hidden.val()) {
@@ -514,7 +607,6 @@
 
             $otroInput.on('input', syncTipoCarga);
 
-            // Estado inicial al cargar la página
             if ($otroRadio.is(':checked')) {
                 $otroInput.prop('disabled', false);
             }
@@ -522,5 +614,100 @@
             syncTipoCarga();
         });
     </script>
+
+    <script>
+        // Misma lógica de compresión que en entregas:
+        function compressImage(file, maxWidth = 1280, maxHeight = 1280, quality = 0.8) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                const url = URL.createObjectURL(file);
+
+                img.onload = () => {
+                    let width = img.width;
+                    let height = img.height;
+                    const aspectRatio = width / height;
+
+                    if (width > maxWidth) {
+                        width = maxWidth;
+                        height = Math.round(width / aspectRatio);
+                    }
+
+                    if (height > maxHeight) {
+                        height = maxHeight;
+                        width = Math.round(height * aspectRatio);
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    canvas.toBlob(
+                        (blob) => {
+                            URL.revokeObjectURL(url);
+                            if (!blob) {
+                                reject(new Error('No se pudo generar el blob'));
+                                return;
+                            }
+
+                            const compressedFile = new File([blob], file.name, {
+                                type: 'image/jpeg',
+                                lastModified: Date.now(),
+                            });
+
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                                resolve({
+                                    file: compressedFile,
+                                    dataUrl: reader.result,
+                                });
+                            };
+                            reader.readAsDataURL(blob);
+                        },
+                        'image/jpeg',
+                        quality
+                    );
+                };
+
+                img.onerror = (err) => {
+                    URL.revokeObjectURL(url);
+                    reject(err);
+                };
+
+                img.src = url;
+            });
+        }
+
+        async function previewPhoto(input, previewId) {
+            const file = input.files && input.files[0];
+            const previewWrap = document.getElementById(previewId);
+            if (!file || !previewWrap) return;
+
+            try {
+                const { file: compressedFile, dataUrl } = await compressImage(file);
+
+                const dt = new DataTransfer();
+                dt.items.add(compressedFile);
+                input.files = dt.files;
+
+                // Límite 4 MB (puedes cambiar a 5 si quieres)
+                const maxBytes = 4 * 1024 * 1024;
+                if (compressedFile.size > maxBytes) {
+                    alert('La imagen sigue pesando más de 4 MB. Intenta con una foto más liviana.');
+                }
+
+                const img = previewWrap.querySelector('img');
+                img.src = dataUrl;
+                previewWrap.style.display = 'block';
+
+            } catch (e) {
+                console.error(e);
+                alert('No se pudo procesar la imagen seleccionada.');
+            }
+        }
+    </script>
+
     </body>
 </x-laravel-ui-adminlte::adminlte-layout>

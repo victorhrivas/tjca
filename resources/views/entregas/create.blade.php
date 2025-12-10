@@ -62,6 +62,70 @@
                 color: var(--ink);
             }
         </style>
+        <style>
+            :root{
+                --bg-0:#101114;--bg-1:#15171b;--bg-2:#1c1f24;--bg-3:#23272e;
+                --line:#2c3139;--ink:#e6e7ea;--muted:#a7adb7;
+                --accent:#d4ad18;--accent-hover:#e1ba1f;--accent-ink:#0b0c0e;
+                --shadow:0 14px 40px rgba(0,0,0,.45);
+            }
+            /* ... LO QUE YA TENÍAS ... */
+
+            .photo-grid{
+                display:flex;
+                flex-wrap:wrap;
+                gap:16px;
+            }
+            .photo-card{
+                flex:1 1 0;
+                min-width:180px;
+                max-width:260px;
+                background:rgba(16,17,20,.7);
+                border-radius:12px;
+                border:1px dashed var(--line);
+                padding:12px;
+                display:flex;
+                flex-direction:column;
+                justify-content:space-between;
+                transition:.15s all ease-out;
+            }
+            .photo-card:hover{
+                border-style:solid;
+                border-color:var(--accent);
+                box-shadow:0 10px 24px rgba(0,0,0,.4);
+                transform:translateY(-1px);
+            }
+            .photo-upload-label{
+                cursor:pointer;
+                display:flex;
+                flex-direction:column;
+                align-items:center;
+                justify-content:center;
+                gap:8px;
+                text-align:center;
+                color:var(--muted);
+                min-height:130px;
+            }
+            .photo-upload-label i{
+                font-size:1.8rem;
+                color:var(--accent);
+            }
+            .photo-upload-label span{
+                font-size:.8rem;
+            }
+            .photo-preview{
+                margin-top:8px;
+                display:none;
+            }
+            .photo-preview img{
+                max-width:100%;
+                max-height:140px;
+                border-radius:10px;
+                object-fit:cover;
+                border:1px solid var(--line);
+            }
+        </style>
+
     </head>
 
     <body>
@@ -234,33 +298,78 @@
                     {{-- Fotos (hasta 3 imágenes) --}}
                     <div class="col-md-12 mb-3">
                         <label>Fotos de la entrega (opcional)</label>
-                        <div class="row">
-                            <div class="col-md-4 mb-2">
-                                <input type="file"
-                                    name="foto_1"
-                                    class="form-control"
-                                    accept="image/*">
-                                <small class="helper-text">Foto 1</small>
+
+                        <div class="photo-grid">
+                            {{-- FOTO 1 --}}
+                            <div class="photo-card">
+                                <label class="photo-upload-label">
+                                    <i class="fas fa-camera"></i>
+                                    <strong>Tomar / subir foto 1</strong>
+                                    <span>Toca aquí para abrir la cámara o la galería.</span>
+
+                                    <input type="file"
+                                        name="foto_1"
+                                        id="foto_1"
+                                        class="d-none"
+                                        accept="image/*"
+                                        capture="environment"
+                                        onchange="previewPhoto(this, 'preview_foto_1')">
+                                </label>
+
+                                <div id="preview_foto_1" class="photo-preview">
+                                    <img src="#" alt="Vista previa foto 1">
+                                </div>
                             </div>
-                            <div class="col-md-4 mb-2">
-                                <input type="file"
-                                    name="foto_2"
-                                    class="form-control"
-                                    accept="image/*">
-                                <small class="helper-text">Foto 2</small>
+
+                            {{-- FOTO 2 --}}
+                            <div class="photo-card">
+                                <label class="photo-upload-label">
+                                    <i class="fas fa-camera"></i>
+                                    <strong>Tomar / subir foto 2</strong>
+                                    <span>Opcional, para más ángulos.</span>
+
+                                    <input type="file"
+                                        name="foto_2"
+                                        id="foto_2"
+                                        class="d-none"
+                                        accept="image/*"
+                                        capture="environment"
+                                        onchange="previewPhoto(this, 'preview_foto_2')">
+                                </label>
+
+                                <div id="preview_foto_2" class="photo-preview">
+                                    <img src="#" alt="Vista previa foto 2">
+                                </div>
                             </div>
-                            <div class="col-md-4 mb-2">
-                                <input type="file"
-                                    name="foto_3"
-                                    class="form-control"
-                                    accept="image/*">
-                                <small class="helper-text">Foto 3</small>
+
+                            {{-- FOTO 3 --}}
+                            <div class="photo-card">
+                                <label class="photo-upload-label">
+                                    <i class="fas fa-camera"></i>
+                                    <strong>Tomar / subir foto 3</strong>
+                                    <span>Opcional.</span>
+
+                                    <input type="file"
+                                        name="foto_3"
+                                        id="foto_3"
+                                        class="d-none"
+                                        accept="image/*"
+                                        capture="environment"
+                                        onchange="previewPhoto(this, 'preview_foto_3')">
+                                </label>
+
+                                <div id="preview_foto_3" class="photo-preview">
+                                    <img src="#" alt="Vista previa foto 3">
+                                </div>
                             </div>
                         </div>
+
                         <div class="helper-text">
-                            Las imágenes se almacenan como respaldo de la entrega (máx. ~3MB por foto).
+                            Las imágenes se almacenan como respaldo de la entrega. En celular se abrirá la cámara por defecto
+                            (puedes cambiar a galería si lo deseas).
                         </div>
-                    </div>  
+                    </div>
+                    
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center mt-3">
@@ -314,5 +423,106 @@
         syncFromOt(); // inicial
     });
     </script>
+    <script>
+        // Comprime y escala una imagen a un máximo de ancho/alto
+        function compressImage(file, maxWidth = 1280, maxHeight = 1280, quality = 0.8) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                const url = URL.createObjectURL(file);
+
+                img.onload = () => {
+                    let width = img.width;
+                    let height = img.height;
+
+                    // Mantener proporciones
+                    const aspectRatio = width / height;
+
+                    if (width > maxWidth) {
+                        width = maxWidth;
+                        height = Math.round(width / aspectRatio);
+                    }
+
+                    if (height > maxHeight) {
+                        height = maxHeight;
+                        width = Math.round(height * aspectRatio);
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    canvas.toBlob(
+                        (blob) => {
+                            URL.revokeObjectURL(url);
+                            if (!blob) {
+                                reject(new Error('No se pudo generar el blob'));
+                                return;
+                            }
+
+                            const compressedFile = new File([blob], file.name, {
+                                type: 'image/jpeg',
+                                lastModified: Date.now(),
+                            });
+
+                            // También devolvemos un dataURL para la vista previa
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                                resolve({
+                                    file: compressedFile,
+                                    dataUrl: reader.result,
+                                });
+                            };
+                            reader.readAsDataURL(blob);
+                        },
+                        'image/jpeg', // salida en JPG
+                        quality       // calidad 0–1
+                    );
+                };
+
+                img.onerror = (err) => {
+                    URL.revokeObjectURL(url);
+                    reject(err);
+                };
+
+                img.src = url;
+            });
+        }
+
+        // Maneja el cambio del input, comprime y muestra preview
+        async function previewPhoto(input, previewId) {
+            const file = input.files && input.files[0];
+            const previewWrap = document.getElementById(previewId);
+            if (!file || !previewWrap) return;
+
+            try {
+                // Comprimir/reescalar
+                const { file: compressedFile, dataUrl } = await compressImage(file);
+
+                // Reemplazar el archivo del input por el comprimido
+                const dt = new DataTransfer();
+                dt.items.add(compressedFile);
+                input.files = dt.files;
+
+                // Si aún así pesa > 5MB, avisar
+                const maxBytes = 5 * 1024 * 1024;
+                if (compressedFile.size > maxBytes) {
+                    alert('La imagen sigue pesando más de 5MB. Intenta con una foto más liviana.');
+                }
+
+                // Mostrar vista previa
+                const img = previewWrap.querySelector('img');
+                img.src = dataUrl;
+                previewWrap.style.display = 'block';
+
+            } catch (e) {
+                console.error(e);
+                alert('No se pudo procesar la imagen seleccionada.');
+            }
+        }
+    </script>
+
     </body>
 </x-laravel-ui-adminlte::adminlte-layout>
