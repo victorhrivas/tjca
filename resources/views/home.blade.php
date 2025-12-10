@@ -7,7 +7,7 @@
         <div class="col-md-12">
             <h3 class="mb-0">Dashboard general – Mes en curso</h3>
             <small class="text-muted">
-                Resumen ejecutivo entre {{ $inicioMes->format('d-m-Y') }} y {{ $hoy->format('d-m-Y') }}.
+                Resumen ejecutivo entre {{ $inicioMes->format('d-m-Y') }} y {{ $finMes->format('d-m-Y') }}.
             </small>
         </div>
     </div>

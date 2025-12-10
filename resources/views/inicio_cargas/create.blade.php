@@ -260,7 +260,7 @@
                                 <option
                                     value="{{ $otItem->id }}"
                                     data-cliente="{{ $otItem->cliente }}"
-                                    data-contacto="{{ $otItem->contacto }}"
+                                    data-contacto="{{ $otItem->solicitante }}"
                                     data-telefono="{{ $otItem->telefono_contacto }}"
                                     data-correo="{{ $otItem->correo_contacto }}"
                                     data-origen="{{ $otItem->origen }}"

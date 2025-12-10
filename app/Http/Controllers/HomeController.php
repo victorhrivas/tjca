@@ -23,18 +23,19 @@ class HomeController extends Controller
     {
         $hoy       = Carbon::today();
         $inicioMes = Carbon::now()->startOfMonth();
+        $finMes = Carbon::now()->EndOfMonth();
 
         // === KPIs generales (SOLO MES EN CURSO) ===
         $totales = [
-            'solicitudes'   => Solicitud::whereBetween('created_at', [$inicioMes, $hoy])->count(),
-            'cotizaciones'  => Cotizacion::whereBetween('created_at', [$inicioMes, $hoy])->count(),
-            'ots'           => Ot::whereBetween('created_at', [$inicioMes, $hoy])->count(),
-            'inicios_carga' => InicioCarga::whereBetween('created_at', [$inicioMes, $hoy])->count(),
-            'entregas'      => Entrega::whereBetween('created_at', [$inicioMes, $hoy])->count(),
+            'solicitudes'   => Solicitud::whereBetween('created_at', [$inicioMes, $finMes])->count(),
+            'cotizaciones'  => Cotizacion::whereBetween('created_at', [$inicioMes, $finMes])->count(),
+            'ots'           => Ot::whereBetween('created_at', [$inicioMes, $finMes])->count(),
+            'inicios_carga' => InicioCarga::whereBetween('created_at', [$inicioMes, $finMes])->count(),
+            'entregas'      => Entrega::whereBetween('created_at', [$inicioMes, $finMes])->count(),
         ];
 
         // Monto cotizado en el mes actual
-        $montoCotizadoMes = Cotizacion::whereBetween('created_at', [$inicioMes, $hoy])
+        $montoCotizadoMes = Cotizacion::whereBetween('created_at', [$inicioMes, $finMes])
             ->sum('monto');
 
         // Cotizaciones por estado (MES EN CURSO)
@@ -43,7 +44,7 @@ class HomeController extends Controller
                 DB::raw('COUNT(*) as total'),
                 DB::raw('COALESCE(SUM(monto),0) as monto_total')
             )
-            ->whereBetween('created_at', [$inicioMes, $hoy])
+            ->whereBetween('created_at', [$inicioMes, $finMes])
             ->groupBy('estado')
             ->get();
 
@@ -52,7 +53,7 @@ class HomeController extends Controller
                 'estado',
                 DB::raw('COUNT(*) as total')
             )
-            ->whereBetween('created_at', [$inicioMes, $hoy])
+            ->whereBetween('created_at', [$inicioMes, $finMes])
             ->groupBy('estado')
             ->get();
 
@@ -62,7 +63,7 @@ class HomeController extends Controller
                 DB::raw('COUNT(*) as total'),
                 DB::raw('COALESCE(SUM(monto),0) as monto_total')
             )
-            ->whereBetween('created_at', [$inicioMes, $hoy])
+            ->whereBetween('created_at', [$inicioMes, $finMes])
             ->groupBy(DB::raw('DATE(created_at)'))
             ->orderBy('fecha')
             ->get();
@@ -85,25 +86,25 @@ class HomeController extends Controller
 
         // Actividad reciente SOLO del mes
         $recentSolicitudes = Solicitud::with('cliente')
-            ->whereBetween('created_at', [$inicioMes, $hoy])
+            ->whereBetween('created_at', [$inicioMes, $finMes])
             ->latest()
             ->limit(5)
             ->get();
 
         $recentCotizaciones = Cotizacion::with(['solicitud.cliente'])
-            ->whereBetween('created_at', [$inicioMes, $hoy])
+            ->whereBetween('created_at', [$inicioMes, $finMes])
             ->latest()
             ->limit(5)
             ->get();
 
         $recentOts = Ot::with(['cotizacion.solicitud.cliente'])
-            ->whereBetween('created_at', [$inicioMes, $hoy])
+            ->whereBetween('created_at', [$inicioMes, $finMes])
             ->latest()
             ->limit(5)
             ->get();
 
         $recentEntregas = Entrega::with(['ot.cotizacion.solicitud.cliente'])
-            ->whereBetween('created_at', [$inicioMes, $hoy])
+            ->whereBetween('created_at', [$inicioMes, $finMes])
             ->latest()
             ->limit(5)
             ->get();
@@ -115,6 +116,7 @@ class HomeController extends Controller
             'otsPorEstado',
             'chartCotizaciones',
             'inicioMes',
+            'finMes',
             'hoy',
             'recentSolicitudes',
             'recentCotizaciones',
