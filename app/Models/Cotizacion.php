@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Cliente;
 
 class Cotizacion extends Model
 {
@@ -76,5 +77,23 @@ class Cotizacion extends Model
     public function getEstadoLabelAttribute()
     {
         return ucfirst($this->estado);
+    }
+
+    /**
+     * Obtiene el objeto Cliente buscando en la tabla 'clientes' por el RUT
+     * que está almacenado en el campo 'cliente' de esta cotización.
+     * Acceso: $cotizacion->cliente_obj
+     */
+    public function getClienteObjAttribute()
+    {
+        // 1. Obtener el valor del campo 'cliente' (que contiene el RUT)
+        $cliente = $this->cliente; 
+
+        // 2. Consulta: Buscar el Cliente donde la columna 'rut' coincida con el valor.
+        $cliente = Cliente::where('razon_social', $cliente)->first();
+
+        // 3. Devolver el resultado.
+        // Si la consulta no encuentra nada, $cliente será null.
+        return $cliente;
     }
 }

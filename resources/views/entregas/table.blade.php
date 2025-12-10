@@ -3,7 +3,7 @@
         <table class="table" id="entregas-table">
             <thead>
             <tr>
-                <th>Ot Id</th>
+                <th>OT</th>
                 <th>Nombre Receptor</th>
                 <th>Lugar Entrega</th>
                 <th>Fecha Entrega</th>
@@ -14,7 +14,7 @@
             <tbody>
             @foreach($entregas as $entrega)
                 <tr>
-                    <td>{{ $entrega->ot_id }}</td>
+                    <td>{{ optional($entrega->ot)->folio ?? '-' }}</td>
                     <td>{{ $entrega->nombre_receptor }}</td>
                     <td>{{ $entrega->lugar_entrega }}</td>
                     <td>{{ $entrega->fecha_entrega }}</td>

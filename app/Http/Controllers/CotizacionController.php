@@ -120,30 +120,39 @@ class CotizacionController extends AppBaseController
     {
         $input = $request->all();
 
-        // Siempre el usuario logueado como dueño de la cotización
+        // Usuario dueño de la cotización
         $input['user_id'] = auth()->id();
 
-        // Tomamos la solicitud relacionada
+        // Obtener solicitud relacionada
         $solicitud = Solicitud::with('cliente')->findOrFail($request->solicitud_id);
 
-        // Asignar automáticamente el solicitante si no viene del formulario
+        // Validar estado de la solicitud
+        if ($solicitud->estado !== 'pendiente') {
+            Flash::error('Solo se pueden crear cotizaciones de solicitudes pendientes.');
+            return redirect()->back()->withInput();
+        }
+
+        // Asignar solicitante
         $input['solicitante'] = $input['solicitante']
             ?? $solicitud->solicitante
             ?? auth()->user()->name;
 
-        // Asegurar cliente como string siempre
+        // Cliente siempre como string
         $input['cliente'] = $request->input(
             'cliente',
             optional($solicitud->cliente)->razon_social
         );
 
+        // Crear cotización
         $cotizacion = $this->cotizacionRepository->create($input);
 
-        Flash::success('Cotización se guardó correctamente.');
+        // Actualizar solicitud a aprobada
+        $solicitud->update(['estado' => 'aprobada']);
+
+        Flash::success('Cotización guardada y solicitud aprobada correctamente.');
 
         return redirect(route('cotizacions.index'));
     }
-
 
     /**
      * Display the specified Cotizacion.

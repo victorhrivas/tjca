@@ -183,6 +183,13 @@ class OtController extends AppBaseController
             return redirect(route('ots.index'));
         }
 
+        // Cargar relaciones necesarias para el detalle (incluye fotos)
+        $ot->load([
+            'cotizacion',     // ya la usas en show_fields
+            'inicioCargas',   // para fotos de inicio de carga
+            'entregas',       // para fotos de entrega
+        ]);
+
         return view('ots.show')->with('ot', $ot);
     }
 

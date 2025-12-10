@@ -161,8 +161,8 @@
 <body>
 @php
     // Intentar obtener nombre y RUT desde el campo cliente (que viene como JSON o string)
-    $clienteNombre = '—';
-    $rutCliente    = '—';
+    $cliente = $cotizacion->cliente_obj;
+    $rutCliente = $cliente->rut;
 
     if (!empty($cotizacion->cliente)) {
         // Intento decodificar como JSON
@@ -184,7 +184,7 @@
 
     // Dirigido a: primero intento con contacto en la propia cotización,
     // si no, desde el cliente relacionado, si existiera.
-    $dirigidoA = $cotizacion->contacto
+    $dirigidoA = $cotizacion->solicitante
         ?? optional(optional($cotizacion->solicitud)->cliente)->contacto
         ?? '—';
 

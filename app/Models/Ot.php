@@ -100,4 +100,14 @@ class Ot extends Model
         };
     }
 
+    public function inicioCargas()
+    {
+        return $this->hasMany(\App\Models\InicioCarga::class, 'ot_id');
+    }
+
+    public function entregas()
+    {
+        return $this->hasMany(\App\Models\Entrega::class, 'ot_id');
+    }
+
 }

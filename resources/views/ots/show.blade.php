@@ -1,6 +1,67 @@
+{{-- resources/views/ots/show.blade.php --}}
 @extends('layouts.app')
 
 @section('content')
+    {{-- Estilos para overlay de imágenes (mismo estilo que entregas) --}}
+    <style>
+        .image-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1050;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .image-overlay-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.75);
+        }
+        .image-overlay-content {
+            position: relative;
+            z-index: 1051;
+            max-width: 90vw;
+            max-height: 90vh;
+            background: #101114;
+            border-radius: 12px;
+            border: 1px solid #2c3139;
+            box-shadow: 0 18px 45px rgba(0,0,0,.7);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+        }
+        .image-overlay-close {
+            position: absolute;
+            top: 6px;
+            right: 10px;
+            border: none;
+            background: transparent;
+            color: #e6e7ea;
+            font-size: 1.6rem;
+            line-height: 1;
+            cursor: pointer;
+        }
+        .image-overlay-title {
+            color: #e6e7ea;
+            font-size: .95rem;
+            margin-bottom: 8px;
+            padding-right: 26px;
+        }
+        .image-overlay-img-wrap {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .image-overlay-img {
+            max-width: 100%;
+            max-height: 80vh;
+            border-radius: 10px;
+            object-fit: contain;
+        }
+    </style>
+
+    {{-- Header --}}
     <section class="content-header">
         <div class="container-fluid">
             <div class="row mb-2 align-items-center">
@@ -27,6 +88,7 @@
         </div>
     </section>
 
+    {{-- Contenido principal --}}
     <section class="content">
         <div class="container-fluid">
             <div class="row justify-content-center">
@@ -68,9 +130,51 @@
                         </div>
                     </div>
 
-                    {{-- Espacio para tarjetas relacionadas si luego quieres agregar seguimiento, eventos, etc. --}}
+                    {{-- Aquí puedes agregar otras tarjetas relacionadas si lo necesitas --}}
                 </div>
             </div>
         </div>
     </section>
+
+    {{-- Overlay de imagen reutilizable (igual patrón que entregas/inicio_cargas) --}}
+    <div id="imageOverlay" class="image-overlay" onclick="overlayBackdropClick(event)">
+        <div class="image-overlay-backdrop"></div>
+        <div class="image-overlay-content">
+            <button type="button" class="image-overlay-close" onclick="closeImageOverlay()">
+                &times;
+            </button>
+            <div class="image-overlay-title">
+                Vista de imagen
+            </div>
+            <div class="image-overlay-img-wrap">
+                <img id="overlayImage" src="" alt="Imagen ampliada" class="image-overlay-img">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openImageOverlay(src) {
+            var overlay = document.getElementById('imageOverlay');
+            var img = document.getElementById('overlayImage');
+
+            img.src = src;
+            overlay.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeImageOverlay() {
+            var overlay = document.getElementById('imageOverlay');
+            var img = document.getElementById('overlayImage');
+
+            overlay.style.display = 'none';
+            img.src = '';
+            document.body.style.overflow = '';
+        }
+
+        function overlayBackdropClick(event) {
+            if (event.target.id === 'imageOverlay') {
+                closeImageOverlay();
+            }
+        }
+    </script>
 @endsection

@@ -83,8 +83,7 @@
                     {{-- Información General --}}
                     <div class="col-md-6">
                         <h5><strong>Información General</strong></h5>
-                        <hr>
-                        <p><strong>OT ID:</strong> {{ $entrega->ot_id }}</p>
+                        <p><strong>OT ID:</strong> {{ optional($entrega->ot)->folio ?? '-' }}</p>
                         <p><strong>Cliente:</strong> {{ $entrega->cliente }}</p>
                         <p><strong>Lugar de Entrega:</strong> {{ $entrega->lugar_entrega }}</p>
                         <p><strong>Fecha de Entrega:</strong>
@@ -103,9 +102,6 @@
                         <h5><strong>Receptor</strong></h5>
                         <hr>
                         <p><strong>Nombre:</strong> {{ $entrega->nombre_receptor }}</p>
-                        <p><strong>RUT:</strong> {{ $entrega->rut_receptor ?? '-' }}</p>
-                        <p><strong>Teléfono:</strong> {{ $entrega->telefono_receptor ?? '-' }}</p>
-                        <p><strong>Correo:</strong> {{ $entrega->correo_receptor ?? '-' }}</p>
                     </div>
                 </div>
 

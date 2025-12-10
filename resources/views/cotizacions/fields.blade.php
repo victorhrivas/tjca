@@ -22,6 +22,8 @@
                     data-origen="{{ $solicitud->origen }}"
                     data-destino="{{ $solicitud->destino }}"
                     data-cliente="{{ optional($solicitud->cliente)->razon_social }}"
+                    data-solicitante="{{ $solicitud->solicitante }}"
+                    data-carga="{{ $solicitud->carga }}"
                 >
                     #{{ $solicitud->id }}
                     · {{ optional($solicitud->cliente)->razon_social }}
@@ -127,21 +129,21 @@ document.addEventListener('DOMContentLoaded', function () {
     const selectSolicitud = document.getElementById('solicitud_id');
     if (!selectSolicitud) return;
 
-    const inputOrigen  = document.querySelector('input[name="origen"]');
-    const inputDestino = document.querySelector('input[name="destino"]');
-    const inputCliente = document.querySelector('input[name="cliente"]');
+    const inputOrigen      = document.querySelector('input[name="origen"]');
+    const inputDestino     = document.querySelector('input[name="destino"]');
+    const inputCliente     = document.querySelector('input[name="cliente"]');
+    const inputSolicitante = document.querySelector('input[name="solicitante"]');
+    const inputCarga       = document.querySelector('input[name="carga"]');
 
     selectSolicitud.addEventListener('change', function () {
         const option = this.options[this.selectedIndex];
         if (!option) return;
 
-        const origen  = option.getAttribute('data-origen')  || '';
-        const destino = option.getAttribute('data-destino') || '';
-        const cliente = option.getAttribute('data-cliente') || '';
-
-        if (inputOrigen)  inputOrigen.value  = origen;
-        if (inputDestino) inputDestino.value = destino;
-        if (inputCliente) inputCliente.value = cliente;
+        inputOrigen.value      = option.getAttribute('data-origen')      || '';
+        inputDestino.value     = option.getAttribute('data-destino')     || '';
+        inputCliente.value     = option.getAttribute('data-cliente')     || '';
+        inputSolicitante.value = option.getAttribute('data-solicitante') || '';
+        inputCarga.value       = option.getAttribute('data-carga')       || '';
     });
 });
 </script>

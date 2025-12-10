@@ -160,34 +160,6 @@
                                required>
                     </div>
 
-                    {{-- RUT / Teléfono / Correo --}}
-                    <div class="col-md-4 mb-3">
-                        <label>RUT receptor</label>
-                        <input type="text"
-                               name="rut_receptor"
-                               class="form-control"
-                               value="{{ old('rut_receptor') }}"
-                               placeholder="11.111.111-1">
-                    </div>
-
-                    <div class="col-md-4 mb-3">
-                        <label>Teléfono receptor</label>
-                        <input type="text"
-                               name="telefono_receptor"
-                               class="form-control"
-                               value="{{ old('telefono_receptor') }}"
-                               placeholder="+56 9 xxxx xxxx">
-                    </div>
-
-                    <div class="col-md-4 mb-3">
-                        <label>Correo receptor</label>
-                        <input type="email"
-                               name="correo_receptor"
-                               class="form-control"
-                               value="{{ old('correo_receptor') }}"
-                               placeholder="correo@ejemplo.cl">
-                    </div>
-
                     {{-- Lugar / Fecha --}}
                     <div class="col-md-6 mb-3">
                         <label>Lugar de entrega</label>
