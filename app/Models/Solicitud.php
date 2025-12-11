@@ -15,6 +15,7 @@ class Solicitud extends Model
         'origen',
         'destino',
         'carga',
+        'valor',
         'notas',
         'estado',
         'created_at',

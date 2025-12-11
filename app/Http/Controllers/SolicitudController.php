@@ -256,7 +256,7 @@ class SolicitudController extends AppBaseController
                             ?? auth()->user()->name,
 
             'estado'       => 'enviada',
-            'monto'        => $solicitud->monto ?? $solicitud->valor ?? 0,
+            'monto'        => $solicitud->valor ?? 0,
 
             // Copiamos tal cual desde Solicitud
             'origen'       => $solicitud->origen,

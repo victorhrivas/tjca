@@ -19,16 +19,27 @@ class Ot extends Model
         'fecha',
         'solicitante',
         'conductor',
+
+        // ORIGEN
         'contacto_origen',
+        'telefono_origen',
+        'direccion_origen',
+        'link_mapa_origen',
+
+        // DESTINO
         'contacto_destino',
+        'telefono_destino',
+        'direccion_destino',
+        'link_mapa_destino',
+
+        // Campo legacy (si lo sigues usando en alguna parte)
         'link_mapa',
+
         'patente_camion',
         'patente_remolque',
         'estado',
         'observaciones',
         'folio',
-        'created_at',
-        'updated_at',
     ];
 
     protected $casts = [

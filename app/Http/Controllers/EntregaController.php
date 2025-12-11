@@ -25,10 +25,11 @@ class EntregaController extends AppBaseController
      */
     public function index(Request $request)
     {
-        $entregas = $this->entregaRepository->paginate(10);
+        $entregas = Entrega::orderBy('id', 'desc')->paginate(10);
 
         return view('entregas.index', compact('entregas'));
     }
+
 
     /**
      * Formulario público (resource 'entregas') o interno si lo llamas.

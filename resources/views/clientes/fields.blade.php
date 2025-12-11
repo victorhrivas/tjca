@@ -10,6 +10,12 @@
     {!! Form::text('rut', null, ['class' => 'form-control']) !!}
 </div>
 
+<!-- Giro Field -->
+<div class="form-group col-sm-6">
+    {!! Form::label('giro', 'Giro:') !!}
+    {!! Form::text('giro', null, ['class' => 'form-control']) !!}
+</div>
+
 <!-- Correo Field -->
 <div class="form-group col-sm-6">
     {!! Form::label('correo', 'Correo:') !!}

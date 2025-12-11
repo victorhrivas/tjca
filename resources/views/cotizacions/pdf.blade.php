@@ -373,23 +373,24 @@
                 </td>
             </tr>
 
-            {{-- FILA ORIGEN / DESTINO (AL ESTILO DE LAS FILAS 29-30 DEL EXCEL) --}}
+            {{-- FILA ORIGEN / DESTINO CON ESPACIO SIMÉTRICO --}}
             <tr>
-                <td class="celda-label">Origen</td>
-                <td colspan="3">
+                <td class="celda-label" colspan="2">Origen</td>
+                <td class="celda-valor celda-origen" colspan="4">
                     {{ $cotizacion->origen
                         ?? optional($cotizacion->solicitud)->origen
                         ?? '—' }}
                 </td>
-                <td class="celda-label">Destino</td>
-                <td colspan="7">
+
+                <td class="celda-label" colspan="2">Destino</td>
+                <td class="celda-valor celda-destino" colspan="4">
                     {{ $cotizacion->destino
                         ?? optional($cotizacion->solicitud)->destino
                         ?? '—' }}
                 </td>
             </tr>
 
-            {{-- SI QUIERES, PUEDES AGREGAR MÁS FILAS DE DETALLE AQUÍ --}}
+            {{-- Más filas de detalle si quieres --}}
         </tbody>
     </table>
 </div>

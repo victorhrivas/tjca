@@ -36,26 +36,55 @@
 
 {{-- Ejecutivo (User dueño de la cotización) --}}
 <div class="form-group col-sm-6">
-    {!! Form::label('ejecutivo', 'Ejecutivo') !!}
+    {!! Form::label('user_id', 'Ejecutivo') !!}
 
     @php
-        $ejecutivoNombre = isset($cotizacion)
-            ? optional($cotizacion->user)->name
-            : auth()->user()->name;
+        // Orden deseado
+        $nombresPermitidos = ['Jorge Contador', 'Felipe Henott'];
 
-        $ejecutivoId = isset($cotizacion)
-            ? $cotizacion->user_id
-            : auth()->id();
+        // Buscar ejecutivos existentes en BD
+        $ejecutivosRaw = \App\Models\User::whereIn('name', $nombresPermitidos)
+                        ->pluck('name', 'id'); // [id => nombre]
+
+        // Reordenar según $nombresPermitidos: primero Jorge, luego Felipe
+        $ejecutivos = [];
+        foreach ($nombresPermitidos as $nombre) {
+            $id = $ejecutivosRaw->search($nombre);
+            if ($id !== false) {
+                $ejecutivos[$id] = $nombre;
+            }
+        }
+
+        // Determinar el ejecutivo seleccionado
+        if (isset($cotizacion)) {
+            // Editando → usar el user_id guardado
+            $ejecutivoSeleccionado = $cotizacion->user_id;
+
+        } else {
+            // Creando → comportamiento dinámico
+
+            if (empty($ejecutivos)) {
+                // NO existen Jorge ni Felipe → usar SIEMPRE el usuario logeado
+                $ejecutivoSeleccionado = auth()->id();
+
+            } elseif (in_array(auth()->user()->name, $nombresPermitidos)) {
+                // El logeado SÍ es Jorge o Felipe
+                $ejecutivoSeleccionado = auth()->id();
+
+            } else {
+                // No es Jorge ni Felipe → usar el primero que exista (Jorge si está, si no Felipe)
+                $ejecutivoSeleccionado = array_key_first($ejecutivos);
+            }
+        }
     @endphp
 
-    {{-- Campo visible solo lectura con el nombre del usuario --}}
-    <input type="text"
-           class="form-control"
-           value="{{ $ejecutivoNombre }}"
-           readonly>
-
-    {{-- Campo oculto que realmente se envía al formulario --}}
-    <input type="hidden" name="user_id" value="{{ $ejecutivoId }}">
+    {!! Form::select('user_id', $ejecutivos, $ejecutivoSeleccionado, [
+        'class' => 'form-control',
+        'placeholder' => empty($ejecutivos)
+            ? 'No existen ejecutivos configurados (se guardará el usuario actual)'
+            : 'Seleccione un ejecutivo...',
+        'required'
+    ]) !!}
 </div>
 
 <div class="form-group col-sm-6">

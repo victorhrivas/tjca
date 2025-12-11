@@ -11,6 +11,7 @@ class Cliente extends Model
     protected $fillable = [
         'razon_social',
         'rut',
+        'giro',
         'correo',
         'telefono',
         'direccion',
@@ -19,6 +20,7 @@ class Cliente extends Model
     protected $casts = [
         'razon_social' => 'string',
         'rut' => 'string',
+        'giro' => 'string',
         'correo' => 'string',
         'telefono' => 'string',
         'direccion' => 'string',

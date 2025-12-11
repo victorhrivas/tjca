@@ -16,13 +16,13 @@
 
 <!-- Origen -->
 <div class="form-group col-sm-6">
-    {!! Form::label('origen', 'Origen:') !!}
+    {!! Form::label('origen', 'Origen (dirección / faena):') !!}
     {!! Form::text('origen', null, ['class' => 'form-control']) !!}
 </div>
 
 <!-- Destino -->
 <div class="form-group col-sm-6">
-    {!! Form::label('destino', 'Destino:') !!}
+    {!! Form::label('destino', 'Destino (dirección / faena):') !!}
     {!! Form::text('destino', null, ['class' => 'form-control']) !!}
 </div>
 
@@ -65,38 +65,107 @@
     ]) !!}
 </div>
 
-<!-- Contacto Origen -->
-<div class="form-group col-sm-6">
-    {!! Form::label('contacto_origen', 'Contacto en origen:') !!}
-    {!! Form::text('contacto_origen', null, [
-        'class' => 'form-control',
-        'placeholder' => 'Persona y teléfono de contacto en origen'
-    ]) !!}
-</div>
-
-<!-- Contacto Destino -->
-<div class="form-group col-sm-6">
-    {!! Form::label('contacto_destino', 'Contacto en destino:') !!}
-    {!! Form::text('contacto_destino', null, [
-        'class' => 'form-control',
-        'placeholder' => 'Persona y teléfono de contacto en destino'
-    ]) !!}
-</div>
-
-<!-- Link Google Maps Destino -->
-<div class="form-group col-sm-6">
-    {!! Form::label('link_mapa', 'Ubicación destino (Google Maps):') !!}
-    {!! Form::text('link_mapa', null, [
-        'class' => 'form-control',
-        'placeholder' => 'Pegue aquí el enlace de Google Maps'
-    ]) !!}
-</div>
-
-<!-- Patente Camión -->
+<!-- PATENTE CAMIÓN -->
 <div class="form-group col-sm-6">
     {!! Form::label('patente_camion', 'Patente camión:') !!}
     {!! Form::text('patente_camion', null, ['class' => 'form-control']) !!}
 </div>
+
+{{-- =========================
+     DATOS DE ORIGEN
+   ========================= --}}
+<div class="col-12">
+    <hr>
+    <h5>Datos de origen</h5>
+</div>
+
+<!-- Contacto Origen -->
+<div class="form-group col-sm-4">
+    {!! Form::label('contacto_origen', 'Contacto en origen:') !!}
+    {!! Form::text('contacto_origen', null, [
+        'class' => 'form-control',
+        'placeholder' => 'Nombre de contacto en origen'
+    ]) !!}
+</div>
+
+<!-- Teléfono Origen -->
+<div class="form-group col-sm-4">
+    {!! Form::label('telefono_origen', 'Número de contacto (origen):') !!}
+    {!! Form::text('telefono_origen', null, [
+        'class' => 'form-control',
+        'placeholder' => 'Ej: +56 9 1234 5678'
+    ]) !!}
+</div>
+
+<!-- Dirección Origen -->
+<div class="form-group col-sm-4">
+    {!! Form::label('direccion_origen', 'Dirección origen:') !!}
+    {!! Form::text('direccion_origen', null, [
+        'class' => 'form-control',
+        'placeholder' => 'Calle, número, ciudad'
+    ]) !!}
+</div>
+
+<!-- Link Google Maps Origen -->
+<div class="form-group col-sm-12">
+    {!! Form::label('link_mapa_origen', 'Ubicación origen (Google Maps):') !!}
+    {!! Form::text('link_mapa_origen', null, [
+        'class' => 'form-control',
+        'placeholder' => 'Pega aquí el enlace de Google Maps del origen'
+    ]) !!}
+</div>
+
+{{-- =========================
+     DATOS DE DESTINO
+   ========================= --}}
+<div class="col-12">
+    <hr>
+    <h5>Datos de destino</h5>
+</div>
+
+<!-- Contacto Destino -->
+<div class="form-group col-sm-4">
+    {!! Form::label('contacto_destino', 'Contacto en destino:') !!}
+    {!! Form::text('contacto_destino', null, [
+        'class' => 'form-control',
+        'placeholder' => 'Nombre de contacto en destino'
+    ]) !!}
+</div>
+
+<!-- Teléfono Destino -->
+<div class="form-group col-sm-4">
+    {!! Form::label('telefono_destino', 'Número de contacto (destino):') !!}
+    {!! Form::text('telefono_destino', null, [
+        'class' => 'form-control',
+        'placeholder' => 'Ej: +56 9 8765 4321'
+    ]) !!}
+</div>
+
+<!-- Dirección Destino -->
+<div class="form-group col-sm-4">
+    {!! Form::label('direccion_destino', 'Dirección destino:') !!}
+    {!! Form::text('direccion_destino', null, [
+        'class' => 'form-control',
+        'placeholder' => 'Calle, número, ciudad'
+    ]) !!}
+</div>
+
+<!-- Link Google Maps Destino -->
+<div class="form-group col-sm-12">
+    {!! Form::label('link_mapa_destino', 'Ubicación destino (Google Maps):') !!}
+    {!! Form::text('link_mapa_destino', null, [
+        'class' => 'form-control',
+        'placeholder' => 'Pega aquí el enlace de Google Maps del destino'
+    ]) !!}
+</div>
+
+{{-- Campo legacy opcional: link_mapa general (si quieres mantenerlo editable) --}}
+{{-- 
+<div class="form-group col-sm-6">
+    {!! Form::label('link_mapa', 'Ubicación general (legacy):') !!}
+    {!! Form::text('link_mapa', null, ['class' => 'form-control']) !!}
+</div>
+--}}
 
 <!-- Estado -->
 <div class="form-group col-sm-6">
@@ -108,7 +177,6 @@
         'en_transito'  => 'En tránsito',
         'entregada'    => 'Entregada',
     ],
-    // valor seleccionado (default: pendiente)
     old('estado', $ot->estado ?? 'pendiente'),
     ['class' => 'form-control custom-select']) !!}
 </div>

@@ -24,11 +24,11 @@ class ClienteController extends AppBaseController
      */
     public function index(Request $request)
     {
-        $clientes = $this->clienteRepository->paginate(10);
+        $clientes = \App\Models\Cliente::orderBy('razon_social', 'asc')->paginate(10);
 
-        return view('clientes.index')
-            ->with('clientes', $clientes);
+        return view('clientes.index', compact('clientes'));
     }
+
 
     /**
      * Show the form for creating a new Cliente.

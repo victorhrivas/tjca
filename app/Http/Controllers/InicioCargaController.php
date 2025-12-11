@@ -26,10 +26,9 @@ class InicioCargaController extends AppBaseController
      */
     public function index(Request $request)
     {
-        $inicioCargas = $this->inicioCargaRepository->paginate(10);
+        $inicioCargas = InicioCarga::orderBy('id', 'desc')->paginate(10);
 
-        return view('inicio_cargas.index')
-            ->with('inicioCargas', $inicioCargas);
+        return view('inicio_cargas.index', compact('inicioCargas'));
     }
 
     /**

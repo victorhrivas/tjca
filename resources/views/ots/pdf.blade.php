@@ -95,10 +95,10 @@
             text-transform: uppercase;
         }
 
-        .badge-success { background-color: #d4edda; color: #155724; }
-        .badge-danger  { background-color: #f8d7da; color: #721c24; }
-        .badge-warning { background-color: #fff3cd; color: #856404; }
-        .badge-info    { background-color: #d1ecf1; color: #0c5460; }
+        .badge-success   { background-color: #d4edda; color: #155724; }
+        .badge-danger    { background-color: #f8d7da; color: #721c24; }
+        .badge-warning   { background-color: #fff3cd; color: #856404; }
+        .badge-info      { background-color: #d1ecf1; color: #0c5460; }
         .badge-secondary { background-color: #e2e3e5; color: #383d41; }
 
         .footer {
@@ -119,7 +119,6 @@
             <tr>
                 <td>
                     @php
-                        // Ajusta extensión según tu archivo real
                         $logoPath = public_path('images/logo.png');
                     @endphp
                     @if(file_exists($logoPath))
@@ -182,52 +181,68 @@
         <div class="section-title">Datos del servicio</div>
         <table class="info-table">
             <tr>
+                <td class="label">Folio OT:</td>
+                <td class="value">
+                    {{ $ot->folio ?? 'Sin folio asignado' }}
+                </td>
+            </tr>
+            <tr>
                 <td class="label">Cliente:</td>
                 <td class="value">
-                    @if($ot->cotizacion && $ot->cotizacion->cliente)
-                        {{ $ot->cotizacion->cliente }}
+                    {{ $ot->cliente
+                        ?? optional($ot->cotizacion)->cliente
+                        ?? 'No informado' }}
+                </td>
+            </tr>
+            <tr>
+                <td class="label">Origen:</td>
+                <td class="value">
+                    {{ $ot->origen
+                        ?? optional($ot->cotizacion)->origen
+                        ?? 'No especificado' }}
+                </td>
+            </tr>
+            <tr>
+                <td class="label">Destino:</td>
+                <td class="value">
+                    {{ $ot->destino
+                        ?? optional($ot->cotizacion)->destino
+                        ?? 'No especificado' }}
+                </td>
+            </tr>
+            <tr>
+                <td class="label">Equipo / Tipo de carga:</td>
+                <td class="value">
+                    {{ $ot->equipo ?? 'No especificado' }}
+                </td>
+            </tr>
+            <tr>
+                <td class="label">Valor servicio (CLP):</td>
+                <td class="value">
+                    @if(!is_null($ot->valor))
+                        $ {{ number_format($ot->valor, 0, ',', '.') }}
                     @else
                         No informado
                     @endif
                 </td>
             </tr>
             <tr>
-                <td class="label">Origen:</td>
+                <td class="label">Fecha de servicio:</td>
                 <td class="value">
-                    @if($ot->cotizacion && $ot->cotizacion->origen)
-                        {{ $ot->cotizacion->origen }}
-                    @else
-                        No especificado
-                    @endif
-                </td>
-            </tr>
-            <tr>
-                <td class="label">Destino:</td>
-                <td class="value">
-                    @if($ot->cotizacion && $ot->cotizacion->destino)
-                        {{ $ot->cotizacion->destino }}
-                    @else
-                        No especificado
-                    @endif
-                </td>
-            </tr>
-            <tr>
-                <td class="label">Carga:</td>
-                <td class="value">
-                    @if($ot->cotizacion && $ot->cotizacion->carga)
-                        {{ $ot->cotizacion->carga }}
-                    @else
-                        No especificada
-                    @endif
+                    {{ $ot->fecha ? \Carbon\Carbon::parse($ot->fecha)->format('d/m/Y') : 'No definida' }}
                 </td>
             </tr>
         </table>
     </div>
 
-    {{-- Datos operativos --}}
+    {{-- Datos operativos (sin ubicación) --}}
     <div class="section">
         <div class="section-title">Datos operativos</div>
         <table class="info-table">
+            <tr>
+                <td class="label">Solicitante:</td>
+                <td class="value">{{ $ot->solicitante ?: 'No informado' }}</td>
+            </tr>
             <tr>
                 <td class="label">Conductor:</td>
                 <td class="value">{{ $ot->conductor ?: 'No asignado' }}</td>
@@ -236,13 +251,36 @@
                 <td class="label">Patente camión:</td>
                 <td class="value">{{ $ot->patente_camion ?: 'No registrada' }}</td>
             </tr>
+        </table>
+    </div>
+
+    {{-- Datos de origen --}}
+    <div class="section">
+        <div class="section-title">Datos de origen</div>
+        <table class="info-table">
             <tr>
-                <td class="label">Link Google Maps:</td>
+                <td class="label">Contacto:</td>
                 <td class="value">
-                    @if(!empty($ot->link_mapa))
-                        <a href="{{ $ot->link_mapa }}" target="_blank" style="color:#007BFF; text-decoration:underline;">
-                            Ver ubicación en Google Maps
-                        </a>
+                    {{ $ot->contacto_origen ?: 'Sin información' }}
+                </td>
+            </tr>
+            <tr>
+                <td class="label">Número de contacto:</td>
+                <td class="value">
+                    {{ $ot->telefono_origen ?: 'Sin información' }}
+                </td>
+            </tr>
+            <tr>
+                <td class="label">Dirección:</td>
+                <td class="value">
+                    {{ $ot->direccion_origen ?: 'Sin información' }}
+                </td>
+            </tr>
+            <tr>
+                <td class="label">Ubicación (Google Maps):</td>
+                <td class="value">
+                    @if(!empty($ot->link_mapa_origen))
+                        {{ $ot->link_mapa_origen }}
                     @else
                         Sin información
                     @endif
@@ -251,27 +289,39 @@
         </table>
     </div>
 
-    {{-- Contacto --}}
+    {{-- Datos de destino --}}
     <div class="section">
-        <div class="section-title">Información de Contacto</div>
+        <div class="section-title">Datos de destino</div>
         <table class="info-table">
             <tr>
-                <td class="label">Contacto de Origen:</td>
+                <td class="label">Contacto:</td>
                 <td class="value">
-                    @if($ot->contacto_origen)
-                        {{ $ot->contacto_origen }}
-                    @else
-                        Sin Información
-                    @endif
+                    {{ $ot->contacto_destino ?: 'Sin información' }}
                 </td>
             </tr>
             <tr>
-                <td class="label">Contacto de Destino:</td>
+                <td class="label">Número de contacto:</td>
                 <td class="value">
-                    @if($ot->contacto_destino)
-                        {{ $ot->contacto_destino }}
+                    {{ $ot->telefono_destino ?: 'Sin información' }}
+                </td>
+            </tr>
+            <tr>
+                <td class="label">Dirección:</td>
+                <td class="value">
+                    {{ $ot->direccion_destino ?: 'Sin información' }}
+                </td>
+            </tr>
+            <tr>
+                <td class="label">Ubicación (Google Maps):</td>
+                <td class="value">
+                    @if(!empty($ot->link_mapa_destino))
+                        {{ $ot->link_mapa_destino }}
                     @else
-                        Sin Información
+                        @if(!empty($ot->link_mapa))
+                            {{ $ot->link_mapa }} {{-- fallback legacy --}}
+                        @else
+                            Sin información
+                        @endif
                     @endif
                 </td>
             </tr>
@@ -282,7 +332,6 @@
     <div class="section">
         <div class="section-title">Observaciones</div>
         <p>
-            {{-- Si luego agregas un campo observaciones en la OT, lo usas aquí --}}
             {{ $ot->observaciones ?? 'Sin observaciones registradas.' }}
         </p>
     </div>
