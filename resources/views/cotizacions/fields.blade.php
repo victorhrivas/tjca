@@ -40,7 +40,7 @@
 
     @php
         // Orden deseado
-        $nombresPermitidos = ['Jorge Contador', 'Felipe Henott'];
+        $nombresPermitidos = ['Jorge Contador Cerenic', 'Felipe Henott'];
 
         // Buscar ejecutivos existentes en BD
         $ejecutivosRaw = \App\Models\User::whereIn('name', $nombresPermitidos)
