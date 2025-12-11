@@ -217,16 +217,6 @@
                 </td>
             </tr>
             <tr>
-                <td class="label">Valor servicio (CLP):</td>
-                <td class="value">
-                    @if(!is_null($ot->valor))
-                        $ {{ number_format($ot->valor, 0, ',', '.') }}
-                    @else
-                        No informado
-                    @endif
-                </td>
-            </tr>
-            <tr>
                 <td class="label">Fecha de servicio:</td>
                 <td class="value">
                     {{ $ot->fecha ? \Carbon\Carbon::parse($ot->fecha)->format('d/m/Y') : 'No definida' }}

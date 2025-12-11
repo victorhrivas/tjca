@@ -6,6 +6,7 @@ use App\Http\Requests\CreateOtRequest;
 use App\Http\Requests\UpdateOtRequest;
 use App\Http\Controllers\AppBaseController;
 use App\Repositories\OtRepository;
+use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use App\Models\Conductor;
@@ -110,11 +111,16 @@ class OtController extends AppBaseController
             'numero_ot' => 'required|string',
         ]);
 
-        // El cliente ingresa el FOLIO, ej: 202512/001
         $folio = trim($request->numero_ot);
 
-        // Buscar OT por folio
-        $ot = Ot::where('folio', $folio)->first();
+        // Cargar OT + relaciones reales
+        $ot = Ot::with([
+                'cotizacion.solicitud.cliente',
+                'inicioCargas',
+                'entregas',
+            ])
+            ->where('folio', $folio)
+            ->first();
 
         if (! $ot) {
             return response()->json([
@@ -123,26 +129,68 @@ class OtController extends AppBaseController
             ]);
         }
 
-        // Cliente asociado (misma lógica que en tus tablas)
+        // Cliente asociado
         $clienteNombre = optional(optional(optional($ot->cotizacion)->solicitud)->cliente)->razon_social
             ?? $ot->cliente
             ?? '-';
 
+        // ==========================
+        // FOTOS DE INICIO DE CARGA
+        // ==========================
+        $inicioCargaFotos = [];
+
+        // Si quieres tomar SOLO el último inicio de carga:
+        $inicio = $ot->inicioCargas->sortByDesc('id')->first();
+
+        if ($inicio) {
+            foreach (['foto_1', 'foto_2', 'foto_3'] as $campo) {
+                $ruta = $inicio->{$campo} ?? null;
+                if ($ruta) {
+                    // Si guardas rutas en disco 'public' tipo "inicio_cargas/xxx.jpg"
+                    $inicioCargaFotos[] = Storage::url($ruta);
+
+                    // Si ya son URLs completas, usa en cambio:
+                    // $inicioCargaFotos[] = $ruta;
+                }
+            }
+        }
+
+        // ==========================
+        // FOTOS DE ENTREGA
+        // ==========================
+        $entregaFotos = [];
+
+        // Igual: tomamos la última entrega asociada
+        $entrega = $ot->entregas->sortByDesc('id')->first();
+
+        if ($entrega) {
+            foreach (['foto_1', 'foto_2', 'foto_3'] as $campo) {
+                $ruta = $entrega->{$campo} ?? null;
+                if ($ruta) {
+                    $entregaFotos[] = Storage::url($ruta);
+                }
+            }
+        }
+
         return response()->json([
             'found'       => true,
             'folio'       => $ot->folio,
-            'estado'      => $ot->estado_label,        // texto bonito
-            'estado_raw'  => $ot->estado,              // valor crudo
-            'badge_class' => $ot->estado_badge_class,  // por si quieres usar clases CSS
+            'estado'      => $ot->estado_label,
+            'estado_raw'  => $ot->estado,
+            'badge_class' => $ot->estado_badge_class,
             'cliente'     => $clienteNombre,
             'origen'      => $ot->origen,
             'destino'     => $ot->destino,
             'conductor'   => $ot->conductor,
-            'fecha'       => optional($ot->fecha)->format('d-m-Y') ?? null,
+            'fecha'       => $ot->fecha
+                                ? \Carbon\Carbon::parse($ot->fecha)->format('d-m-Y')
+                                : null,
+
+            // Lo que consume el JS del modal
+            'inicio_carga_fotos' => $inicioCargaFotos,
+            'entrega_fotos'      => $entregaFotos,
         ]);
     }
-
-
 
     /**
      * Store a newly created Ot in storage.

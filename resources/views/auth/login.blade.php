@@ -74,6 +74,23 @@
                 .action-grid{grid-template-columns:1fr}
                 .checklist{grid-template-columns:1fr}
             }
+
+            /* Thumbs de fotos en seguimiento */
+            .seguimiento-thumbs img {
+                max-width: 90px;
+                max-height: 90px;
+                border-radius: 6px;
+                border: 1px solid var(--line);
+                object-fit: cover;
+                margin-right: 6px;
+                margin-bottom: 6px;
+                cursor: pointer;
+                transition: .12s ease-out;
+            }
+            .seguimiento-thumbs img:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 6px 16px rgba(0,0,0,.4);
+            }
         </style>
 
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -251,6 +268,22 @@
                             <small id="res_detalle" class="text-muted"></small>
                         </div>
 
+                        {{-- Fotos relacionadas --}}
+                        <div id="seguimientoImagenes" class="mt-3" style="display: none;">
+                            <hr>
+                            <h6 class="mb-2">Fotos relacionadas</h6>
+
+                            <div class="mb-2">
+                                <small class="text-muted d-block mb-1">Inicio de carga</small>
+                                <div id="imgs_inicio_carga" class="seguimiento-thumbs"></div>
+                            </div>
+
+                            <div class="mb-2">
+                                <small class="text-muted d-block mb-1">Entrega</small>
+                                <div id="imgs_entrega" class="seguimiento-thumbs"></div>
+                            </div>
+                        </div>
+
                         <div id="seguimientoLoading" class="mt-3" style="display: none;">
                             Consultando estado…
                         </div>
@@ -268,31 +301,90 @@
         </div>
     </div>
 
-    {{-- Script directo, sin depender de @push ni de jQuery --}}
+    {{-- Script directo, sin depender de @push --}}
     <script>
         (function() {
-            const modal    = document.getElementById('modalSeguimientoOT');
-            const inputOT  = document.getElementById('numero_ot');
-            const resBox   = document.getElementById('seguimientoResultado');
-            const resOT    = document.getElementById('res_ot');
-            const resEstado= document.getElementById('res_estado');
-            const resDetalle = document.getElementById('res_detalle');
-            const loading  = document.getElementById('seguimientoLoading');
-            const errBox   = document.getElementById('seguimientoError');
+            const modal        = document.getElementById('modalSeguimientoOT');
+            const inputOT      = document.getElementById('numero_ot');
+            const resBox       = document.getElementById('seguimientoResultado');
+            const resOT        = document.getElementById('res_ot');
+            const resEstado    = document.getElementById('res_estado');
+            const resDetalle   = document.getElementById('res_detalle');
+            const loading      = document.getElementById('seguimientoLoading');
+            const errBox       = document.getElementById('seguimientoError');
             const btnConsultar = document.getElementById('btnConsultarSeguimiento');
 
-            // Limpia el modal cada vez que se abre (Bootstrap dispara este evento)
+            const imgBox       = document.getElementById('seguimientoImagenes');
+            const imgsInicio   = document.getElementById('imgs_inicio_carga');
+            const imgsEntrega  = document.getElementById('imgs_entrega');
+
+            // Limpia el modal cada vez que se abre
             if (modal) {
                 modal.addEventListener('shown.bs.modal', function () {
                     if (inputOT) inputOT.value = '';
+
                     if (resBox)  resBox.style.display = 'none';
                     if (errBox) {
                         errBox.style.display = 'none';
                         errBox.textContent = '';
                     }
                     if (loading) loading.style.display = 'none';
+
+                    if (imgBox) imgBox.style.display = 'none';
+                    if (imgsInicio)  imgsInicio.innerHTML = '';
+                    if (imgsEntrega) imgsEntrega.innerHTML = '';
+
                     if (inputOT) inputOT.focus();
                 });
+            }
+
+            function pintarImagenes(inicioFotos, entregaFotos) {
+                if (!imgBox || !imgsInicio || !imgsEntrega) {
+                    return;
+                }
+
+                imgsInicio.innerHTML  = '';
+                imgsEntrega.innerHTML = '';
+
+                const tieneInicio  = Array.isArray(inicioFotos)  && inicioFotos.length > 0;
+                const tieneEntrega = Array.isArray(entregaFotos) && entregaFotos.length > 0;
+
+                if (!tieneInicio && !tieneEntrega) {
+                    imgBox.style.display = 'none';
+                    return;
+                }
+
+                if (tieneInicio) {
+                    inicioFotos.forEach(function(url) {
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.target = '_blank';
+
+                        const img = document.createElement('img');
+                        img.src = url;
+                        img.alt = 'Foto inicio de carga';
+
+                        a.appendChild(img);
+                        imgsInicio.appendChild(a);
+                    });
+                }
+
+                if (tieneEntrega) {
+                    entregaFotos.forEach(function(url) {
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.target = '_blank';
+
+                        const img = document.createElement('img');
+                        img.src = url;
+                        img.alt = 'Foto entrega';
+
+                        a.appendChild(img);
+                        imgsEntrega.appendChild(a);
+                    });
+                }
+
+                imgBox.style.display = 'block';
             }
 
             function consultarSeguimiento() {
@@ -309,6 +401,10 @@
                 }
                 if (loading) loading.style.display = 'block';
 
+                if (imgBox) imgBox.style.display = 'none';
+                if (imgsInicio)  imgsInicio.innerHTML = '';
+                if (imgsEntrega) imgsEntrega.innerHTML = '';
+
                 fetch("{{ route('seguimiento-ot.consultar') }}", {
                     method: 'POST',
                     headers: {
@@ -318,37 +414,57 @@
                     },
                     body: JSON.stringify({ numero_ot: folio })
                 })
-                .then(async response => {
-                    const data = await response.json().catch(() => ({}));
+                .then(function(response) {
+                    return response.json().catch(function() {
+                        return {};
+                    }).then(function(data) {
+                        if (loading) loading.style.display = 'none';
 
-                    if (!response.ok) {
-                        throw new Error(data.message || 'Error en la consulta');
-                    }
-
-                    if (loading) loading.style.display = 'none';
-
-                    if (data.found) {
-                        if (resOT)     resOT.textContent = data.folio || '';
-                        if (resEstado) resEstado.textContent = data.estado || '';
-
-                        const partes = [];
-                        if (data.cliente)   partes.push('Cliente: ' + data.cliente);
-                        if (data.origen)    partes.push('Origen: ' + data.origen);
-                        if (data.destino)   partes.push('Destino: ' + data.destino);
-                        if (data.conductor) partes.push('Conductor: ' + data.conductor);
-                        if (data.fecha)     partes.push('Fecha: ' + data.fecha);
-
-                        if (resDetalle) resDetalle.textContent = partes.join(' • ');
-
-                        if (resBox) resBox.style.display = 'block';
-                    } else {
-                        if (errBox) {
-                            errBox.textContent = data.message || 'No se encontró una OT con ese folio.';
-                            errBox.style.display = 'block';
+                        // Si el servidor devolvió error HTTP, lo mostramos genérico
+                        if (!response.ok) {
+                            if (errBox) {
+                                errBox.textContent = data.message || 'Ocurrió un error al consultar el seguimiento.';
+                                errBox.style.display = 'block';
+                            }
+                            return;
                         }
-                    }
+
+                        if (data.found) {
+                            if (resOT) resOT.textContent = data.folio || '';
+
+                            if (resEstado) {
+                                resEstado.textContent = data.estado || '';
+                                // si viene la clase del badge desde el backend, la usamos
+                                if (data.badge_class) {
+                                    resEstado.className = 'badge ' + data.badge_class;
+                                }
+                            }
+
+                            const partes = [];
+                            if (data.cliente)   partes.push('Cliente: ' + data.cliente);
+                            if (data.origen)    partes.push('Origen: ' + data.origen);
+                            if (data.destino)   partes.push('Destino: ' + data.destino);
+                            if (data.conductor) partes.push('Conductor: ' + data.conductor);
+                            if (data.fecha)     partes.push('Fecha: ' + data.fecha);
+
+                            if (resDetalle) resDetalle.textContent = partes.join(' • ');
+
+                            if (resBox) resBox.style.display = 'block';
+
+                            // Pintar fotos
+                            pintarImagenes(
+                                data.inicio_carga_fotos || [],
+                                data.entrega_fotos      || []
+                            );
+                        } else {
+                            if (errBox) {
+                                errBox.textContent = data.message || 'No se encontró una OT con ese folio.';
+                                errBox.style.display = 'block';
+                            }
+                        }
+                    });
                 })
-                .catch(err => {
+                .catch(function(err) {
                     if (loading) loading.style.display = 'none';
                     if (errBox) {
                         errBox.textContent = 'Ocurrió un error al consultar el seguimiento. Intenta nuevamente.';
@@ -365,7 +481,7 @@
                 });
             }
 
-            // Por seguridad, bloqueamos cualquier submit estándar del formulario
+            // Bloqueo de submit estándar del formulario
             const form = document.getElementById('formSeguimientoOT');
             if (form) {
                 form.addEventListener('submit', function(e) {
