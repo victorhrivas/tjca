@@ -38,18 +38,19 @@ class InicioCargaController extends AppBaseController
     public function create(Request $request)
     {
         $ots = Ot::with(['cotizacion.solicitud.cliente'])
+            ->whereIn('estado', ['pendiente', 'inicio_carga'])
             ->orderBy('id', 'desc')
             ->get()
             ->map(function ($ot) {
 
                 $cliente = optional(optional(optional($ot->cotizacion)->solicitud)->cliente);
 
-                // Cliente (nombre)
+                // Cliente
                 if (is_null($ot->cliente)) {
                     $ot->cliente = $cliente?->razon_social;
                 }
 
-                // Origen / Destino: ajusta a tus columnas reales
+                // Origen / Destino
                 if (is_null($ot->origen)) {
                     $ot->origen = optional($ot->cotizacion)->origen;
                 }
@@ -63,8 +64,8 @@ class InicioCargaController extends AppBaseController
                     $ot->conductor = optional($ot->cotizacion)->conductor;
                 }
 
-                // Datos de contacto (para InicioCarga)
-                $ot->contacto          = $cliente?->razon_social;          // o contact-name específico si lo tienes
+                // Datos de contacto
+                $ot->contacto          = $cliente?->razon_social;
                 $ot->telefono_contacto = $cliente?->telefono ?? '';
                 $ot->correo_contacto   = $cliente?->correo   ?? '';
 

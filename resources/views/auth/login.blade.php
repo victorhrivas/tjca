@@ -91,6 +91,49 @@
                 transform: translateY(-1px);
                 box-shadow: 0 6px 16px rgba(0,0,0,.4);
             }
+
+            /* Lightbox simple sin jQuery */
+            .img-lightbox-backdrop {
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,.82);
+                display: none;
+                align-items: center;
+                justify-content: center;
+                z-index: 1055; /* por encima del modal de Bootstrap */
+            }
+            .img-lightbox-backdrop.open {
+                display: flex;
+            }
+            .img-lightbox-inner {
+                position: relative;
+                max-width: 90vw;
+                max-height: 90vh;
+            }
+            .img-lightbox-inner img {
+                max-width: 100%;
+                max-height: 100%;
+                border-radius: 8px;
+                box-shadow: 0 20px 60px rgba(0,0,0,.6);
+            }
+            .img-lightbox-close {
+                position: absolute;
+                top: -14px;
+                right: -14px;
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                border: none;
+                background: rgba(16,17,20,.95);
+                color: #fff;
+                font-size: 1.2rem;
+                line-height: 1;
+                cursor: pointer;
+                box-shadow: 0 8px 20px rgba(0,0,0,.5);
+            }
+            .img-lightbox-close:hover {
+                background: #ff4b4b;
+            }
         </style>
 
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -301,6 +344,14 @@
         </div>
     </div>
 
+    {{-- Lightbox de imagen (sin jQuery) --}}
+    <div id="imgLightbox" class="img-lightbox-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="img-lightbox-inner">
+            <button type="button" id="imgLightboxClose" class="img-lightbox-close" aria-label="Cerrar imagen">&times;</button>
+            <img id="imgLightboxImg" src="" alt="Vista ampliada">
+        </div>
+    </div>
+
     {{-- Script directo, sin depender de @push --}}
     <script>
         (function() {
@@ -317,6 +368,49 @@
             const imgBox       = document.getElementById('seguimientoImagenes');
             const imgsInicio   = document.getElementById('imgs_inicio_carga');
             const imgsEntrega  = document.getElementById('imgs_entrega');
+
+            // Lightbox
+            const lightbox      = document.getElementById('imgLightbox');
+            const lightboxImg   = document.getElementById('imgLightboxImg');
+            const lightboxClose = document.getElementById('imgLightboxClose');
+
+            function openLightbox(url) {
+                if (!lightbox || !lightboxImg) return;
+                lightboxImg.src = url;
+                lightbox.classList.add('open');
+                lightbox.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeLightbox() {
+                if (!lightbox || !lightboxImg) return;
+                lightbox.classList.remove('open');
+                lightbox.setAttribute('aria-hidden', 'true');
+                lightboxImg.src = '';
+                document.body.style.overflow = '';
+            }
+
+            if (lightboxClose) {
+                lightboxClose.addEventListener('click', function() {
+                    closeLightbox();
+                });
+            }
+
+            if (lightbox) {
+                // Cerrar al hacer click fuera de la imagen
+                lightbox.addEventListener('click', function(e) {
+                    if (e.target === lightbox) {
+                        closeLightbox();
+                    }
+                });
+            }
+
+            // Cerrar con ESC
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeLightbox();
+                }
+            });
 
             // Limpia el modal cada vez que se abre
             if (modal) {
@@ -358,13 +452,17 @@
                     inicioFotos.forEach(function(url) {
                         const a = document.createElement('a');
                         a.href = url;
-                        a.target = '_blank';
 
                         const img = document.createElement('img');
                         img.src = url;
                         img.alt = 'Foto inicio de carga';
 
                         a.appendChild(img);
+                        a.addEventListener('click', function(ev) {
+                            ev.preventDefault();
+                            openLightbox(url);
+                        });
+
                         imgsInicio.appendChild(a);
                     });
                 }
@@ -373,13 +471,17 @@
                     entregaFotos.forEach(function(url) {
                         const a = document.createElement('a');
                         a.href = url;
-                        a.target = '_blank';
 
                         const img = document.createElement('img');
                         img.src = url;
                         img.alt = 'Foto entrega';
 
                         a.appendChild(img);
+                        a.addEventListener('click', function(ev) {
+                            ev.preventDefault();
+                            openLightbox(url);
+                        });
+
                         imgsEntrega.appendChild(a);
                     });
                 }
@@ -420,7 +522,6 @@
                     }).then(function(data) {
                         if (loading) loading.style.display = 'none';
 
-                        // Si el servidor devolvió error HTTP, lo mostramos genérico
                         if (!response.ok) {
                             if (errBox) {
                                 errBox.textContent = data.message || 'Ocurrió un error al consultar el seguimiento.';
@@ -434,7 +535,6 @@
 
                             if (resEstado) {
                                 resEstado.textContent = data.estado || '';
-                                // si viene la clase del badge desde el backend, la usamos
                                 if (data.badge_class) {
                                     resEstado.className = 'badge ' + data.badge_class;
                                 }
@@ -451,7 +551,6 @@
 
                             if (resBox) resBox.style.display = 'block';
 
-                            // Pintar fotos
                             pintarImagenes(
                                 data.inicio_carga_fotos || [],
                                 data.entrega_fotos      || []

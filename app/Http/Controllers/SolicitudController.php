@@ -87,15 +87,37 @@ class SolicitudController extends AppBaseController
     {
         $input = $request->all();
 
-        // Si no viene en $request, lo autocompleta con el usuario conectado
         $input['solicitante'] = $input['solicitante'] ?? auth()->user()->name;
+
+        $cargas = $request->input('cargas', []);
+
+        // compatibilidad: solicituds.carga es NOT NULL en tu tabla
+        $input['carga'] = collect($cargas)->pluck('descripcion')->filter()->take(3)->implode(' | ');
+        if (trim($input['carga']) === '') {
+            $input['carga'] = 'Servicio';
+        }
+
+        unset($input['cargas']);
 
         $solicitud = $this->solicitudRepository->create($input);
 
-        Flash::success('Solicitud se guardó correctamente.');
+        foreach ($cargas as $row) {
+            $cantidad = (float) ($row['cantidad'] ?? 0);
+            $unit     = (int) ($row['precio_unitario'] ?? 0);
+            $subtotal = (int) round($cantidad * $unit);
 
+            $solicitud->cargas()->create([
+                'descripcion'     => $row['descripcion'],
+                'cantidad'        => $cantidad,
+                'precio_unitario' => $unit,
+                'subtotal'        => $subtotal,
+            ]);
+        }
+
+        Flash::success('Solicitud se guardó correctamente.');
         return redirect(route('solicituds.index'));
     }
+
 
 
     /**
@@ -103,7 +125,7 @@ class SolicitudController extends AppBaseController
      */
     public function show($id)
     {
-        $solicitud = $this->solicitudRepository->find($id);
+        $solicitud = \App\Models\Solicitud::with(['cliente','cargas'])->find($id);
 
         if (empty($solicitud)) {
             Flash::error('Solicitud not found');
@@ -135,20 +157,57 @@ class SolicitudController extends AppBaseController
      */
     public function update($id, UpdateSolicitudRequest $request)
     {
-        $solicitud = $this->solicitudRepository->find($id);
+        $solicitud = \App\Models\Solicitud::with('cargas')->find($id);
 
-        if (empty($solicitud)) {
+        if (!$solicitud) {
             Flash::error('Solicitud not found');
-
             return redirect(route('solicituds.index'));
         }
 
-        $solicitud = $this->solicitudRepository->update($request->all(), $id);
+        $data = $request->except(['cargas']);
+        $cargas = collect($request->input('cargas', []));
 
-        Flash::success('Solicitud ACtualizada Correctamente.');
+        // compatibilidad con solicituds.carga NOT NULL
+        $data['carga'] = $cargas->pluck('descripcion')->filter()->take(3)->implode(' | ');
+        if (trim($data['carga']) === '') {
+            $data['carga'] = 'Servicio';
+        }
 
+        $this->solicitudRepository->update($data, $id);
+
+        // sync cargas
+        $idsEnviados = $cargas->pluck('id')->filter()->map(fn($v) => (int)$v)->values();
+        $solicitud->cargas()->whereNotIn('id', $idsEnviados)->delete();
+
+        foreach ($cargas as $row) {
+            $cantidad = (float) ($row['cantidad'] ?? 0);
+            $unit     = (int) ($row['precio_unitario'] ?? 0);
+            $subtotal = (int) round($cantidad * $unit);
+
+            if (!empty($row['id'])) {
+                $item = $solicitud->cargas()->where('id', (int)$row['id'])->first();
+                if ($item) {
+                    $item->update([
+                        'descripcion'     => $row['descripcion'],
+                        'cantidad'        => $cantidad,
+                        'precio_unitario' => $unit,
+                        'subtotal'        => $subtotal,
+                    ]);
+                }
+            } else {
+                $solicitud->cargas()->create([
+                    'descripcion'     => $row['descripcion'],
+                    'cantidad'        => $cantidad,
+                    'precio_unitario' => $unit,
+                    'subtotal'        => $subtotal,
+                ]);
+            }
+        }
+
+        Flash::success('Solicitud actualizada correctamente.');
         return redirect(route('solicituds.index'));
     }
+
 
     /**
      * Remove the specified Solicitud from storage.
@@ -231,9 +290,10 @@ class SolicitudController extends AppBaseController
 
     public function aprobar($id)
     {
-        $solicitud = $this->solicitudRepository->find($id);
+        // Cargar con relaciones reales, NO solo repository->find
+        $solicitud = \App\Models\Solicitud::with(['cliente', 'cargas'])->find($id);
 
-        if (empty($solicitud)) {
+        if (!$solicitud) {
             Flash::error('Solicitud no encontrada.');
             return redirect()->route('solicituds.index');
         }
@@ -243,38 +303,67 @@ class SolicitudController extends AppBaseController
             return redirect()->route('solicituds.index');
         }
 
-        $cliente = optional($solicitud->cliente); // relación solicitud->cliente
+        $cliente = optional($solicitud->cliente);
 
-        Cotizacion::create([
+        // Crear cotización
+        $cotizacion = \App\Models\Cotizacion::create([
             'solicitud_id' => $solicitud->id,
             'user_id'      => auth()->id(),
-
-            // Si la solicitud trae solicitante, usamos eso; si no, el nombre del cliente;
-            // como última opción, el usuario logueado
             'solicitante'  => $solicitud->solicitante
                             ?? $cliente->razon_social
                             ?? auth()->user()->name,
-
             'estado'       => 'enviada',
-            'monto'        => $solicitud->valor ?? 0,
 
-            // Copiamos tal cual desde Solicitud
+            // por ahora lo dejamos 0, se recalcula con cargas
+            'monto'        => 0,
+
             'origen'       => $solicitud->origen,
             'destino'      => $solicitud->destino,
+
+            // resumen para compatibilidad
             'carga'        => $solicitud->carga,
 
-            // String “congelado” del cliente
             'cliente'      => $cliente->razon_social
                             ?? $solicitud->cliente_nombre
                             ?? $solicitud->cliente_id
                             ?? 'Cliente sin nombre',
         ]);
 
+        // Copiar cargas solicitud -> cotización
+        $total = 0;
+
+        foreach ($solicitud->cargas as $sc) {
+            $cantidad = (float) $sc->cantidad;
+            $unit     = (int) ($sc->precio_unitario ?? 0);
+            $subtotal = (int) round($cantidad * $unit);
+
+            $cotizacion->cargas()->create([
+                'descripcion'     => $sc->descripcion,
+                'cantidad'        => $cantidad,
+                'precio_unitario' => $unit,
+                'subtotal'        => $subtotal,
+            ]);
+
+            $total += $subtotal;
+        }
+
+        if ($solicitud->cargas->count() === 0 && !empty($solicitud->carga)) {
+            $cotizacion->cargas()->create([
+                'descripcion'     => $solicitud->carga,
+                'cantidad'        => 1,
+                'precio_unitario' => 0,
+                'subtotal'        => 0,
+            ]);
+        }
+
+        $cotizacion->update(['monto' => $total]);
+
         $solicitud->update(['estado' => 'aprobada']);
 
         Flash::success('Solicitud aprobada y cotización generada.');
         return redirect()->route('solicituds.index');
     }
+
     
     public function fallida($id)
     {

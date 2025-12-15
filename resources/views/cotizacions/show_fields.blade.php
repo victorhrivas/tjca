@@ -71,4 +71,60 @@
             </p>
         </div>
     </div>
+
+    {{-- Cargas --}}
+        <div class="col-12">
+            <div class="mt-3">
+                <h6 class="text-uppercase text-muted small mb-2">Cargas / Ítems</h6>
+
+            @php
+                $cargas = $cotizacion->cargas ?? collect();
+
+                $items = $cargas->count()
+                    ? $cargas
+                    : collect([ (object)[
+                        'descripcion'     => $cotizacion->carga ?? 'Servicio',
+                        'cantidad'        => 1,
+                        'precio_unitario' => (int)($cotizacion->monto ?? 0),
+                        'subtotal'        => (int)($cotizacion->monto ?? 0),
+                    ]]);
+
+                $total = $items->sum('subtotal');
+            @endphp
+
+
+            @if($cargas->count())
+                <div class="table-responsive">
+                    <table class="table table-sm table-dark mb-0">
+                        <thead>
+                            <tr>
+                                <th>Descripción</th>
+                                <th class="text-right" style="width:140px;">Cantidad</th>
+                                <th class="text-right" style="width:180px;">Precio unitario</th>
+                                <th class="text-right" style="width:180px;">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($items as $item)
+                            <tr>
+                                <td>{{ $item->descripcion }}</td>
+                                <td class="text-center">{{ number_format($item->cantidad, 2, ',', '.') }}</td>
+                                <td class="text-right">$ {{ number_format($item->precio_unitario, 0, ',', '.') }}</td>
+                                <td class="text-right">$ {{ number_format($item->subtotal, 0, ',', '.') }}</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="3" class="text-right">Total</th>
+                                <th class="text-right">$ {{ number_format((int)$cotizacion->monto, 0, ',', '.') }}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            @else
+                <p class="text-muted mb-0">Sin cargas registradas.</p>
+            @endif
+        </div>
+    </div>
 </div>

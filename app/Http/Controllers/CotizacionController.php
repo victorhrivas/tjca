@@ -6,7 +6,9 @@ use App\Http\Requests\CreateCotizacionRequest;
 use App\Http\Requests\UpdateCotizacionRequest;
 use App\Http\Controllers\AppBaseController;
 use App\Repositories\CotizacionRepository;
+use App\Models\CotizacionCarga;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Flash;
 use App\Models\Ot;
@@ -32,7 +34,7 @@ class CotizacionController extends AppBaseController
     {
         $clientes = Cliente::orderBy('razon_social')->pluck('razon_social', 'id');
 
-        $query = Cotizacion::with(['solicitud.cliente', 'ot'])
+        $query = Cotizacion::with(['solicitud.cliente', 'ot', 'cargas'])
             ->orderByDesc('id');
 
         // ---------------------------
@@ -116,41 +118,55 @@ class CotizacionController extends AppBaseController
     /**
      * Store a newly created Cotizacion in storage.
      */
+
     public function store(CreateCotizacionRequest $request)
     {
-        $input = $request->all();
+        DB::transaction(function () use ($request) {
 
-        // Usuario dueño de la cotización
-        $input['user_id'] = auth()->id();
+            $input = $request->except(['cargas', 'monto']);
+            $input['user_id'] = $request->input('user_id', auth()->id());
 
-        // Obtener solicitud relacionada
-        $solicitud = Solicitud::with('cliente')->findOrFail($request->solicitud_id);
+            $solicitud = Solicitud::with('cliente')->findOrFail($request->solicitud_id);
 
-        // Validar estado de la solicitud
-        if ($solicitud->estado !== 'pendiente') {
-            Flash::error('Solo se pueden crear cotizaciones de solicitudes pendientes.');
-            return redirect()->back()->withInput();
-        }
+            if ($solicitud->estado !== 'pendiente') {
+                throw new \Exception('Solicitud no pendiente');
+            }
 
-        // Asignar solicitante
-        $input['solicitante'] = $input['solicitante']
-            ?? $solicitud->solicitante
-            ?? auth()->user()->name;
+            $input['solicitante'] = $input['solicitante']
+                ?? $solicitud->solicitante
+                ?? auth()->user()->name;
 
-        // Cliente siempre como string
-        $input['cliente'] = $request->input(
-            'cliente',
-            optional($solicitud->cliente)->razon_social
-        );
+            $input['cliente'] = $request->input(
+                'cliente',
+                optional($solicitud->cliente)->razon_social
+            );
 
-        // Crear cotización
-        $cotizacion = $this->cotizacionRepository->create($input);
+            $input['monto'] = 0;
 
-        // Actualizar solicitud a aprobada
-        $solicitud->update(['estado' => 'aprobada']);
+            $cotizacion = $this->cotizacionRepository->create($input);
+
+            $total = 0;
+
+            foreach ($request->input('cargas', []) as $row) {
+                $cantidad = (float) $row['cantidad'];
+                $unit     = (int) $row['precio_unitario'];
+                $subtotal = (int) round($cantidad * $unit);
+
+                $cotizacion->cargas()->create([
+                    'descripcion'     => $row['descripcion'],
+                    'cantidad'        => $cantidad,
+                    'precio_unitario' => $unit,
+                    'subtotal'        => $subtotal,
+                ]);
+
+                $total += $subtotal;
+            }
+
+            $cotizacion->update(['monto' => $total]);
+            $solicitud->update(['estado' => 'aprobada']);
+        });
 
         Flash::success('Cotización guardada y solicitud aprobada correctamente.');
-
         return redirect(route('cotizacions.index'));
     }
 
@@ -159,7 +175,7 @@ class CotizacionController extends AppBaseController
      */
     public function show($id)
     {
-        $cotizacion = Cotizacion::with(['solicitud.cliente', 'ot'])->find($id);
+        $cotizacion = Cotizacion::with(['solicitud.cliente', 'ot', 'cargas'])->find($id);
 
         if (empty($cotizacion)) {
             Flash::error('Cotización no encontrada.');
@@ -190,20 +206,62 @@ class CotizacionController extends AppBaseController
      */
     public function update($id, UpdateCotizacionRequest $request)
     {
-        $cotizacion = $this->cotizacionRepository->find($id);
+        $cotizacion = Cotizacion::with('cargas')->find($id);
 
-        if (empty($cotizacion)) {
+        if (!$cotizacion) {
             Flash::error('Cotización no encontrada.');
-
             return redirect(route('cotizacions.index'));
         }
 
-        $this->cotizacionRepository->update($request->all(), $id);
+        // actualiza cabecera (no monto)
+        $data = $request->except(['monto', 'cargas']);
+
+        $this->cotizacionRepository->update($data, $id);
+
+        // sincronizar cargas
+        $enviadas = collect($request->input('cargas', []));
+
+        $idsEnviados = $enviadas->pluck('id')->filter()->map(fn($v) => (int)$v)->values();
+
+        // eliminar las que ya no vienen
+        $cotizacion->cargas()->whereNotIn('id', $idsEnviados)->delete();
+
+        // upsert manual
+        $total = 0;
+
+        foreach ($enviadas as $row) {
+            $cantidad = (float) $row['cantidad'];
+            $unit     = (int) $row['precio_unitario'];
+            $subtotal = (int) round($cantidad * $unit);
+
+            if (!empty($row['id'])) {
+                $item = $cotizacion->cargas()->where('id', $row['id'])->first();
+                if ($item) {
+                    $item->update([
+                        'descripcion'     => $row['descripcion'],
+                        'cantidad'        => $cantidad,
+                        'precio_unitario' => $unit,
+                        'subtotal'        => $subtotal,
+                    ]);
+                }
+            } else {
+                $cotizacion->cargas()->create([
+                    'descripcion'     => $row['descripcion'],
+                    'cantidad'        => $cantidad,
+                    'precio_unitario' => $unit,
+                    'subtotal'        => $subtotal,
+                ]);
+            }
+
+            $total += $subtotal;
+        }
+
+        $cotizacion->update(['monto' => $total]);
 
         Flash::success('Cotización actualizada correctamente.');
-
         return redirect(route('cotizacions.index'));
     }
+
 
     /**
      * Remove the specified Cotizacion from storage.
@@ -246,7 +304,7 @@ class CotizacionController extends AppBaseController
      */
     public function generarOt($id)
     {
-        $cotizacion = Cotizacion::with(['solicitud.cliente', 'ot'])->find($id);
+        $cotizacion = Cotizacion::with(['solicitud.cliente', 'ot', 'cargas'])->find($id);
 
         if (!$cotizacion) {
             Flash::error('Cotización no encontrada.');
@@ -258,57 +316,53 @@ class CotizacionController extends AppBaseController
             return redirect()->route('cotizacions.index');
         }
 
-        if (!in_array($cotizacion->estado, ['pendiente', 'enviada'])) {
-            Flash::warning('Solo cotizaciones Pendientes o Enviadas pueden generar una OT.');
+        // ✅ estados reales de tu enum
+        if (!in_array($cotizacion->estado, ['enviada'])) {
+            Flash::warning('Solo cotizaciones "Enviadas" pueden generar una OT.');
             return redirect()->route('cotizacions.index');
         }
 
         $solicitud = $cotizacion->solicitud;
-        $cliente   = optional($solicitud)->cliente;
+        $clienteRel = optional($solicitud)->cliente;
 
-        // Fecha base para servicio
-        $fechaBase = $solicitud && $solicitud->created_at
+        // Fecha base para folio/servicio
+        $fechaBase = ($solicitud && $solicitud->created_at)
             ? $solicitud->created_at->copy()->addDays(2)
             : Carbon::now();
 
-        // Cambiar estado a aceptada
-        $cotizacion->estado = 'aceptada';
-        $cotizacion->save();
+        // ✅ pasar a aceptada
+        $cotizacion->update(['estado' => 'aceptada']);
 
-        // Datos “congelados” preferidos desde la cotización,
-        // y si están vacíos, usamos la solicitud como respaldo
+        // Datos “congelados” (cotizacion) con fallback a solicitud/cliente
         $clienteNombre = $cotizacion->cliente
-            ?? $cliente->razon_social
+            ?? ($clienteRel->razon_social ?? null)
             ?? 'Cliente sin nombre';
 
         $origen = $cotizacion->origen
-            ?? optional($solicitud)->origen
-            ?? null;
+            ?? ($solicitud->origen ?? null);
 
         $destino = $cotizacion->destino
-            ?? optional($solicitud)->destino
-            ?? null;
-
-        $carga = $cotizacion->carga
-            ?? optional($solicitud)->carga
-            ?? 'Servicio de carga';
+            ?? ($solicitud->destino ?? null);
 
         $solicitanteNombre = $cotizacion->solicitante
-            ?? $clienteNombre
-            ?? 'Sin solicitante';
+            ?? ($solicitud->solicitante ?? null)
+            ?? auth()->user()->name;
 
-        // Generar folio
+        // ✅ NO usar "carga" como requisito. Si quieres llenar "equipo", que sea solo un resumen.
+        $equipo = optional($cotizacion->cargas->first())->descripcion
+            ?? $cotizacion->carga // legacy por si existiera
+            ?? 'Servicio de transporte';
+
         $folio = Ot::generarFolioParaFecha($fechaBase);
 
-        // Crear OT con todos los datos llenos
-        $ot = Ot::create([
+        Ot::create([
             'folio'            => $folio,
             'cotizacion_id'    => $cotizacion->id,
-            'equipo'           => $carga,
+            'equipo'           => $equipo,                 // opcional (solo resumen)
             'origen'           => $origen,
             'destino'          => $destino,
             'cliente'          => $clienteNombre,
-            'valor'            => $cotizacion->monto ?? 0,
+            'valor'            => (int)($cotizacion->monto ?? 0),
             'fecha'            => $fechaBase->toDateString(),
             'solicitante'      => $solicitanteNombre,
             'conductor'        => null,
@@ -319,7 +373,6 @@ class CotizacionController extends AppBaseController
         ]);
 
         Flash::success('OT generada correctamente. La cotización pasó a estado "aceptada".');
-
         return redirect()->route('ots.index');
     }
 

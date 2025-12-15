@@ -1,3 +1,14 @@
+@if ($errors->any())
+<div class="alert alert-danger">
+    <strong>Error al guardar:</strong>
+    <ul class="mb-0">
+        @foreach ($errors->all() as $error)
+            <li>{{ $error }}</li>
+        @endforeach
+    </ul>
+</div>
+@endif
+
 {{-- Solicitud --}}
 <div class="form-group col-sm-12">
     {!! Form::label('solicitud_id', 'Solicitud') !!}
@@ -23,7 +34,6 @@
                     data-destino="{{ $solicitud->destino }}"
                     data-cliente="{{ optional($solicitud->cliente)->razon_social }}"
                     data-solicitante="{{ $solicitud->solicitante }}"
-                    data-carga="{{ $solicitud->carga }}"
                 >
                     #{{ $solicitud->id }}
                     · {{ optional($solicitud->cliente)->razon_social }}
@@ -126,15 +136,76 @@
     ]) !!}
 </div>
 
-<!-- Carga -->
-<div class="form-group col-sm-6">
-    {!! Form::label('carga', 'Carga') !!}
-    {!! Form::text('carga', null, [
-        'class' => 'form-control',
-        'placeholder' => 'Ej: 200 kg / Pallets / Insumos médicos'
-    ]) !!}
-</div>
+<div class="col-12">
+  <label class="d-block">Cargas / Ítems</label>
 
+  <div class="table-responsive">
+    <table class="table table-dark table-sm" id="tablaCargas">
+      <thead>
+        <tr>
+          <th>Descripción</th>
+          <th style="width:140px;">Cantidad</th>
+          <th style="width:170px;">Precio unitario (CLP)</th>
+          <th style="width:170px;">Subtotal</th>
+          <th style="width:60px;"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @php
+        $rows = old('cargas', isset($cotizacion)
+            ? $cotizacion->cargas->map(fn($c) => [
+                'id' => $c->id,
+                'descripcion' => $c->descripcion,
+                'cantidad' => $c->cantidad,
+                'precio_unitario' => $c->precio_unitario,
+            ])->toArray()
+            : [
+                ['descripcion' => '', 'cantidad' => 1, 'precio_unitario' => 0]
+            ]
+        );
+        @endphp
+
+
+        @foreach($rows as $i => $row)
+          <tr>
+            <td>
+              @if(!empty($row['id']))
+                <input type="hidden" name="cargas[{{ $i }}][id]" value="{{ $row['id'] }}">
+              @endif
+              <input class="form-control form-control-sm" name="cargas[{{ $i }}][descripcion]" value="{{ $row['descripcion'] ?? '' }}" required>
+            </td>
+            <td>
+              <input class="form-control form-control-sm js-cantidad" type="number" step="0.01" min="0.01"
+                     name="cargas[{{ $i }}][cantidad]" value="{{ $row['cantidad'] ?? 1 }}" required>
+            </td>
+            <td>
+              <input class="form-control form-control-sm js-unit" type="number" step="1" min="0"
+                     name="cargas[{{ $i }}][precio_unitario]" value="{{ $row['precio_unitario'] ?? 0 }}" required>
+            </td>
+            <td>
+              <input class="form-control form-control-sm js-subtotal" type="text" value="0" readonly>
+            </td>
+            <td class="text-center">
+              <button type="button" class="btn btn-danger btn-sm js-del">×</button>
+            </td>
+          </tr>
+        @endforeach
+      </tbody>
+    </table>
+  </div>
+
+    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnAddCarga">
+    + Agregar carga
+    </button>
+
+
+  <div class="mt-3">
+    <label>Total (CLP)</label>
+    <input class="form-control" id="monto_total_ui" type="text" readonly>
+    {{-- si quieres mandar monto igual (no se usará), puedes incluir hidden --}}
+    <input type="hidden" name="monto" id="monto_total_hidden" value="0">
+  </div>
+</div>
 
 <!-- Estado -->
 <div class="form-group col-sm-6">
@@ -146,11 +217,6 @@
     ], null, ['class' => 'form-control custom-select', 'required']) !!}
 </div>
 
-<!-- Monto -->
-<div class="form-group col-sm-6">
-    {!! Form::label('monto', 'Monto (CLP)') !!}
-    {!! Form::number('monto', null, ['class' => 'form-control', 'min'=>0, 'step'=>1]) !!}
-</div>
 
 @push('scripts')
 <script>
@@ -162,7 +228,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const inputDestino     = document.querySelector('input[name="destino"]');
     const inputCliente     = document.querySelector('input[name="cliente"]');
     const inputSolicitante = document.querySelector('input[name="solicitante"]');
-    const inputCarga       = document.querySelector('input[name="carga"]');
 
     selectSolicitud.addEventListener('change', function () {
         const option = this.options[this.selectedIndex];
@@ -172,8 +237,90 @@ document.addEventListener('DOMContentLoaded', function () {
         inputDestino.value     = option.getAttribute('data-destino')     || '';
         inputCliente.value     = option.getAttribute('data-cliente')     || '';
         inputSolicitante.value = option.getAttribute('data-solicitante') || '';
-        inputCarga.value       = option.getAttribute('data-carga')       || '';
     });
 });
 </script>
 @endpush
+
+@push('scripts')
+<script>
+(function(){
+  const tbody = document.querySelector('#tablaCargas tbody');
+  const btnAdd = document.getElementById('btnAddCarga');
+  const totalUI = document.getElementById('monto_total_ui');
+  const totalHidden = document.getElementById('monto_total_hidden');
+
+  function money(n){
+    n = Math.round(n || 0);
+    return n.toLocaleString('es-CL');
+  }
+
+  function recalc(){
+    let total = 0;
+    tbody.querySelectorAll('tr').forEach(tr => {
+      const qty = parseFloat(tr.querySelector('.js-cantidad')?.value || 0);
+      const unit = parseInt(tr.querySelector('.js-unit')?.value || 0, 10);
+      const sub = Math.round(qty * unit);
+
+      tr.querySelector('.js-subtotal').value = money(sub);
+      total += sub;
+    });
+
+    totalUI.value = money(total);
+    totalHidden.value = total;
+  }
+
+  function reindex(){
+    // reindexa name="cargas[i][...]" para evitar huecos
+    [...tbody.querySelectorAll('tr')].forEach((tr, i) => {
+      tr.querySelectorAll('input[name^="cargas["]').forEach(inp => {
+        inp.name = inp.name.replace(/cargas\[\d+\]/, `cargas[${i}]`);
+      });
+    });
+  }
+
+  btnAdd?.addEventListener('click', () => {
+    const i = tbody.querySelectorAll('tr').length;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>
+        <input class="form-control form-control-sm" name="cargas[${i}][descripcion]" required>
+      </td>
+      <td>
+        <input class="form-control form-control-sm js-cantidad" type="number" step="0.01" min="0.01"
+               name="cargas[${i}][cantidad]" value="1" required>
+      </td>
+      <td>
+        <input class="form-control form-control-sm js-unit" type="number" step="1" min="0"
+               name="cargas[${i}][precio_unitario]" value="0" required>
+      </td>
+      <td>
+        <input class="form-control form-control-sm js-subtotal" type="text" value="0" readonly>
+      </td>
+      <td class="text-center">
+        <button type="button" class="btn btn-danger btn-sm js-del">×</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+    recalc();
+  });
+
+  tbody?.addEventListener('input', (e) => {
+    if (e.target.classList.contains('js-cantidad') || e.target.classList.contains('js-unit')) {
+      recalc();
+    }
+  });
+
+  tbody?.addEventListener('click', (e) => {
+    if (e.target.classList.contains('js-del')) {
+      e.target.closest('tr')?.remove();
+      reindex();
+      recalc();
+    }
+  });
+
+  recalc();
+})();
+</script>
+@endpush
+

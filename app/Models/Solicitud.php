@@ -34,9 +34,15 @@ class Solicitud extends Model
     ];
 
     public static array $rules = [
-        'cliente_id' => 'required',
-        'origen'     => 'required',
-        'destino'    => 'required'
+        'cliente_id'           => 'required',
+        'origen'               => 'required',
+        'destino'              => 'required',
+
+        'cargas'                       => 'required|array|min:1',
+        'cargas.*.id'                  => 'nullable|integer|exists:solicitud_cargas,id',
+        'cargas.*.descripcion'         => 'required|string|max:255',
+        'cargas.*.cantidad'            => 'required|numeric|min:0.01',
+        'cargas.*.precio_unitario'     => 'required|integer|min:0',
     ];
 
     protected static function boot()
@@ -59,4 +65,10 @@ class Solicitud extends Model
     {
         return $this->hasOne(\App\Models\Cotizacion::class);
     }
+
+    public function cargas()
+    {
+        return $this->hasMany(\App\Models\SolicitudCarga::class, 'solicitud_id');
+    }
+
 }

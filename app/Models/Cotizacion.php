@@ -36,11 +36,18 @@ class Cotizacion extends Model
     ];
 
     public static array $rules = [
-        'solicitud_id' => 'required',
-        'user_id'      => 'required|exists:users,id', // <--- NUEVO
-        'origen'       => 'required',
-        'destino'      => 'required',
-        'cliente'      => 'required',
+        'user_id'      => 'required|exists:users,id',
+        'solicitante'  => 'required|string|max:255',
+        'origen'       => 'required|string|max:255',
+        'destino'      => 'required|string|max:255',
+        'cliente'      => 'required|string|max:255',
+        'estado'       => 'required|in:enviada,aceptada,rechazada',
+
+        'cargas'                   => 'required|array|min:1',
+        'cargas.*.id'              => 'nullable|integer|exists:cotizacion_cargas,id',
+        'cargas.*.descripcion'     => 'required|string|max:255',
+        'cargas.*.cantidad'        => 'required|numeric|min:0.01',
+        'cargas.*.precio_unitario' => 'required|integer|min:0',
     ];
 
     public function solicitud()
@@ -96,4 +103,17 @@ class Cotizacion extends Model
         // Si la consulta no encuentra nada, $cliente será null.
         return $cliente;
     }
+
+    public function cargas()
+    {
+        return $this->hasMany(\App\Models\CotizacionCarga::class, 'cotizacion_id');
+    }
+
+    public function recalcularMonto(): void
+    {
+        $total = $this->cargas()->sum('subtotal');
+        $this->update(['monto' => (int) $total]);
+    }
+
+
 }

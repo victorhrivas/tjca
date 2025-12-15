@@ -64,6 +64,11 @@
                     <small class="text-muted">
                         En curso (todas las fechas): {{ number_format($otsEnCursoTotal ?? 0) }}
                     </small>
+
+                    <small class="text-muted d-block">
+                        Monto OT en tránsito (mes): ${{ number_format($montoOtsEnTransitoMes ?? 0, 0, ',', '.') }}
+                    </small>
+
                 </div>
             </div>
         </div>

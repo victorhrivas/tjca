@@ -38,6 +38,15 @@ class HomeController extends Controller
         $montoCotizadoMes = Cotizacion::whereBetween('created_at', [$inicioMes, $finMes])
             ->sum('monto');
 
+        // Monto total de OT en tránsito (MES EN CURSO)
+        // Asume que el monto está en cotizaciones.monto y la OT tiene cotizacion_id
+        $montoOtsEnTransitoMes = Ot::where('ots.estado', 'en_transito')
+            ->whereBetween('ots.created_at', [$inicioMes, $finMes])
+            ->join('cotizacions', 'ots.cotizacion_id', '=', 'cotizacions.id')
+            ->sum('cotizacions.monto');
+
+
+
         // Cotizaciones por estado (MES EN CURSO)
         $cotizacionesPorEstado = Cotizacion::select(
                 'estado',
@@ -123,7 +132,8 @@ class HomeController extends Controller
             'recentOts',
             'recentEntregas',
             'otsEnCursoTotal',
-            'otsEnCursoListado'
+            'otsEnCursoListado',
+            'montoOtsEnTransitoMes'
         ));
     }
 }

@@ -2,30 +2,19 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Cotizacion;
 use Illuminate\Foundation\Http\FormRequest;
+
+use App\Models\Cotizacion;
 
 class UpdateCotizacionRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     *
-     * @return bool
-     */
     public function authorize()
     {
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array
-     */
     public function rules()
     {
-        $rules = Cotizacion::$rules;
-        
-        return $rules;
+        return Cotizacion::$rules;
     }
 }

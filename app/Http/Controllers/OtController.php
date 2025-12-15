@@ -243,7 +243,7 @@ class OtController extends AppBaseController
 
     public function pdf($id)
     {
-        $ot = Ot::with('cotizacion')->findOrFail($id);
+        $ot = Ot::with(['cotizacion.cargas'])->findOrFail($id);
 
         $pdf = Pdf::loadView('ots.pdf', [
             'ot' => $ot,
@@ -252,7 +252,7 @@ class OtController extends AppBaseController
         $fileName = 'ot_' . $ot->id . '.pdf';
 
         return $pdf->stream($fileName);
-        // o ->download($fileName) si se quiere descargar al tiro
+        // o ->download($fileName)
     }
 
     /**

@@ -112,7 +112,7 @@
         }
     </style>
 </head>
-<body>
+<body>  
     {{-- Encabezado corporativo --}}
     <div class="header">
         <table class="header-table">
@@ -210,10 +210,37 @@
                         ?? 'No especificado' }}
                 </td>
             </tr>
+            @php
+                $cargasOt = optional($ot->cotizacion)->cargas ?? collect();
+
+                // fallback: si no hay cargas (cotizaciones antiguas)
+                $itemsOt = $cargasOt->count()
+                    ? $cargasOt
+                    : collect([ (object)[
+                        'descripcion'     => optional($ot->cotizacion)->carga ?? ($ot->equipo ?? 'Servicio de transporte'),
+                        'cantidad'        => 1,
+                        'precio_unitario' => null,
+                        'subtotal'        => null,
+                    ]]);
+            @endphp
+
             <tr>
-                <td class="label">Equipo / Tipo de carga:</td>
+                <td class="label">Equipo / Cargas:</td>
                 <td class="value">
-                    {{ $ot->equipo ?? 'No especificado' }}
+                    @if($itemsOt->count())
+                        <ul style="margin:0; padding-left:16px;">
+                            @foreach($itemsOt as $it)
+                                <li>
+                                    {{ $it->descripcion ?? '—' }}
+                                    @if(isset($it->cantidad))
+                                        — {{ number_format((float)$it->cantidad, 2, ',', '.') }}
+                                    @endif
+                                </li>
+                            @endforeach
+                        </ul>
+                    @else
+                        No especificado
+                    @endif
                 </td>
             </tr>
             <tr>

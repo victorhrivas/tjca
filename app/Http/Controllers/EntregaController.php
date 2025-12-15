@@ -36,8 +36,14 @@ class EntregaController extends AppBaseController
      */
     public function create(Request $request)
     {
-        $ots = Ot::with('cotizacion')->orderBy('id', 'desc')->get();
-        $conductores = Conductor::where('activo', true)->orderBy('nombre')->get();
+        $ots = Ot::with('cotizacion')
+            ->where('estado', '!=', 'entregada')
+            ->orderBy('id', 'desc')
+            ->get();
+
+        $conductores = Conductor::where('activo', true)
+            ->orderBy('nombre')
+            ->get();
 
         return view('entregas.create', compact('ots', 'conductores'));
     }
