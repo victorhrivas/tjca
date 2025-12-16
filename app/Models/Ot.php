@@ -65,21 +65,25 @@ class Ot extends Model
      */
     public static function generarFolioParaFecha(Carbon $fecha): string
     {
-        if (! $fecha instanceof Carbon) {
-            $fecha = Carbon::parse($fecha);
+        $fecha = $fecha instanceof Carbon ? $fecha : Carbon::parse($fecha);
+
+        $periodo = $fecha->format('Ym'); // 202512
+
+        // Bloquea la fila “más alta” del período mientras dure la transacción
+        $ultimo = self::where('folio', 'like', $periodo . '/%')
+            ->orderBy('folio', 'desc')
+            ->lockForUpdate()
+            ->first();
+
+        $ultimoCorrelativo = 0;
+
+        if ($ultimo && preg_match('#^' . $periodo . '/(\d+)$#', $ultimo->folio, $m)) {
+            $ultimoCorrelativo = (int) $m[1];
         }
 
-        // Prefijo del período: 202512
-        $periodo = $fecha->format('Ym');
+        $nuevo = $ultimoCorrelativo + 1;
 
-        // Contar cuántas OTs ya tienen folio en ese período
-        // Ej: todos los que empiezan con "202512/"
-        $cantidadMes = self::where('folio', 'like', $periodo . '/%')->count() + 1;
-
-        // 001, 002, 003...
-        $correlativo = str_pad($cantidadMes, 3, '0', STR_PAD_LEFT);
-
-        return "{$periodo}/{$correlativo}";
+        return sprintf('%s/%03d', $periodo, $nuevo);
     }
 
     public function cotizacion()

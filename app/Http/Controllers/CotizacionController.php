@@ -302,122 +302,93 @@ class CotizacionController extends AppBaseController
     /**
      * Generar OT desde una cotización.
      */
-    public function generarOt($id)
-    {
-        $cotizacion = Cotizacion::with(['solicitud.cliente', 'ot', 'cargas'])->find($id);
+public function generarOt($id)
+{
+    $cotizacion = Cotizacion::with(['solicitud.cliente', 'ot', 'cargas'])->find($id);
 
-        if (! $cotizacion) {
-            Flash::error('Cotización no encontrada.');
-            return redirect()->route('cotizacions.index');
-        }
-
-        if ($cotizacion->ot) {
-            Flash::warning('Esta cotización ya tiene una OT asociada.');
-            return redirect()->route('cotizacions.index');
-        }
-
-        if (! in_array($cotizacion->estado, ['enviada'], true)) {
-            Flash::warning('Solo cotizaciones "Enviadas" pueden generar una OT.');
-            return redirect()->route('cotizacions.index');
-        }
-
-        try {
-            DB::transaction(function () use ($cotizacion) {
-
-                // Bloqueo para evitar doble OT por doble click / concurrencia
-                $cotizacion = Cotizacion::whereKey($cotizacion->id)
-                    ->lockForUpdate()
-                    ->with(['solicitud.cliente', 'ot', 'cargas'])
-                    ->first();
-
-                if (! $cotizacion) {
-                    throw new \RuntimeException('Cotización no encontrada (lock).');
-                }
-
-                if ($cotizacion->ot) {
-                    // Si otro request alcanzó a crearla
-                    return;
-                }
-
-                if (! in_array($cotizacion->estado, ['enviada'], true)) {
-                    throw new \RuntimeException('La cotización ya no está en estado "enviada".');
-                }
-
-                $solicitud = $cotizacion->solicitud;
-                $clienteRel = optional($solicitud)->cliente;
-
-                $fechaBase = ($solicitud && $solicitud->created_at)
-                    ? $solicitud->created_at->copy()->addDays(2)
-                    : Carbon::now();
-
-                // Si tiene cargas: resumen. Si no: usa campo carga
-                $equipo = $cotizacion->cargas->isNotEmpty()
-                    ? $cotizacion->cargas->pluck('descripcion')->filter()->implode(', ')
-                    : ($cotizacion->carga ?? 'Servicio de transporte');
-
-                $clienteNombre = $cotizacion->cliente
-                    ?? optional($clienteRel)->razon_social
-                    ?? 'Cliente sin nombre';
-
-                // Defaults por si columnas en DB son NOT NULL
-                $origen  = $cotizacion->origen  ?? optional($solicitud)->origen  ?? '-';
-                $destino = $cotizacion->destino ?? optional($solicitud)->destino ?? '-';
-
-                $solicitanteNombre = $cotizacion->solicitante
-                    ?? optional($solicitud)->solicitante
-                    ?? auth()->user()->name;
-
-                // Reintento por colisión de folio (unique)
-                $maxIntentos = 8;
-                $ot = null;
-
-                for ($i = 0; $i < $maxIntentos; $i++) {
-                    $folio = Ot::generarFolioParaFecha($fechaBase);
-
-                    try {
-                        $ot = Ot::create([
-                            'folio'            => $folio,
-                            'cotizacion_id'    => $cotizacion->id,
-                            'equipo'           => $equipo,
-                            'origen'           => $origen,
-                            'destino'          => $destino,
-                            'cliente'          => $clienteNombre,
-                            'valor'            => (int)($cotizacion->monto ?? 0),
-                            'fecha'            => $fechaBase->toDateString(),
-                            'solicitante'      => $solicitanteNombre,
-                            'conductor'        => null,
-                            'patente_camion'   => null,
-                            'patente_remolque' => null,
-                            'estado'           => 'pendiente',
-                            'observaciones'    => 'OT generada automáticamente desde la cotización #'.$cotizacion->id,
-                        ]);
-                        break; // ✅ ok
-                    } catch (QueryException $e) {
-                        // MySQL duplicate key = 1062
-                        if ((int)($e->errorInfo[1] ?? 0) === 1062) {
-                            continue; // recalcular y reintentar
-                        }
-                        throw $e;
-                    }
-                }
-
-                if (! $ot) {
-                    throw new \RuntimeException('No se pudo generar un folio único para la OT.');
-                }
-
-                // Cambiar estado SOLO si OT fue creada
-                $cotizacion->update(['estado' => 'aceptada']);
-            });
-
-            Flash::success('OT generada correctamente. La cotización pasó a estado "aceptada".');
-            return redirect()->route('ots.index');
-
-        } catch (\Throwable $e) {
-            report($e);
-            Flash::error('No se pudo generar la OT. Revisa el log para ver el detalle.');
-            return redirect()->route('cotizacions.index');
-        }
+    if (! $cotizacion) {
+        Flash::error('Cotización no encontrada.');
+        return redirect()->route('cotizacions.index');
     }
+
+    if ($cotizacion->ot) {
+        Flash::warning('Esta cotización ya tiene una OT asociada.');
+        return redirect()->route('cotizacions.index');
+    }
+
+    if (! in_array($cotizacion->estado, ['enviada'], true)) {
+        Flash::warning('Solo cotizaciones "Enviadas" pueden generar una OT.');
+        return redirect()->route('cotizacions.index');
+    }
+
+    try {
+        DB::transaction(function () use ($cotizacion) {
+
+            // Lock de la cotización para evitar doble click / requests paralelas
+            $cotizacion = Cotizacion::whereKey($cotizacion->id)
+                ->lockForUpdate()
+                ->with(['solicitud.cliente', 'ot', 'cargas'])
+                ->first();
+
+            if (! $cotizacion) {
+                throw new \RuntimeException('Cotización no encontrada (lock).');
+            }
+
+            if ($cotizacion->ot) {
+                return; // otro request ya la creó
+            }
+
+            $solicitud = $cotizacion->solicitud;
+            $clienteRel = optional($solicitud)->cliente;
+
+            $fechaBase = ($solicitud && $solicitud->created_at)
+                ? $solicitud->created_at->copy()->addDays(2)
+                : Carbon::now();
+
+            $equipo = $cotizacion->cargas->isNotEmpty()
+                ? $cotizacion->cargas->pluck('descripcion')->filter()->implode(', ')
+                : ($cotizacion->carga ?? 'Servicio de transporte');
+
+            $clienteNombre = $cotizacion->cliente
+                ?? optional($clienteRel)->razon_social
+                ?? 'Cliente sin nombre';
+
+            $origen  = $cotizacion->origen  ?? optional($solicitud)->origen  ?? '-';
+            $destino = $cotizacion->destino ?? optional($solicitud)->destino ?? '-';
+
+            $solicitanteNombre = $cotizacion->solicitante
+                ?? optional($solicitud)->solicitante
+                ?? auth()->user()->name;
+
+            // ✅ folio atómico (lockForUpdate en la query del modelo)
+            $folio = Ot::generarFolioParaFecha($fechaBase);
+
+            Ot::create([
+                'folio'            => $folio,
+                'cotizacion_id'    => $cotizacion->id,
+                'equipo'           => $equipo,
+                'origen'           => $origen,
+                'destino'          => $destino,
+                'cliente'          => $clienteNombre,
+                'valor'            => (int)($cotizacion->monto ?? 0),
+                'fecha'            => $fechaBase->toDateString(),
+                'solicitante'      => $solicitanteNombre,
+                'estado'           => 'pendiente',
+                'observaciones'    => 'OT generada automáticamente desde la cotización #'.$cotizacion->id,
+            ]);
+
+            $cotizacion->update(['estado' => 'aceptada']);
+        });
+
+        Flash::success('OT generada correctamente. La cotización pasó a estado "aceptada".');
+        return redirect()->route('ots.index');
+
+    } catch (\Throwable $e) {
+        report($e);
+        Flash::error('No se pudo generar la OT. Revisa el log para ver el detalle.');
+        return redirect()->route('cotizacions.index');
+    }
+}
 
 
 
