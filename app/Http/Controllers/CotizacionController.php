@@ -306,7 +306,7 @@ class CotizacionController extends AppBaseController
     {
         $cotizacion = Cotizacion::with(['solicitud.cliente', 'ot', 'cargas'])->find($id);
 
-        if (!$cotizacion) {
+        if (! $cotizacion) {
             Flash::error('Cotización no encontrada.');
             return redirect()->route('cotizacions.index');
         }
@@ -316,13 +316,32 @@ class CotizacionController extends AppBaseController
             return redirect()->route('cotizacions.index');
         }
 
-        if (!in_array($cotizacion->estado, ['enviada'])) {
+        if (! in_array($cotizacion->estado, ['enviada'], true)) {
             Flash::warning('Solo cotizaciones "Enviadas" pueden generar una OT.');
             return redirect()->route('cotizacions.index');
         }
 
         try {
             DB::transaction(function () use ($cotizacion) {
+
+                // Bloqueo para evitar doble OT por doble click / concurrencia
+                $cotizacion = Cotizacion::whereKey($cotizacion->id)
+                    ->lockForUpdate()
+                    ->with(['solicitud.cliente', 'ot', 'cargas'])
+                    ->first();
+
+                if (! $cotizacion) {
+                    throw new \RuntimeException('Cotización no encontrada (lock).');
+                }
+
+                if ($cotizacion->ot) {
+                    // Si otro request alcanzó a crearla
+                    return;
+                }
+
+                if (! in_array($cotizacion->estado, ['enviada'], true)) {
+                    throw new \RuntimeException('La cotización ya no está en estado "enviada".');
+                }
 
                 $solicitud = $cotizacion->solicitud;
                 $clienteRel = optional($solicitud)->cliente;
@@ -331,7 +350,7 @@ class CotizacionController extends AppBaseController
                     ? $solicitud->created_at->copy()->addDays(2)
                     : Carbon::now();
 
-                // ✅ Si tiene cargas: resumen desde la relación. Si no: usa campo "carga"
+                // Si tiene cargas: resumen. Si no: usa campo carga
                 $equipo = $cotizacion->cargas->isNotEmpty()
                     ? $cotizacion->cargas->pluck('descripcion')->filter()->implode(', ')
                     : ($cotizacion->carga ?? 'Servicio de transporte');
@@ -340,33 +359,53 @@ class CotizacionController extends AppBaseController
                     ?? optional($clienteRel)->razon_social
                     ?? 'Cliente sin nombre';
 
-                $origen = $cotizacion->origen ?? optional($solicitud)->origen;
-                $destino = $cotizacion->destino ?? optional($solicitud)->destino;
+                // Defaults por si columnas en DB son NOT NULL
+                $origen  = $cotizacion->origen  ?? optional($solicitud)->origen  ?? '-';
+                $destino = $cotizacion->destino ?? optional($solicitud)->destino ?? '-';
 
                 $solicitanteNombre = $cotizacion->solicitante
                     ?? optional($solicitud)->solicitante
                     ?? auth()->user()->name;
 
-                $folio = Ot::generarFolioParaFecha($fechaBase);
+                // Reintento por colisión de folio (unique)
+                $maxIntentos = 8;
+                $ot = null;
 
-                $ot = Ot::create([
-                    'folio'            => $folio,
-                    'cotizacion_id'    => $cotizacion->id,
-                    'equipo'           => $equipo,
-                    'origen'           => $origen,
-                    'destino'          => $destino,
-                    'cliente'          => $clienteNombre,
-                    'valor'            => (int)($cotizacion->monto ?? 0),
-                    'fecha'            => $fechaBase->toDateString(),
-                    'solicitante'      => $solicitanteNombre,
-                    'conductor'        => null,
-                    'patente_camion'   => null,
-                    'patente_remolque' => null,
-                    'estado'           => 'pendiente',
-                    'observaciones'    => 'OT generada automáticamente desde la cotización #'.$cotizacion->id,
-                ]);
+                for ($i = 0; $i < $maxIntentos; $i++) {
+                    $folio = Ot::generarFolioParaFecha($fechaBase);
 
-                // ✅ Cambiar estado SOLO si la OT se creó bien
+                    try {
+                        $ot = Ot::create([
+                            'folio'            => $folio,
+                            'cotizacion_id'    => $cotizacion->id,
+                            'equipo'           => $equipo,
+                            'origen'           => $origen,
+                            'destino'          => $destino,
+                            'cliente'          => $clienteNombre,
+                            'valor'            => (int)($cotizacion->monto ?? 0),
+                            'fecha'            => $fechaBase->toDateString(),
+                            'solicitante'      => $solicitanteNombre,
+                            'conductor'        => null,
+                            'patente_camion'   => null,
+                            'patente_remolque' => null,
+                            'estado'           => 'pendiente',
+                            'observaciones'    => 'OT generada automáticamente desde la cotización #'.$cotizacion->id,
+                        ]);
+                        break; // ✅ ok
+                    } catch (QueryException $e) {
+                        // MySQL duplicate key = 1062
+                        if ((int)($e->errorInfo[1] ?? 0) === 1062) {
+                            continue; // recalcular y reintentar
+                        }
+                        throw $e;
+                    }
+                }
+
+                if (! $ot) {
+                    throw new \RuntimeException('No se pudo generar un folio único para la OT.');
+                }
+
+                // Cambiar estado SOLO si OT fue creada
                 $cotizacion->update(['estado' => 'aceptada']);
             });
 
@@ -379,6 +418,7 @@ class CotizacionController extends AppBaseController
             return redirect()->route('cotizacions.index');
         }
     }
+
 
 
 }
