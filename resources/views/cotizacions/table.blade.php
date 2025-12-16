@@ -84,21 +84,33 @@
 
                         <div class="btn-group">
                             {{-- Generar OT / Ver OT --}}
-                            @if(!$cotizacion->ot)
+                            @if($cotizacion->ot)
+                                {{-- Ya existe OT --}}
+                                <a href="{{ route('ots.show', $cotizacion->ot->id) }}"
+                                class="btn btn-success btn-xs"
+                                title="Ver OT">
+                                    <i class="fas fa-file-alt"></i>
+                                </a>
+
+                            @elseif($cotizacion->estado === 'aceptada')
+                                {{-- Aceptada, pero aún sin OT asociada --}}
                                 <a href="#"
-                                   class="btn btn-success btn-xs"
-                                   title="Generar OT"
-                                   onclick="event.preventDefault();
+                                class="btn btn-success btn-xs disabled"
+                                title="OT aún no generada"
+                                onclick="event.preventDefault(); alert('Esta cotización está aceptada, pero todavía no tiene OT asociada.');">
+                                    <i class="fas fa-file-alt"></i>
+                                </a>
+
+                            @else
+                                {{-- No hay OT y no está aceptada: permitir generar --}}
+                                <a href="#"
+                                class="btn btn-success btn-xs"
+                                title="Generar OT"
+                                onclick="event.preventDefault();
                                             if (confirm('¿Generar una OT desde esta cotización?')) {
                                                 document.getElementById('generar-ot-{{ $cotizacion->id }}').submit();
                                             }">
                                     <i class="fas fa-truck"></i>
-                                </a>
-                            @else
-                                <a href="{{ route('ots.show', $cotizacion->ot->id) }}"
-                                   class="btn btn-success btn-xs"
-                                   title="Ver OT">
-                                    <i class="fas fa-file-alt"></i>
                                 </a>
                             @endif
 
