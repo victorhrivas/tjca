@@ -37,7 +37,7 @@ class EntregaController extends AppBaseController
     public function create(Request $request)
     {
         $ots = Ot::with('cotizacion')
-            ->where('estado', '!=', 'entregada')
+            ->where('estado', '=', 'en_transito')
             ->orderBy('id', 'desc')
             ->get();
 
