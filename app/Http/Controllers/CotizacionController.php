@@ -316,64 +316,69 @@ class CotizacionController extends AppBaseController
             return redirect()->route('cotizacions.index');
         }
 
-        // ✅ estados reales de tu enum
         if (!in_array($cotizacion->estado, ['enviada'])) {
             Flash::warning('Solo cotizaciones "Enviadas" pueden generar una OT.');
             return redirect()->route('cotizacions.index');
         }
 
-        $solicitud = $cotizacion->solicitud;
-        $clienteRel = optional($solicitud)->cliente;
+        try {
+            DB::transaction(function () use ($cotizacion) {
 
-        // Fecha base para folio/servicio
-        $fechaBase = ($solicitud && $solicitud->created_at)
-            ? $solicitud->created_at->copy()->addDays(2)
-            : Carbon::now();
+                $solicitud = $cotizacion->solicitud;
+                $clienteRel = optional($solicitud)->cliente;
 
-        // ✅ pasar a aceptada
-        $cotizacion->update(['estado' => 'aceptada']);
+                $fechaBase = ($solicitud && $solicitud->created_at)
+                    ? $solicitud->created_at->copy()->addDays(2)
+                    : Carbon::now();
 
-        // Datos “congelados” (cotizacion) con fallback a solicitud/cliente
-        $clienteNombre = $cotizacion->cliente
-            ?? ($clienteRel->razon_social ?? null)
-            ?? 'Cliente sin nombre';
+                // ✅ Si tiene cargas: resumen desde la relación. Si no: usa campo "carga"
+                $equipo = $cotizacion->cargas->isNotEmpty()
+                    ? $cotizacion->cargas->pluck('descripcion')->filter()->implode(', ')
+                    : ($cotizacion->carga ?? 'Servicio de transporte');
 
-        $origen = $cotizacion->origen
-            ?? ($solicitud->origen ?? null);
+                $clienteNombre = $cotizacion->cliente
+                    ?? optional($clienteRel)->razon_social
+                    ?? 'Cliente sin nombre';
 
-        $destino = $cotizacion->destino
-            ?? ($solicitud->destino ?? null);
+                $origen = $cotizacion->origen ?? optional($solicitud)->origen;
+                $destino = $cotizacion->destino ?? optional($solicitud)->destino;
 
-        $solicitanteNombre = $cotizacion->solicitante
-            ?? ($solicitud->solicitante ?? null)
-            ?? auth()->user()->name;
+                $solicitanteNombre = $cotizacion->solicitante
+                    ?? optional($solicitud)->solicitante
+                    ?? auth()->user()->name;
 
-        // ✅ NO usar "carga" como requisito. Si quieres llenar "equipo", que sea solo un resumen.
-        $equipo = optional($cotizacion->cargas->first())->descripcion
-            ?? $cotizacion->carga // legacy por si existiera
-            ?? 'Servicio de transporte';
+                $folio = Ot::generarFolioParaFecha($fechaBase);
 
-        $folio = Ot::generarFolioParaFecha($fechaBase);
+                $ot = Ot::create([
+                    'folio'            => $folio,
+                    'cotizacion_id'    => $cotizacion->id,
+                    'equipo'           => $equipo,
+                    'origen'           => $origen,
+                    'destino'          => $destino,
+                    'cliente'          => $clienteNombre,
+                    'valor'            => (int)($cotizacion->monto ?? 0),
+                    'fecha'            => $fechaBase->toDateString(),
+                    'solicitante'      => $solicitanteNombre,
+                    'conductor'        => null,
+                    'patente_camion'   => null,
+                    'patente_remolque' => null,
+                    'estado'           => 'pendiente',
+                    'observaciones'    => 'OT generada automáticamente desde la cotización #'.$cotizacion->id,
+                ]);
 
-        Ot::create([
-            'folio'            => $folio,
-            'cotizacion_id'    => $cotizacion->id,
-            'equipo'           => $equipo,                 // opcional (solo resumen)
-            'origen'           => $origen,
-            'destino'          => $destino,
-            'cliente'          => $clienteNombre,
-            'valor'            => (int)($cotizacion->monto ?? 0),
-            'fecha'            => $fechaBase->toDateString(),
-            'solicitante'      => $solicitanteNombre,
-            'conductor'        => null,
-            'patente_camion'   => null,
-            'patente_remolque' => null,
-            'estado'           => 'pendiente',
-            'observaciones'    => 'OT generada automáticamente desde la cotización #'.$cotizacion->id,
-        ]);
+                // ✅ Cambiar estado SOLO si la OT se creó bien
+                $cotizacion->update(['estado' => 'aceptada']);
+            });
 
-        Flash::success('OT generada correctamente. La cotización pasó a estado "aceptada".');
-        return redirect()->route('ots.index');
+            Flash::success('OT generada correctamente. La cotización pasó a estado "aceptada".');
+            return redirect()->route('ots.index');
+
+        } catch (\Throwable $e) {
+            report($e);
+            Flash::error('No se pudo generar la OT. Revisa el log para ver el detalle.');
+            return redirect()->route('cotizacions.index');
+        }
     }
+
 
 }
