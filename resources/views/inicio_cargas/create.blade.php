@@ -43,6 +43,11 @@
             .form-head .title{font-weight:800;letter-spacing:.4px;text-transform:uppercase;font-size:0.95rem;}
             .form-head .subtitle{font-size:0.85rem;}
 
+            /* Campos que vienen desde la OT */
+            .auto-from-ot {
+                display: none;
+            }
+
             .card-section{background:var(--bg-2);border-radius:14px;padding:20px;border:1px solid var(--line);}
             .form-control{background:#2a2f38;border:1px solid var(--line);color:var(--ink);border-radius:10px;}
             .form-control:focus{background:#2d333d;border-color:var(--accent);box-shadow:0 0 0 .15rem rgba(246,199,0,.2);color:#fff}
@@ -282,28 +287,32 @@
                         </select>
                     </div>
 
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-3 auto-from-ot">
                         <label>Cliente</label>
-                        <input type="text" name="cliente" id="cliente" class="form-control"
-                               value="{{ old('cliente') }}" required>
+                        <input type="text" name="cliente" id="cliente"
+                            class="form-control"
+                            readonly>
                     </div>
 
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-3 auto-from-ot">
                         <label>Contacto / Solicitante</label>
-                        <input type="text" name="contacto" class="form-control"
-                               value="{{ old('contacto') }}" required>
+                        <input type="text" name="contacto"
+                            class="form-control"
+                            readonly>
                     </div>
 
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-3 auto-from-ot">
                         <label>Teléfono de contacto</label>
-                        <input type="text" name="telefono_contacto" class="form-control"
-                            value="{{ old('telefono_contacto') }}" placeholder="+56 9 xxxx xxxx" required>
+                        <input type="text" name="telefono_contacto"
+                            class="form-control"
+                            readonly>
                     </div>
 
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-3 auto-from-ot">
                         <label>Correo de contacto</label>
-                        <input type="email" name="correo_contacto" class="form-control"
-                            value="{{ old('correo_contacto') }}" placeholder="correo@ejemplo.cl" required>
+                        <input type="email" name="correo_contacto"
+                            class="form-control"
+                            readonly>
                     </div>
 
                     <div class="col-md-6 mb-3">
@@ -336,7 +345,7 @@
                     @endphp
 
                     {{-- Equipo / Tipo de carga (opciones + Otro) --}}
-                    <div class="col-md-12 mb-3">
+                    <div class="col-md-12 mb-3 auto-from-ot">
                         <label>¿Qué carga es?</label>
 
                         <div class="tipo-carga-group">

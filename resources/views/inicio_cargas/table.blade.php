@@ -15,7 +15,7 @@
             <tbody>
             @foreach($inicioCargas as $inicioCarga)
                 <tr>
-                    <td>{{ $inicioCarga->ot_id }}</td>
+                    <td>{{ optional($inicioCarga->ot)->folio ?? '-' }}</td>
                     <td>{{ $inicioCarga->cliente }}</td>
                     <td>{{ $inicioCarga->origen }}</td>
                     <td>{{ $inicioCarga->destino }}</td>
