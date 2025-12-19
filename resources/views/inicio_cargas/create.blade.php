@@ -445,7 +445,6 @@
                                         id="foto_1"
                                         class="d-none"
                                         accept="image/*"
-                                        capture="environment"
                                         onchange="previewPhoto(this, 'preview_foto_1')">
                                 </label>
 
@@ -466,7 +465,6 @@
                                         id="foto_2"
                                         class="d-none"
                                         accept="image/*"
-                                        capture="environment"
                                         onchange="previewPhoto(this, 'preview_foto_2')">
                                 </label>
 
@@ -487,7 +485,6 @@
                                         id="foto_3"
                                         class="d-none"
                                         accept="image/*"
-                                        capture="environment"
                                         onchange="previewPhoto(this, 'preview_foto_3')">
                                 </label>
 
