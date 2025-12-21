@@ -17,7 +17,7 @@ class InicioCarga extends Model
         'origen',
         'destino',
         'tipo_carga',
-        'peso_aproximado',
+        // 'peso_aproximado',  // quitar
         'fecha_carga',
         'hora_presentacion',
         'conductor',
@@ -25,8 +25,9 @@ class InicioCarga extends Model
         'foto_1',
         'foto_2',
         'foto_3',
+        'foto_guia_despacho', // nuevo
     ];
-
+    
     protected $casts = [
         'ot_id'          => 'integer',
         'fecha_carga'    => 'date',

@@ -241,6 +241,41 @@
                         </div>
                     </div>
                 @endif
+
+                {{-- Foto guía de despacho --}}
+                @if(!empty($inicioCarga->foto_guia_despacho))
+                    <hr class="mt-4 mb-3">
+
+                    <div class="card card-outline" style="border-color: rgba(255,255,255,0.06);">
+                        <div class="card-header" style="border-bottom-color: rgba(255,255,255,0.06);">
+                            <h3 class="card-title mb-0">
+                                <i class="fas fa-file-alt mr-1"></i>
+                                Guía de despacho
+                            </h3>
+                        </div>
+
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <div class="card bg-dark border-0 shadow-sm h-100">
+                                        <div class="card-body p-2 d-flex align-items-center justify-content-center">
+                                            <img src="{{ asset('storage/'.$inicioCarga->foto_guia_despacho) }}"
+                                                alt="Foto guía de despacho"
+                                                class="img-fluid rounded"
+                                                style="max-height: 220px; object-fit: cover; cursor:pointer;"
+                                                onclick="openImageOverlay('{{ asset('storage/'.$inicioCarga->foto_guia_despacho) }}')">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <small class="text-muted">
+                                Haz clic sobre la imagen para verla en grande.
+                            </small>
+                        </div>
+                    </div>
+                @endif
+
             </div>
 
             <div class="card-footer text-right">

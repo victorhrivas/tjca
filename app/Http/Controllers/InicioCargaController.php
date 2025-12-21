@@ -38,7 +38,7 @@ class InicioCargaController extends AppBaseController
     public function create(Request $request)
     {
         $ots = Ot::with(['cotizacion.solicitud.cliente'])
-            ->whereIn('estado', ['pendiente', 'inicio_carga'])
+            ->where('estado', '=', 'pendiente')
             ->orderBy('id', 'desc')
             ->get()
             ->map(function ($ot) {
@@ -104,6 +104,7 @@ class InicioCargaController extends AppBaseController
             'foto_1'            => ['nullable', 'image', 'max:4096'],
             'foto_2'            => ['nullable', 'image', 'max:4096'],
             'foto_3'            => ['nullable', 'image', 'max:4096'],
+            'foto_guia_despacho' => ['nullable', 'image', 'max:4096'],
         ]);
 
         // Manejo de archivos (disco 'public')
@@ -117,6 +118,11 @@ class InicioCargaController extends AppBaseController
 
         if ($request->hasFile('foto_3')) {
             $data['foto_3'] = $request->file('foto_3')->store('inicio_cargas', 'public');
+        }
+
+        if ($request->hasFile('foto_guia_despacho')) {
+            $path = $request->file('foto_guia_despacho')->store('inicio_cargas', 'public');
+            $data['foto_guia_despacho'] = $path;
         }
 
         // Crear inicio de carga

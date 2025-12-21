@@ -44,13 +44,36 @@
             .form-head .subtitle{font-size:0.85rem;}
 
             /* Campos que vienen desde la OT */
-            .auto-from-ot {
-                display: none;
-            }
+            .auto-from-ot { display: none; }
 
             .card-section{background:var(--bg-2);border-radius:14px;padding:20px;border:1px solid var(--line);}
-            .form-control{background:#2a2f38;border:1px solid var(--line);color:var(--ink);border-radius:10px;}
-            .form-control:focus{background:#2d333d;border-color:var(--accent);box-shadow:0 0 0 .15rem rgba(246,199,0,.2);color:#fff}
+
+            /* Base inputs dark */
+            .form-control{
+                background:#2a2f38;
+                border:1px solid var(--line);
+                color:var(--ink);
+                border-radius:10px;
+            }
+            .form-control:focus{
+                background:#2d333d;
+                border-color:var(--accent);
+                box-shadow:0 0 0 .15rem rgba(246,199,0,.2);
+                color:#fff
+            }
+
+            /* OVERRIDE Bootstrap: readonly/disabled se ven blancos si no lo fuerzas */
+            .form-control[readonly],
+            .form-control:disabled{
+                background:#222834 !important;
+                color:var(--ink) !important;
+                opacity:1 !important;      /* bootstrap baja opacity */
+                -webkit-text-fill-color: var(--ink) !important; /* safari/chrome */
+            }
+            .form-control::placeholder{
+                color: rgba(167,173,183,.75);
+            }
+
             label{font-size:0.85rem;color:var(--muted);}
             .btn{border-radius:10px;font-weight:700;letter-spacing:.3px;}
             .btn-accent{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);}
@@ -58,126 +81,46 @@
             .back-link{font-size:0.85rem;color:var(--muted);}
             .back-link a{color:var(--accent);}
 
-            /* --- Bloque "¿Qué carga es?" --- */
-            .tipo-carga-group {
-                background: #20242c;
-                border-radius: 14px;
-                border: 1px solid var(--line);
-                padding: 16px 18px;
-                margin-top: 6px;
-            }
-
-            .tipo-carga-group-title {
-                font-size: 0.8rem;
-                text-transform: uppercase;
-                letter-spacing: .08em;
-                color: var(--muted);
-                margin-bottom: 10px;
-            }
-
-            .tipo-carga-option {
-                margin-bottom: 8px;
-            }
-
-            .tipo-carga-option input[type="radio"] {
-                position: absolute;
-                opacity: 0;
-                pointer-events: none;
-            }
-
-            .tipo-carga-option label {
-                display: block;
-                width: 100%;
-                padding: 9px 12px;
-                border-radius: 999px;
-                border: 1px solid var(--line);
-                background: #1b1f26;
-                cursor: pointer;
-                font-size: 0.88rem;
-                color: var(--muted);
-                transition: all .15s ease;
-            }
-
-            .tipo-carga-option input[type="radio"]:checked + label {
-                border-color: var(--accent);
-                background: rgba(212,173,24,.08);
-                color: var(--ink);
-                box-shadow: 0 0 0 1px rgba(212,173,24,.6);
-            }
-
-            /* Opción "Otro" */
-            .tipo-carga-otro-wrap {
-                margin-top: 10px;
-                padding-top: 10px;
-                border-top: 1px dashed var(--line);
-            }
-
-            .tipo-carga-otro-label {
-                margin-right: 8px;
-                white-space: nowrap;
-                font-size: 0.88rem;
-            }
-
-            #tipo_carga_otro {
-                background: #181b21;
-                border-radius: 999px;
-            }
-
             /* Selects en tema oscuro */
             select.form-control {
                 background: #2a2f38;
                 color: var(--ink);
                 border-color: var(--line);
             }
-
             select.form-control option {
                 background: #1c1f24;
                 color: var(--ink);
             }
-
             select.form-control option[value=""],
-            select.form-control option:first-child {
-                color: var(--muted);
-            }
+            select.form-control option:first-child { color: var(--muted); }
 
             .select2-container--bootstrap4 .select2-selection--single {
                 background: #2a2f38 !important;
                 border-color: var(--line) !important;
                 color: var(--ink) !important;
                 border-radius: 10px !important;
+                min-height: 42px;
+                display:flex;
+                align-items:center;
             }
-
-            .select2-container--bootstrap4 .select2-selection__rendered {
-                color: var(--ink) !important;
-            }
-
-            .select2-container--bootstrap4 .select2-selection__placeholder {
-                color: var(--muted) !important;
-            }
-
+            .select2-container--bootstrap4 .select2-selection__rendered { color: var(--ink) !important; }
+            .select2-container--bootstrap4 .select2-selection__placeholder { color: var(--muted) !important; }
             .select2-container--bootstrap4 .select2-dropdown {
                 background: #1c1f24 !important;
                 border-color: var(--line) !important;
             }
-
             .select2-container--bootstrap4 .select2-results > .select2-results__options {
                 background: #1c1f24 !important;
             }
-
-            .select2-container--bootstrap4 .select2-results__option {
-                color: var(--ink) !important;
-            }
-
+            .select2-container--bootstrap4 .select2-results__option { color: var(--ink) !important; }
             .select2-container--bootstrap4 .select2-results__option[aria-selected="true"] {
                 background: #2a2f38 !important;
                 color: var(--ink) !important;
             }
-
             .select2-container--bootstrap4 .select2-results__option--highlighted[aria-selected] {
                 background: var(--accent) !important;
                 color: var(--accent-ink) !important;
             }
-
             .select2-container--bootstrap4 .select2-search__field {
                 background: #101114 !important;
                 color: var(--ink) !important;
@@ -220,17 +163,9 @@
                 color:var(--muted);
                 min-height:130px;
             }
-            .photo-upload-label i{
-                font-size:1.8rem;
-                color:var(--accent);
-            }
-            .photo-upload-label span{
-                font-size:.8rem;
-            }
-            .photo-preview{
-                margin-top:8px;
-                display:none;
-            }
+            .photo-upload-label i{ font-size:1.8rem; color:var(--accent); }
+            .photo-upload-label span{ font-size:.8rem; }
+            .photo-preview{ margin-top:8px; display:none; }
             .photo-preview img{
                 max-width:100%;
                 max-height:140px;
@@ -264,6 +199,8 @@
                             @foreach($ots as $otItem)
                                 <option
                                     value="{{ $otItem->id }}"
+                                    data-folio="{{ $otItem->folio }}"
+                                    data-equipo="{{ $otItem->equipo }}"
                                     data-cliente="{{ $otItem->cliente }}"
                                     data-contacto="{{ $otItem->solicitante }}"
                                     data-telefono="{{ $otItem->telefono_contacto }}"
@@ -287,133 +224,51 @@
                         </select>
                     </div>
 
+                    {{-- Campo oculto requerido por BD --}}
+                    <input type="hidden" name="tipo_carga" id="tipo_carga">
+
+                    {{-- Detalle OT (auto) --}}
+                    <div class="col-md-6 mb-3 auto-from-ot">
+                        <label>N° OT</label>
+                        <input type="text" id="ot_folio" class="form-control" readonly>
+                    </div>
+
+                    <div class="col-md-6 mb-3 auto-from-ot">
+                        <label>Equipo</label>
+                        <input type="text" id="equipo_ot" class="form-control" readonly>
+                    </div>
+
                     <div class="col-md-6 mb-3 auto-from-ot">
                         <label>Cliente</label>
-                        <input type="text" name="cliente" id="cliente"
-                            class="form-control"
-                            readonly>
+                        <input type="text" name="cliente" id="cliente" class="form-control" readonly>
                     </div>
 
                     <div class="col-md-6 mb-3 auto-from-ot">
                         <label>Contacto / Solicitante</label>
-                        <input type="text" name="contacto"
-                            class="form-control"
-                            readonly>
+                        <input type="text" name="contacto" id="contacto" class="form-control" readonly>
                     </div>
 
                     <div class="col-md-6 mb-3 auto-from-ot">
                         <label>Teléfono de contacto</label>
-                        <input type="text" name="telefono_contacto"
-                            class="form-control"
-                            readonly>
+                        <input type="text" name="telefono_contacto" id="telefono_contacto" class="form-control" readonly>
                     </div>
 
                     <div class="col-md-6 mb-3 auto-from-ot">
                         <label>Correo de contacto</label>
-                        <input type="email" name="correo_contacto"
-                            class="form-control"
-                            readonly>
+                        <input type="email" name="correo_contacto" id="correo_contacto" class="form-control" readonly>
                     </div>
 
-                    <div class="col-md-6 mb-3">
+                    {{-- Origen/Destino: un solo set (se auto-rellena desde OT) --}}
+                    <div class="col-md-6 mb-3 auto-from-ot">
                         <label>Origen</label>
                         <input type="text" name="origen" id="origen" class="form-control"
                                value="{{ old('origen') }}" required>
                     </div>
 
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-3 auto-from-ot">
                         <label>Destino</label>
                         <input type="text" name="destino" id="destino" class="form-control"
                                value="{{ old('destino') }}" required>
-                    </div>
-
-                    @php
-                        $valorTipoCarga = old('tipo_carga');
-                        $opcionesCarga = [
-                            'Excavadora',
-                            'Generador',
-                            'Bulldozer',
-                            'Motoniveladora',
-                            'Cargador Frontal',
-                            'Contenedores',
-                            'TDI',
-                            'Rodillo',
-                            'Retroexcavadora',
-                            'Minicargador',
-                        ];
-                        $esOtro = $valorTipoCarga && !in_array($valorTipoCarga, $opcionesCarga);
-                    @endphp
-
-                    {{-- Equipo / Tipo de carga (opciones + Otro) --}}
-                    <div class="col-md-12 mb-3 auto-from-ot">
-                        <label>¿Qué carga es?</label>
-
-                        <div class="tipo-carga-group">
-                            <div class="tipo-carga-group-title">
-                                Selecciona el tipo de equipo o carga
-                            </div>
-
-                            <div class="row">
-                                @foreach($opcionesCarga as $opcion)
-                                    @php
-                                        $checked = $valorTipoCarga === $opcion
-                                            || (!$valorTipoCarga && !$esOtro && $loop->first);
-                                    @endphp
-
-                                    <div class="col-sm-6 tipo-carga-option">
-                                        <div class="form-check">
-                                            <input class="form-check-input"
-                                                type="radio"
-                                                name="tipo_carga_radio"
-                                                id="tipo_{{ strtolower(str_replace(' ', '_', $opcion)) }}"
-                                                value="{{ $opcion }}"
-                                                {{ $checked ? 'checked' : '' }}
-                                                required>
-                                            <label class="form-check-label"
-                                                for="tipo_{{ strtolower(str_replace(' ', '_', $opcion)) }}">
-                                                {{ $opcion }}
-                                            </label>
-                                        </div>
-                                    </div>
-                                @endforeach
-
-                                {{-- Opción "Otro" --}}
-                                <div class="col-sm-12 tipo-carga-otro-wrap">
-                                    <div class="form-check d-flex flex-wrap align-items-center">
-                                        <div class="tipo-carga-option" style="margin-bottom:0;">
-                                            <input class="form-check-input"
-                                                type="radio"
-                                                name="tipo_carga_radio"
-                                                id="tipo_otro"
-                                                value="__otro__"
-                                                {{ $esOtro ? 'checked' : '' }}
-                                                required>
-                                            <label class="form-check-label tipo-carga-otro-label" for="tipo_otro">
-                                                Otro
-                                            </label>
-                                        </div>
-
-                                        <input type="text"
-                                            id="tipo_carga_otro"
-                                            class="form-control form-control-sm"
-                                            style="max-width: 300px;"
-                                            placeholder="Especifica la carga"
-                                            value="{{ $esOtro ? $valorTipoCarga : '' }}"
-                                            {{ $esOtro ? '' : 'disabled' }}>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {{-- Campo real que se guardará en la BD --}}
-                            <input type="hidden" name="tipo_carga" id="tipo_carga_hidden"
-                                value="{{ $valorTipoCarga }}">
-                        </div>
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label>Peso aproximado</label>
-                        <input type="text" name="peso_aproximado" class="form-control"
-                               value="{{ old('peso_aproximado') }}" placeholder="Ej: 2000 kg">
                     </div>
 
                     <div class="col-md-6 mb-3">
@@ -428,7 +283,7 @@
                                value="{{ old('conductor') }}" placeholder="Nombre del conductor">
                     </div>
 
-                    {{-- Fotos con tarjetas + compresión --}}
+                    {{-- Fotos de la carga (opcional) --}}
                     <div class="col-md-12 mb-3">
                         <label>Fotos de la carga (opcional)</label>
 
@@ -499,6 +354,36 @@
                         </small>
                     </div>
 
+                    {{-- Foto guía de despacho (opcional) --}}
+                    <div class="col-md-12 mb-3">
+                        <label>Foto guía de despacho (opcional)</label>
+
+                        <div class="photo-grid">
+                            <div class="photo-card">
+                                <label class="photo-upload-label" for="foto_guia_despacho">
+                                    <i class="fas fa-camera"></i>
+                                    <strong>Tomar / subir guía de despacho</strong>
+                                    <span>Foto clara donde se lea el documento.</span>
+
+                                    <input type="file"
+                                        name="foto_guia_despacho"
+                                        id="foto_guia_despacho"
+                                        class="d-none"
+                                        accept="image/*"
+                                        onchange="previewPhoto(this, 'preview_foto_guia_despacho')">
+                                </label>
+
+                                <div id="preview_foto_guia_despacho" class="photo-preview">
+                                    <img src="#" alt="Vista previa guía despacho">
+                                </div>
+                            </div>
+                        </div>
+
+                        <small class="text-muted" style="color: var(--muted);">
+                            Formatos permitidos: JPG, PNG. Máx 4 MB por archivo.
+                        </small>
+                    </div>
+
                     <div class="col-md-12 mb-3">
                         <label>Observaciones</label>
                         <textarea name="observaciones" rows="3" class="form-control">{{ old('observaciones') }}</textarea>
@@ -526,16 +411,23 @@
     <script>
         $(function () {
             const $otSelect   = $('#ot_id');
+
+            const $autoBlock  = $('.auto-from-ot');
+
+            const $folioOt    = $('#ot_folio');
+            const $equipoOt   = $('#equipo_ot');
+            const $tipoCarga  = $('#tipo_carga'); // <-- BD
+
             const $cliente    = $('#cliente');
+            const $contacto   = $('#contacto');
+            const $tel        = $('#telefono_contacto');
+            const $correo     = $('#correo_contacto');
+
             const $origen     = $('#origen');
             const $destino    = $('#destino');
+
             const $conductor  = $('#conductor');
 
-            const $contacto   = $('input[name="contacto"]');
-            const $tel        = $('input[name="telefono_contacto"]');
-            const $correo     = $('input[name="correo_contacto"]');
-
-            // --- Select2 OT + autocompletado de campos ---
             if ($otSelect.length) {
                 $otSelect.select2({
                     theme: 'bootstrap4',
@@ -545,11 +437,28 @@
                 });
 
                 $otSelect.on('change', function () {
+                    const otId = $(this).val();
                     const $opt = $(this).find('option:selected');
-                    if (!$opt.length) {
+
+                    if (!otId) {
+                        $autoBlock.hide();
+
+                        $folioOt.val('');
+                        $equipoOt.val('');
+                        $cliente.val('');
+                        $contacto.val('');
+                        $tel.val('');
+                        $correo.val('');
+                        $origen.val('').prop('readonly', false);
+                        $destino.val('').prop('readonly', false);
+                        $conductor.val('');
+                        $tipoCarga.val('');
+
                         return;
                     }
 
+                    const folio     = $opt.data('folio')     || '';
+                    const equipo    = $opt.data('equipo')    || '';
                     const cliente   = $opt.data('cliente')   || '';
                     const contacto  = $opt.data('contacto')  || '';
                     const telefono  = $opt.data('telefono')  || '';
@@ -558,71 +467,43 @@
                     const destino   = $opt.data('destino')   || '';
                     const conductor = $opt.data('conductor') || '';
 
+                    $autoBlock.show();
+
+                    $folioOt.val(folio);
+                    $equipoOt.val(equipo);
+                    $tipoCarga.val(equipo); // 🔥 GUARDA EN BD
+
                     $cliente.val(cliente);
                     $contacto.val(contacto);
                     $tel.val(telefono);
                     $correo.val(correo);
-                    $origen.val(origen);
-                    $destino.val(destino);
+
+                    // Origen/Destino: si vienen desde OT, bloquea. Si no vienen, deja editable.
+                    if (origen) {
+                        $origen.val(origen).prop('readonly', true);
+                    } else {
+                        $origen.prop('readonly', false);
+                    }
+
+                    if (destino) {
+                        $destino.val(destino).prop('readonly', true);
+                    } else {
+                        $destino.prop('readonly', false);
+                    }
+
                     $conductor.val(conductor);
                 });
 
+                // estado inicial
+                $autoBlock.hide();
                 if ($otSelect.val()) {
                     $otSelect.trigger('change');
                 }
             }
-
-            // --- Lógica tipo_carga (radios + otro) ---
-            function syncTipoCarga() {
-                const $radios    = $('input[name="tipo_carga_radio"]');
-                const $checked   = $radios.filter(':checked');
-                const $hidden    = $('#tipo_carga_hidden');
-                const $otroInput = $('#tipo_carga_otro');
-
-                if (!$hidden.length) return;
-
-                if ($checked.length) {
-                    if ($checked.val() === '__otro__') {
-                        $hidden.val($otroInput.val() || '');
-                    } else {
-                        $hidden.val($checked.val());
-                    }
-                } else {
-                    if ($hidden.val()) {
-                        $radios.each(function () {
-                            if (this.value === $hidden.val()) {
-                                this.checked = true;
-                            }
-                        });
-                    }
-                }
-            }
-
-            const $radios    = $('input[name="tipo_carga_radio"]');
-            const $otroRadio = $('#tipo_otro');
-            const $otroInput = $('#tipo_carga_otro');
-
-            $radios.on('change', function () {
-                if ($otroRadio.is(':checked')) {
-                    $otroInput.prop('disabled', false).focus();
-                } else {
-                    $otroInput.prop('disabled', true);
-                }
-                syncTipoCarga();
-            });
-
-            $otroInput.on('input', syncTipoCarga);
-
-            if ($otroRadio.is(':checked')) {
-                $otroInput.prop('disabled', false);
-            }
-
-            syncTipoCarga();
         });
     </script>
 
     <script>
-        // Misma lógica de compresión que en entregas:
         function compressImage(file, maxWidth = 1280, maxHeight = 1280, quality = 0.8) {
             return new Promise((resolve, reject) => {
                 const img = new Image();
@@ -637,7 +518,6 @@
                         width = maxWidth;
                         height = Math.round(width / aspectRatio);
                     }
-
                     if (height > maxHeight) {
                         height = maxHeight;
                         width = Math.round(height * aspectRatio);
@@ -653,10 +533,7 @@
                     canvas.toBlob(
                         (blob) => {
                             URL.revokeObjectURL(url);
-                            if (!blob) {
-                                reject(new Error('No se pudo generar el blob'));
-                                return;
-                            }
+                            if (!blob) return reject(new Error('No se pudo generar el blob'));
 
                             const compressedFile = new File([blob], file.name, {
                                 type: 'image/jpeg',
@@ -664,12 +541,7 @@
                             });
 
                             const reader = new FileReader();
-                            reader.onload = () => {
-                                resolve({
-                                    file: compressedFile,
-                                    dataUrl: reader.result,
-                                });
-                            };
+                            reader.onload = () => resolve({ file: compressedFile, dataUrl: reader.result });
                             reader.readAsDataURL(blob);
                         },
                         'image/jpeg',
@@ -698,7 +570,6 @@
                 dt.items.add(compressedFile);
                 input.files = dt.files;
 
-                // Límite 4 MB (puedes cambiar a 5 si quieres)
                 const maxBytes = 4 * 1024 * 1024;
                 if (compressedFile.size > maxBytes) {
                     alert('La imagen sigue pesando más de 4 MB. Intenta con una foto más liviana.');
@@ -707,7 +578,6 @@
                 const img = previewWrap.querySelector('img');
                 img.src = dataUrl;
                 previewWrap.style.display = 'block';
-
             } catch (e) {
                 console.error(e);
                 alert('No se pudo procesar la imagen seleccionada.');
