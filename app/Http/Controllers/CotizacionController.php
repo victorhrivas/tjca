@@ -9,6 +9,8 @@ use App\Repositories\CotizacionRepository;
 use App\Models\CotizacionCarga;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\CotizacionPdfMail;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Flash;
 use App\Models\Ot;
@@ -298,6 +300,43 @@ class CotizacionController extends AppBaseController
 
         return $pdf->stream($fileName);
     }
+
+    public function sendPdf(Request $request, $id)
+    {
+        $cotizacion = Cotizacion::with(['solicitud.cliente', 'ot', 'user', 'cargas'])
+            ->findOrFail($id);
+
+        $request->validate([
+            'email' => ['required', 'email'],
+        ]);
+
+        // Generar PDF (binario)
+        $pdf = Pdf::loadView('cotizacions.pdf', [
+            'cotizacion' => $cotizacion,
+        ])->setPaper('A4', 'portrait');
+
+        $fileName = 'cotizacion_' . $cotizacion->id . '.pdf';
+        $pdfBinary = $pdf->output();
+
+        // Enviar correo con adjunto
+        Mail::to($request->input('email'))
+            ->send(new CotizacionPdfMail($cotizacion, $pdfBinary, $fileName));
+
+        // 👉 CAMBIAR ESTADO A ENVIADA (solo si no lo está)
+        if ($cotizacion->estado !== 'enviada') {
+            $cotizacion->update([
+                'estado' => 'enviada',
+            ]);
+        }
+
+        // Responder con URL para descargar/abrir el PDF
+        return response()->json([
+            'ok' => true,
+            'download_url' => route('cotizacions.pdf', $cotizacion->id),
+        ]);
+    }
+
+
 
     /**
      * Generar OT desde una cotización.

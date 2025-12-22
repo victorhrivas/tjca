@@ -26,6 +26,7 @@ class Entrega extends Model
         'foto_1',
         'foto_2',
         'foto_3',
+        'foto_guia_despacho', // <-- agregar
     ];
 
     protected $casts = [

@@ -147,10 +147,9 @@
         @foreach($ot->inicioCargas as $inicioCarga)
             @php
                 $tieneFotos = $inicioCarga->foto_1 || $inicioCarga->foto_2 || $inicioCarga->foto_3;
-                $tieneGuia  = !empty($inicioCarga->foto_guia_despacho);
             @endphp
 
-            @if($tieneFotos || $tieneGuia)
+            @if($tieneFotos)
                 <div class="col-12 mb-2">
                     <small class="text-muted">
                         Inicio de carga #{{ $inicioCarga->id }}
@@ -175,26 +174,6 @@
                         </div>
                     @endif
                 @endforeach
-
-                @if($tieneGuia)
-                    <div class="col-12 mb-2">
-                        <small class="text-muted">
-                            Guía de despacho (Inicio de carga #{{ $inicioCarga->id }})
-                        </small>
-                    </div>
-
-                    <div class="col-sm-6 col-md-3 mb-3">
-                        <div class="card bg-dark border-0 shadow-sm h-100">
-                            <div class="card-body p-2 d-flex align-items-center justify-content-center">
-                                <img src="{{ asset('storage/'.$inicioCarga->foto_guia_despacho) }}"
-                                    alt="Guía de despacho"
-                                    class="img-fluid rounded"
-                                    style="max-height: 180px; object-fit: cover; cursor:pointer;"
-                                    onclick="openImageOverlay('{{ asset('storage/'.$inicioCarga->foto_guia_despacho) }}')">
-                            </div>
-                        </div>
-                    </div>
-                @endif
             @endif
         @endforeach
     @endif
@@ -217,9 +196,10 @@
         @foreach($ot->entregas as $entrega)
             @php
                 $tieneFotosEntrega = $entrega->foto_1 || $entrega->foto_2 || $entrega->foto_3;
+                $tieneGuiaEntrega  = !empty($entrega->foto_guia_despacho);
             @endphp
 
-            @if($tieneFotosEntrega)
+            @if($tieneFotosEntrega || $tieneGuiaEntrega)
                 <div class="col-12 mb-2">
                     <small class="text-muted">
                         Entrega #{{ $entrega->id }}
@@ -232,24 +212,47 @@
                     </small>
                 </div>
 
+                {{-- Fotos entrega --}}
                 @foreach (['foto_1', 'foto_2', 'foto_3'] as $foto)
                     @if(!empty($entrega->$foto))
                         <div class="col-sm-6 col-md-3 mb-3">
                             <div class="card bg-dark border-0 shadow-sm h-100">
                                 <div class="card-body p-2 d-flex align-items-center justify-content-center">
                                     <img src="{{ asset('storage/'.$entrega->$foto) }}"
-                                         alt="Foto entrega"
-                                         class="img-fluid rounded"
-                                         style="max-height: 180px; object-fit: cover; cursor:pointer;"
-                                         onclick="openImageOverlay('{{ asset('storage/'.$entrega->$foto) }}')">
+                                        alt="Foto entrega"
+                                        class="img-fluid rounded"
+                                        style="max-height: 180px; object-fit: cover; cursor:pointer;"
+                                        onclick="openImageOverlay('{{ asset('storage/'.$entrega->$foto) }}')">
                                 </div>
                             </div>
                         </div>
                     @endif
                 @endforeach
+
+                {{-- Guía de despacho (desde entrega) --}}
+                @if($tieneGuiaEntrega)
+                    <div class="col-12 mb-2">
+                        <small class="text-muted">
+                            Guía de despacho (Entrega #{{ $entrega->id }})
+                        </small>
+                    </div>
+
+                    <div class="col-sm-6 col-md-3 mb-3">
+                        <div class="card bg-dark border-0 shadow-sm h-100">
+                            <div class="card-body p-2 d-flex align-items-center justify-content-center">
+                                <img src="{{ asset('storage/'.$entrega->foto_guia_despacho) }}"
+                                    alt="Guía de despacho"
+                                    class="img-fluid rounded"
+                                    style="max-height: 180px; object-fit: cover; cursor:pointer;"
+                                    onclick="openImageOverlay('{{ asset('storage/'.$entrega->foto_guia_despacho) }}')">
+                            </div>
+                        </div>
+                    </div>
+                @endif
             @endif
         @endforeach
     @endif
+
 
     @if(
         (!$ot->inicioCargas || !$ot->inicioCargas->count())

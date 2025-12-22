@@ -114,36 +114,78 @@
                     </div>
                 </div>
 
-                {{-- Fotos de la entrega --}}
+
+                {{-- Fotos de la carga --}}
                 @if($entrega->foto_1 || $entrega->foto_2 || $entrega->foto_3)
-                    <div class="row mt-4">
-                        <div class="col-md-12">
-                            <h5><strong>Fotos de la entrega</strong></h5>
-                            <hr>
+                    <hr class="mt-4 mb-3">
+
+                    <div class="card card-outline" style="border-color: rgba(255,255,255,0.06);">
+                        <div class="card-header" style="border-bottom-color: rgba(255,255,255,0.06);">
+                            <h3 class="card-title mb-0">
+                                <i class="fas fa-images mr-1"></i>
+                                Imágenes de la carga
+                            </h3>
+                        </div>
+
+                        <div class="card-body">
+                            <div class="row">
+                                @foreach (['foto_1', 'foto_2', 'foto_3'] as $foto)
+                                    @if(!empty($entrega->$foto))
+                                        <div class="col-md-4 mb-3">
+                                            <div class="card bg-dark border-0 shadow-sm h-100">
+                                                <div class="card-body p-2 d-flex align-items-center justify-content-center">
+                                                    <img src="{{ asset('storage/'.$entrega->$foto) }}"
+                                                         alt="Foto de inicio de carga"
+                                                         class="img-fluid rounded"
+                                                         style="max-height: 220px; object-fit: cover; cursor:pointer;"
+                                                         onclick="openImageOverlay('{{ asset('storage/'.$entrega->$foto) }}')">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
+                                @endforeach
+                            </div>
+                            <small class="text-muted">
+                                Haz clic sobre una imagen para verla en grande.
+                            </small>
                         </div>
                     </div>
+                @endif
 
-                    <div class="row">
-                        @foreach (['foto_1', 'foto_2', 'foto_3'] as $foto)
-                            @if(!empty($entrega->$foto))
+                {{-- Foto guía de despacho --}}
+                @if(!empty($entrega->foto_guia_despacho))
+                    <hr class="mt-4 mb-3">
+
+                    <div class="card card-outline" style="border-color: rgba(255,255,255,0.06);">
+                        <div class="card-header" style="border-bottom-color: rgba(255,255,255,0.06);">
+                            <h3 class="card-title mb-0">
+                                <i class="fas fa-file-alt mr-1"></i>
+                                Guía de despacho
+                            </h3>
+                        </div>
+
+                        <div class="card-body">
+                            <div class="row">
                                 <div class="col-md-4 mb-3">
                                     <div class="card bg-dark border-0 shadow-sm h-100">
                                         <div class="card-body p-2 d-flex align-items-center justify-content-center">
-                                            <img src="{{ asset('storage/'.$entrega->$foto) }}"
-                                                 alt="Foto de entrega"
-                                                 class="img-fluid rounded"
-                                                 style="max-height: 220px; object-fit: cover; cursor:pointer;"
-                                                 onclick="openImageOverlay('{{ asset('storage/'.$entrega->$foto) }}')">
+                                            <img src="{{ asset('storage/'.$entrega->foto_guia_despacho) }}"
+                                                alt="Foto guía de despacho"
+                                                class="img-fluid rounded"
+                                                style="max-height: 220px; object-fit: cover; cursor:pointer;"
+                                                onclick="openImageOverlay('{{ asset('storage/'.$entrega->foto_guia_despacho) }}')">
                                         </div>
                                     </div>
                                 </div>
-                            @endif
-                        @endforeach
+                            </div>
+
+                            <small class="text-muted">
+                                Haz clic sobre la imagen para verla en grande.
+                            </small>
+                        </div>
                     </div>
-                    <small class="text-muted">
-                        Haz clic sobre una imagen para verla en grande.
-                    </small>
                 @endif
+
             </div>
 
             <div class="card-footer">

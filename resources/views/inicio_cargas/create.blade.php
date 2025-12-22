@@ -354,36 +354,6 @@
                         </small>
                     </div>
 
-                    {{-- Foto guía de despacho (opcional) --}}
-                    <div class="col-md-12 mb-3">
-                        <label>Foto guía de despacho (opcional)</label>
-
-                        <div class="photo-grid">
-                            <div class="photo-card">
-                                <label class="photo-upload-label" for="foto_guia_despacho">
-                                    <i class="fas fa-camera"></i>
-                                    <strong>Tomar / subir guía de despacho</strong>
-                                    <span>Foto clara donde se lea el documento.</span>
-
-                                    <input type="file"
-                                        name="foto_guia_despacho"
-                                        id="foto_guia_despacho"
-                                        class="d-none"
-                                        accept="image/*"
-                                        onchange="previewPhoto(this, 'preview_foto_guia_despacho')">
-                                </label>
-
-                                <div id="preview_foto_guia_despacho" class="photo-preview">
-                                    <img src="#" alt="Vista previa guía despacho">
-                                </div>
-                            </div>
-                        </div>
-
-                        <small class="text-muted" style="color: var(--muted);">
-                            Formatos permitidos: JPG, PNG. Máx 4 MB por archivo.
-                        </small>
-                    </div>
-
                     <div class="col-md-12 mb-3">
                         <label>Observaciones</label>
                         <textarea name="observaciones" rows="3" class="form-control">{{ old('observaciones') }}</textarea>

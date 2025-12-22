@@ -50,6 +50,10 @@ Route::middleware(['auth.redirect'])->group(function () {
 
     Route::resource('cotizacions', CotizacionController::class);
     Route::get('cotizacions/{cotizacion}/pdf', [CotizacionController::class, 'pdf'])->name('cotizacions.pdf');
+
+    Route::post('cotizacions/{id}/pdf/send', [App\Http\Controllers\CotizacionController::class, 'sendPdf'])
+        ->name('cotizacions.pdf.send');
+
     Route::post('cotizacions/{cotizacion}/generar-ot', [CotizacionController::class, 'generarOt'])->name('cotizacions.generarOt');
 
     Route::resource('ots', OtController::class);

@@ -295,14 +295,14 @@
                                   placeholder="Comentarios adicionales de la entrega">{{ old('observaciones') }}</textarea>
                     </div>
 
-                    {{-- Fotos (hasta 3 imágenes) --}}
+                    {{-- Fotos de la carga (opcional) --}}
                     <div class="col-md-12 mb-3">
-                        <label>Fotos de la entrega (opcional)</label>
+                        <label>Fotos de la carga (opcional)</label>
 
                         <div class="photo-grid">
                             {{-- FOTO 1 --}}
                             <div class="photo-card">
-                                <label class="photo-upload-label">
+                                <label class="photo-upload-label" for="foto_1">
                                     <i class="fas fa-camera"></i>
                                     <strong>Tomar / subir foto 1</strong>
                                     <span>Toca aquí para abrir la cámara o la galería.</span>
@@ -322,7 +322,7 @@
 
                             {{-- FOTO 2 --}}
                             <div class="photo-card">
-                                <label class="photo-upload-label">
+                                <label class="photo-upload-label" for="foto_2">
                                     <i class="fas fa-camera"></i>
                                     <strong>Tomar / subir foto 2</strong>
                                     <span>Opcional, para más ángulos.</span>
@@ -342,7 +342,7 @@
 
                             {{-- FOTO 3 --}}
                             <div class="photo-card">
-                                <label class="photo-upload-label">
+                                <label class="photo-upload-label" for="foto_3">
                                     <i class="fas fa-camera"></i>
                                     <strong>Tomar / subir foto 3</strong>
                                     <span>Opcional.</span>
@@ -361,11 +361,42 @@
                             </div>
                         </div>
 
-                        <div class="helper-text">
-                            Las imágenes se almacenan como respaldo de la entrega. En celular se abrirá la cámara por defecto
-                            (puedes cambiar a galería si lo deseas).
-                        </div>
+                        <small class="text-muted" style="color: var(--muted);">
+                            Formatos permitidos: JPG, PNG. Máx 4 MB por archivo.
+                        </small>
                     </div>
+
+                    {{-- Foto guía de despacho (opcional) --}}
+                    <div class="col-md-12 mb-3">
+                        <label>Foto guía de despacho (opcional)</label>
+
+                        <div class="photo-grid">
+                            <div class="photo-card">
+                                <label class="photo-upload-label" for="foto_guia_despacho">
+                                    <i class="fas fa-camera"></i>
+                                    <strong>Tomar / subir guía de despacho</strong>
+                                    <span>Foto clara donde se lea el documento.</span>
+
+                                    <input type="file"
+                                        name="foto_guia_despacho"
+                                        id="foto_guia_despacho"
+                                        class="d-none"
+                                        accept="image/*"
+                                        required
+                                        onchange="previewPhoto(this, 'preview_foto_guia_despacho')">
+                                </label>
+
+                                <div id="preview_foto_guia_despacho" class="photo-preview">
+                                    <img src="#" alt="Vista previa guía despacho">
+                                </div>
+                            </div>
+                        </div>
+
+                        <small class="text-muted" style="color: var(--muted);">
+                            Formatos permitidos: JPG, PNG. Máx 4 MB por archivo.
+                        </small>
+                    </div>
+
                     
                 </div>
 

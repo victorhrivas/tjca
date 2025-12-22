@@ -41,7 +41,7 @@ class Cotizacion extends Model
         'origen'       => 'required|string|max:255',
         'destino'      => 'required|string|max:255',
         'cliente'      => 'required|string|max:255',
-        'estado'       => 'required|in:enviada,aceptada,rechazada',
+        'estado'       => 'required|in:pendiente,enviada,aceptada,rechazada',
 
         'cargas'                   => 'required|array|min:1',
         'cargas.*.id'              => 'nullable|integer|exists:cotizacion_cargas,id',
@@ -76,6 +76,8 @@ class Cotizacion extends Model
                 return 'badge-danger';
             case 'enviada':
                 return 'badge-warning';
+            case 'pendiente':
+                return 'badge-info'; // o 'badge-info' si te gusta más
             default:
                 return 'badge-secondary';
         }

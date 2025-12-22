@@ -71,6 +71,7 @@ class EntregaController extends AppBaseController
             'foto_1' => ['nullable', 'image', 'max:10240'], // 10MB
             'foto_2' => ['nullable', 'image', 'max:10240'], // 10MB
             'foto_3' => ['nullable', 'image', 'max:10240'], // 10MB
+            'foto_guia_despacho' => ['required', 'nullable', 'image', 'max:10240'],
         ]);
 
         // Normalizar boolean
@@ -90,6 +91,11 @@ class EntregaController extends AppBaseController
             if ($request->hasFile($campo) && $request->file($campo)->isValid()) {
                 $data[$campo] = $request->file($campo)->store('entregas', 'public');
             }
+        }
+
+        if ($request->hasFile('foto_guia_despacho')) {
+            $path = $request->file('foto_guia_despacho')->store('entregas', 'public');
+            $data['foto_guia_despacho'] = $path;
         }
 
         // Crear entrega

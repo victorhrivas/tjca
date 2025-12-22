@@ -312,7 +312,7 @@ class SolicitudController extends AppBaseController
             'solicitante'  => $solicitud->solicitante
                             ?? $cliente->razon_social
                             ?? auth()->user()->name,
-            'estado'       => 'enviada',
+            'estado'       => 'pendiente',
 
             // por ahora lo dejamos 0, se recalcula con cargas
             'monto'        => 0,
