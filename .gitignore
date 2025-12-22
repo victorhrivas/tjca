@@ -1,0 +1,71 @@
+# ===============================
+# Laravel
+# ===============================
+/vendor
+/node_modules
+/public/storage
+/storage/*.key
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Laravel cache / compiled
+/bootstrap/cache/*
+!/bootstrap/cache/.gitignore
+
+/storage/app/*
+!/storage/app/public
+
+/storage/framework/*
+!/storage/framework/.gitignore
+
+/storage/logs/*
+!/storage/logs/.gitignore
+
+# ===============================
+# Vite / Frontend
+# ===============================
+
+# Vite dev server (MUY IMPORTANTE)
+public/hot
+
+# Build generado en servidor (opcional)
+# Si compilas SIEMPRE en servidor, déjalo ignorado
+/public/build
+
+# Si prefieres versionar build (no recomendado), comenta la línea de arriba
+
+# ===============================
+# Node / JS
+# ===============================
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ===============================
+# IDE / OS
+# ===============================
+.idea
+.vscode
+.DS_Store
+Thumbs.db
+
+# ===============================
+# Testing / Coverage
+# ===============================
+/coverage
+
+# ===============================
+# Logs
+# ===============================
+*.log
+
+# ===============================
+# Misc
+# ===============================
+*.bak
+*.old
+*.swp
