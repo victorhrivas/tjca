@@ -1,61 +1,61 @@
 =========================================
-  DEPLOY – PROYECTO TJCA (AWS – APACHE)
+  DEPLOY – TJCA (AWS – APACHE) [SEGURO]
 =========================================
 
-# 1) Conectarse a la EC2 (si aún no estás dentro)
+# 0) Conectarse
 ssh -i "pirca.pem" ubuntu@ec2-18-223-238-56.us-east-2.compute.amazonaws.com
 
-# 2) Entrar al proyecto
+# 1) Ir al proyecto
 cd /var/www/pirca/tjca
 
-
-# 3) (Solo si alguna vez vuelve a aparecer error “dubious ownership”)
+# 2) (Solo si aparece “dubious ownership”)
 git config --global --add safe.directory /var/www/pirca/tjca
 
-
-# 4) Bajar últimos cambios del repositorio
+# 3) Actualizar código
 git pull
 
-
-# -------------------------------------------------------
-# SOLO SI SE MODIFICARON COMPOSER.JSON O DEPENDENCIAS PHP
-# -------------------------------------------------------
+# 4) (Solo si cambió composer.json / composer.lock)
 composer install --no-dev --optimize-autoloader
 
-
-# -------------------------------------------------------
-# SOLO SI SE MODIFICARON ARCHIVOS JS/CSS (Vite)
-# -------------------------------------------------------
-npm ci          # o npm install si no hay package-lock actualizado
+# 5) (Solo si cambió package.json / package-lock.json o assets JS/CSS)
+#    IMPORTANTE: compilar como ubuntu y con build en manos de ubuntu (evita EACCES)
+sudo chown -R ubuntu:ubuntu public/build storage bootstrap/cache || true
+rm -rf public/build
+npm ci
 npm run build
+sudo chown -R www-data:www-data public/build storage bootstrap/cache
+sudo find public/build -type d -exec chmod 755 {} \;
+sudo find public/build -type f -exec chmod 644 {} \;
 
+# 6) (Solo si hay migraciones nuevas)
+php artisan migrate --force
 
-# -------------------------------------------------------
-# SOLO SI SE AGREGA O CAMBIA UNA MIGRACIÓN
-# -------------------------------------------------------
-# php artisan migrate --forcé
-php artisan migrate:fresh --seed --seeder=DatosRealesSeeder
-
-
-# -------------------------------------------------------
-# RECONSTRUIR CACHÉS DE LARAVEL (opcional pero recomendado)
-# -------------------------------------------------------
-php artisan config:clear
-php artisan cache:clear
-php artisan route:clear
-php artisan view:clear
+# 7) Limpieza/cachés (recomendado cuando hay cambios de config/rutas/vistas)
+php artisan optimize:clear
 php artisan config:cache
+php artisan route:cache || true
+php artisan view:cache || true
 
-
-# -------------------------------------------------------
-# REINICIAR O RECARGAR APACHE (si cambiaste config del server)
-# -------------------------------------------------------
+# 8) Recargar Apache (solo si cambiaste config; si no, igual sirve y es rápido)
 sudo systemctl reload apache2
-# Si algo no funciona bien:
-# sudo systemctl restart apache2
 
 
 =========================================
-Listo. Visitar:
-https://tjca.pircasolutions.cl
+  CHECKS RÁPIDOS (cuando “no carga JS”)
+=========================================
+
+# A) Asegura que NO exista public/hot (si existe, rompe producción)
+rm -f public/hot
+
+# B) Ver que el HTML esté incluyendo /build/assets
+curl -s https://tjca.pircasolutions.cl | grep -Eo "/build/assets/[^\"']+\.(js|css)" | head -n 20
+
+# C) Ver headers del asset (debe ser 200)
+curl -I https://tjca.pircasolutions.cl/build/assets/$(ls -1 public/build/assets | grep '\.js$' | head -n 1) | head -n 20
+
+
+=========================================
+Notas:
+- NUNCA usar migrate:fresh en servidor con datos reales.
+- Asegurar .gitignore: public/hot y .env ignorados.
 =========================================

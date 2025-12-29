@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <title>OT #{{ $ot->id }}</title>
     <style>
-        @page {
-            margin: 40px 40px;
-        }
+        @page { margin: 40px 40px; }
 
         body {
             font-family: DejaVu Sans, Arial, sans-serif;
@@ -14,26 +12,14 @@
             color: #333;
         }
 
-        .header,
-        .footer {
-            width: 100%;
-        }
+        .header, .footer { width: 100%; }
 
-        .header {
-            margin-bottom: 30px;
-        }
+        .header { margin-bottom: 30px; }
 
-        .header-table {
-            width: 100%;
-        }
+        .header-table { width: 100%; }
+        .header-table td { vertical-align: middle; }
 
-        .header-table td {
-            vertical-align: middle;
-        }
-
-        .logo {
-            width: 140px;
-        }
+        .logo { width: 140px; }
 
         .company-name {
             font-size: 16px;
@@ -47,14 +33,9 @@
             color: #777;
         }
 
-        h1 {
-            font-size: 20px;
-            margin: 0 0 5px 0;
-        }
+        h1 { font-size: 20px; margin: 0 0 5px 0; }
 
-        .section {
-            margin-bottom: 18px;
-        }
+        .section { margin-bottom: 18px; }
 
         .section-title {
             font-size: 12px;
@@ -77,15 +58,8 @@
             vertical-align: top;
         }
 
-        .label {
-            font-weight: bold;
-            color: #555;
-            width: 30%;
-        }
-
-        .value {
-            width: 70%;
-        }
+        .label { font-weight: bold; color: #555; width: 30%; }
+        .value { width: 70%; }
 
         .badge {
             display: inline-block;
@@ -101,6 +75,24 @@
         .badge-info      { background-color: #d1ecf1; color: #0c5460; }
         .badge-secondary { background-color: #e2e3e5; color: #383d41; }
 
+        /* Tabla simple para vehículos */
+        table.vehiculos-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 4px;
+        }
+        table.vehiculos-table th,
+        table.vehiculos-table td {
+            border: 1px solid #ddd;
+            padding: 6px 6px;
+            font-size: 11px;
+            vertical-align: top;
+        }
+        table.vehiculos-table th {
+            background: #f5f5f5;
+            text-align: left;
+        }
+
         .footer {
             position: fixed;
             bottom: 20px;
@@ -112,7 +104,7 @@
         }
     </style>
 </head>
-<body>  
+<body>
     {{-- Encabezado corporativo --}}
     <div class="header">
         <table class="header-table">
@@ -126,9 +118,7 @@
                     @endif
                 </td>
                 <td>
-                    <div class="company-name">
-                        Transportes TJCA
-                    </div>
+                    <div class="company-name">Transportes TJCA</div>
                     <div class="company-extra">
                         Direccion: Av. Los Pescadores #4639, Coquimbo.<br>
                         Telefono: 971097698
@@ -144,28 +134,18 @@
 
         @php
             switch ($ot->estado) {
-                case 'entregada':
-                    $badgeClass = 'badge-success';
-                    break;
-                case 'en_transito':
-                    $badgeClass = 'badge-warning';
-                    break;
-                case 'inicio_carga':
-                    $badgeClass = 'badge-info';
-                    break;
-                default:
-                    $badgeClass = 'badge-secondary';
-                    break;
+                case 'entregada':    $badgeClass = 'badge-success'; break;
+                case 'en_transito':  $badgeClass = 'badge-warning'; break;
+                case 'inicio_carga': $badgeClass = 'badge-info'; break;
+                case 'con_incidencia': $badgeClass = 'badge-danger'; break;
+                default:             $badgeClass = 'badge-secondary'; break;
             }
-
             $estadoLabel = ucwords(str_replace('_', ' ', $ot->estado));
         @endphp
 
         <p>
             Estado:
-            <span class="badge {{ $badgeClass }}">
-                {{ $estadoLabel }}
-            </span>
+            <span class="badge {{ $badgeClass }}">{{ $estadoLabel }}</span>
         </p>
 
         <p>
@@ -182,38 +162,30 @@
         <table class="info-table">
             <tr>
                 <td class="label">Folio OT:</td>
-                <td class="value">
-                    {{ $ot->folio ?? 'Sin folio asignado' }}
-                </td>
+                <td class="value">{{ $ot->folio ?? 'Sin folio asignado' }}</td>
             </tr>
             <tr>
                 <td class="label">Cliente:</td>
                 <td class="value">
-                    {{ $ot->cliente
-                        ?? optional($ot->cotizacion)->cliente
-                        ?? 'No informado' }}
+                    {{ $ot->cliente ?? optional($ot->cotizacion)->cliente ?? 'No informado' }}
                 </td>
             </tr>
             <tr>
                 <td class="label">Origen:</td>
                 <td class="value">
-                    {{ $ot->origen
-                        ?? optional($ot->cotizacion)->origen
-                        ?? 'No especificado' }}
+                    {{ $ot->origen ?? optional($ot->cotizacion)->origen ?? 'No especificado' }}
                 </td>
             </tr>
             <tr>
                 <td class="label">Destino:</td>
                 <td class="value">
-                    {{ $ot->destino
-                        ?? optional($ot->cotizacion)->destino
-                        ?? 'No especificado' }}
+                    {{ $ot->destino ?? optional($ot->cotizacion)->destino ?? 'No especificado' }}
                 </td>
             </tr>
+
             @php
                 $cargasOt = optional($ot->cotizacion)->cargas ?? collect();
 
-                // fallback: si no hay cargas (cotizaciones antiguas)
                 $itemsOt = $cargasOt->count()
                     ? $cargasOt
                     : collect([ (object)[
@@ -243,6 +215,7 @@
                     @endif
                 </td>
             </tr>
+
             <tr>
                 <td class="label">Fecha de servicio:</td>
                 <td class="value">
@@ -252,23 +225,67 @@
         </table>
     </div>
 
-    {{-- Datos operativos (sin ubicación) --}}
+    {{-- Datos operativos --}}
     <div class="section">
         <div class="section-title">Datos operativos</div>
+
+        @php
+            // Preferir relación (si viene cargada). Si no hay, fallback a legacy.
+            $vehiculos = $ot->vehiculos ?? collect();
+        @endphp
+
         <table class="info-table">
             <tr>
                 <td class="label">Solicitante:</td>
                 <td class="value">{{ $ot->solicitante ?: 'No informado' }}</td>
             </tr>
-            <tr>
-                <td class="label">Conductor:</td>
-                <td class="value">{{ $ot->conductor ?: 'No asignado' }}</td>
-            </tr>
-            <tr>
-                <td class="label">Patente camión:</td>
-                <td class="value">{{ $ot->patente_camion ?: 'No registrada' }}</td>
-            </tr>
         </table>
+
+        <div style="height: 6px;"></div>
+
+        @if($vehiculos->count())
+            <table class="vehiculos-table">
+                <thead>
+                    <tr>
+                        <th style="width:60px;">#</th>
+                        <th>Conductor</th>
+                        <th>Patente camión</th>
+                        <th>Patente remolque</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($vehiculos as $i => $v)
+                        <tr>
+                            <td>
+                                {{ $i + 1 }}
+                            </td>
+                            <td>{{ $v->conductor ?: 'No asignado' }}</td>
+                            <td>{{ $v->patente_camion ?: 'No registrada' }}</td>
+                            <td>{{ $v->patente_remolque ?: 'No registrada' }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+            <div style="font-size:10px;color:#777;margin-top:4px;">
+                (P) = Principal
+            </div>
+        @else
+            {{-- Fallback legacy --}}
+            <table class="info-table">
+                <tr>
+                    <td class="label">Conductor:</td>
+                    <td class="value">{{ $ot->conductor ?: 'No asignado' }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Patente camión:</td>
+                    <td class="value">{{ $ot->patente_camion ?: 'No registrada' }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Patente remolque:</td>
+                    <td class="value">{{ $ot->patente_remolque ?: 'No registrada' }}</td>
+                </tr>
+            </table>
+        @endif
     </div>
 
     {{-- Datos de origen --}}
@@ -277,21 +294,15 @@
         <table class="info-table">
             <tr>
                 <td class="label">Contacto:</td>
-                <td class="value">
-                    {{ $ot->contacto_origen ?: 'Sin información' }}
-                </td>
+                <td class="value">{{ $ot->contacto_origen ?: 'Sin información' }}</td>
             </tr>
             <tr>
                 <td class="label">Número de contacto:</td>
-                <td class="value">
-                    {{ $ot->telefono_origen ?: 'Sin información' }}
-                </td>
+                <td class="value">{{ $ot->telefono_origen ?: 'Sin información' }}</td>
             </tr>
             <tr>
                 <td class="label">Dirección:</td>
-                <td class="value">
-                    {{ $ot->direccion_origen ?: 'Sin información' }}
-                </td>
+                <td class="value">{{ $ot->direccion_origen ?: 'Sin información' }}</td>
             </tr>
             <tr>
                 <td class="label">Ubicación (Google Maps):</td>
@@ -312,21 +323,15 @@
         <table class="info-table">
             <tr>
                 <td class="label">Contacto:</td>
-                <td class="value">
-                    {{ $ot->contacto_destino ?: 'Sin información' }}
-                </td>
+                <td class="value">{{ $ot->contacto_destino ?: 'Sin información' }}</td>
             </tr>
             <tr>
                 <td class="label">Número de contacto:</td>
-                <td class="value">
-                    {{ $ot->telefono_destino ?: 'Sin información' }}
-                </td>
+                <td class="value">{{ $ot->telefono_destino ?: 'Sin información' }}</td>
             </tr>
             <tr>
                 <td class="label">Dirección:</td>
-                <td class="value">
-                    {{ $ot->direccion_destino ?: 'Sin información' }}
-                </td>
+                <td class="value">{{ $ot->direccion_destino ?: 'Sin información' }}</td>
             </tr>
             <tr>
                 <td class="label">Ubicación (Google Maps):</td>
@@ -348,9 +353,7 @@
     {{-- Observaciones --}}
     <div class="section">
         <div class="section-title">Observaciones</div>
-        <p>
-            {{ $ot->observaciones ?? 'Sin observaciones registradas.' }}
-        </p>
+        <p>{{ $ot->observaciones ?? 'Sin observaciones registradas.' }}</p>
     </div>
 
     <div class="footer">

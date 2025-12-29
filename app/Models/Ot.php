@@ -125,4 +125,43 @@ class Ot extends Model
         return $this->hasMany(\App\Models\Entrega::class, 'ot_id');
     }
 
+    public function vehiculos()
+    {
+        return $this->hasMany(\App\Models\OtVehiculo::class, 'ot_id')->orderBy('orden');
+    }
+
+    public function vehiculoPrincipal()
+    {
+        return $this->hasOne(\App\Models\OtVehiculo::class, 'ot_id')->orderBy('orden');
+    }
+
+    public function getConductorAttribute($value)
+    {
+        $principal = $this->relationLoaded('vehiculoPrincipal')
+            ? $this->getRelation('vehiculoPrincipal')
+            : $this->vehiculoPrincipal()->first();
+
+        return $principal?->conductor ?? $value;
+    }
+
+    public function getPatenteCamionAttribute($value)
+    {
+        $principal = $this->relationLoaded('vehiculoPrincipal')
+            ? $this->getRelation('vehiculoPrincipal')
+            : $this->vehiculoPrincipal()->first();
+
+        return $principal?->patente_camion ?? $value;
+    }
+
+    public function getPatenteRemolqueAttribute($value)
+    {
+        $principal = $this->relationLoaded('vehiculoPrincipal')
+            ? $this->getRelation('vehiculoPrincipal')
+            : $this->vehiculoPrincipal()->first();
+
+        return $principal?->patente_remolque ?? $value;
+    }
+
+
+
 }

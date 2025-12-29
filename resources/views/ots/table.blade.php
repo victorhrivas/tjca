@@ -7,8 +7,10 @@
                 <th>Cliente</th>
                 <th>Origen</th>
                 <th>Destino</th>
-                <th>Conductor</th>
-                <th>Pat. Camión</th>
+
+                {{-- Mostrar N vehículos --}}
+                <th>Vehículos</th>
+
                 <th>Estado</th>
                 <th colspan="3">Acciones</th>
             </tr>
@@ -17,7 +19,6 @@
             <tbody>
             @foreach($ots as $ot)
                 @php
-                    // Mapeo de estados con estilos similares a Cotizaciones
                     $estadosDisponibles = [
                         'pendiente'      => ['label' => 'Pendiente',       'class' => 'bg-warning text-dark'],
                         'inicio_carga'   => ['label' => 'Inicio de carga', 'class' => 'bg-info text-white'],
@@ -29,8 +30,6 @@
                     $estadoActual = $ot->estado ?? 'pendiente';
                     $cfg = $estadosDisponibles[$estadoActual] ?? $estadosDisponibles['pendiente'];
 
-                    // Fallback para compatibilidad hacia atrás:
-                    // si el campo en OT viene nulo, usamos lo de la solicitud/cotización.
                     $clienteNombre = $ot->cliente
                         ?? optional(optional(optional($ot->cotizacion)->solicitud)->cliente)->razon_social
                         ?? '-';
@@ -42,30 +41,74 @@
                     $destino = $ot->destino
                         ?? optional(optional($ot->cotizacion)->solicitud)->destino
                         ?? '-';
+
+                    // Vehículos: preferir relación si viene eager-loaded.
+                    // Fallback: si no hay relación, construir 1 “vehículo” desde legacy.
+                    $vehiculos = $ot->vehiculos ?? collect();
+
+                    $tieneLegacy = !empty($ot->conductor) || !empty($ot->patente_camion) || !empty($ot->patente_remolque);
+
+                    if ($vehiculos->isEmpty() && $tieneLegacy) {
+                        $vehiculos = collect([(object)[
+                            'conductor' => $ot->conductor,
+                            'patente_camion' => $ot->patente_camion,
+                            'patente_remolque' => $ot->patente_remolque,
+                        ]]);
+                    }
                 @endphp
 
                 <tr>
-                    {{-- OT (folio visible + id interno en pequeño) --}}
+                    {{-- OT --}}
                     <td>
                         @if($ot->folio)
                             <strong>{{ $ot->folio }}</strong><br>
                         @else
-                            #{{ $ot->id }}
+                            <strong>#{{ $ot->id }}</strong><br>
                         @endif
+                        <small class="text-muted">ID: {{ $ot->id }}</small>
                     </td>
 
-                    {{-- Cliente (AHORA desde OT, con fallback a solicitud) --}}
                     <td>{{ $clienteNombre }}</td>
-
-                    {{-- Origen / Destino (AHORA desde OT, con fallback a solicitud) --}}
                     <td>{{ $origen }}</td>
                     <td>{{ $destino }}</td>
 
-                    {{-- Conductor / Patentes (ya venían desde OT) --}}
-                    <td>{{ $ot->conductor ?: '-' }}</td>
-                    <td>{{ $ot->patente_camion ?: '-' }}</td>
+                    {{-- Vehículos (N) --}}
+                    <td style="min-width: 260px;">
+                        @if($vehiculos->isEmpty())
+                            <span class="text-muted">—</span>
+                        @else
+                            {{-- Resumen + detalle expandible --}}
+                            <div>
+                                <span class="badge badge-secondary" style="border-radius:6px;">
+                                    {{ $vehiculos->count() }} vehículo{{ $vehiculos->count() === 1 ? '' : 's' }}
+                                </span>
 
-                    {{-- ESTADO: badge + dropdown para cambiar --}}
+                                <details class="mt-1">
+                                    <summary class="text-muted" style="cursor:pointer; font-size:12px;">
+                                        Ver lista
+                                    </summary>
+
+                                    <div class="mt-2">
+                                        @foreach($vehiculos as $i => $v)
+                                            <div class="text-muted" style="font-size: 12px; line-height: 1.25; margin-bottom: 6px;">
+                                                <strong>#{{ $i + 1 }}</strong>
+                                                · {{ $v->conductor ?: 'Sin conductor' }}
+                                                <br>
+                                                <span>
+                                                    Camión: {{ $v->patente_camion ?: '—' }}
+                                                    @if(!empty($v->patente_remolque))
+                                                        · Remolque: {{ $v->patente_remolque }}
+                                                    @endif
+                                                </span>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </details>
+                            </div>
+                        @endif
+                    </td>
+
+                    {{-- Estado --}}
                     <td>
                         <div class="btn-group">
                             <button type="button"
@@ -102,33 +145,28 @@
                         </div>
                     </td>
 
-                    {{-- ACCIONES --}}
+                    {{-- Acciones --}}
                     <td style="width: 150px">
                         {!! Form::open(['route' => ['ots.destroy', $ot->id], 'method' => 'delete']) !!}
                         <div class="btn-group">
-
-                            {{-- Ver --}}
                             <a href="{{ route('ots.show', $ot->id) }}"
                                class="btn btn-default btn-xs"
                                title="Ver">
                                 <i class="far fa-eye"></i>
                             </a>
 
-                            {{-- Editar --}}
                             <a href="{{ route('ots.edit', $ot->id) }}"
                                class="btn btn-default btn-xs"
                                title="Editar">
                                 <i class="far fa-edit"></i>
                             </a>
 
-                            {{-- Eliminar --}}
                             {!! Form::button('<i class="far fa-trash-alt"></i>', [
                                 'type'    => 'submit',
                                 'class'   => 'btn btn-danger btn-xs',
                                 'title'   => 'Eliminar',
                                 'onclick' => "return confirm('¿Eliminar esta OT?')"
                             ]) !!}
-
                         </div>
                         {!! Form::close() !!}
                     </td>

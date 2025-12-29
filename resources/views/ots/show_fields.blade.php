@@ -56,33 +56,68 @@
         </div>
     </div>
 
-    {{-- Conductor --}}
-    <div class="col-md-6">
-        <div class="mb-4">
-            <h6 class="text-uppercase text-muted small mb-1">Conductor</h6>
-            <p class="mb-0 font-weight-bold">
-                {{ $ot->conductor ?: 'No asignado' }}
-            </p>
-        </div>
-    </div>
+    {{-- =========================
+         VEHÍCULOS / CHOFERES (N)
+       ========================= --}}
+    <div class="col-12">
+        <hr>
+        <h6 class="text-uppercase text-muted small mb-2">Vehículos / choferes asignados</h6>
 
-    {{-- Patentes --}}
-    <div class="col-md-6">
-        <div class="mb-4">
-            <h6 class="text-uppercase text-muted small mb-1">Patente camión</h6>
-            <p class="mb-0">
-                {{ $ot->patente_camion ?: 'No registrada' }}
-            </p>
-        </div>
-    </div>
+        @php
+            // Preferir relación. Si no viene cargada, igual funciona si existe accessor legacy.
+            $vehiculos = $ot->vehiculos ?? collect();
+        @endphp
 
-    <div class="col-md-6">
-        <div class="mb-4">
-            <h6 class="text-uppercase text-muted small mb-1">Patente remolque</h6>
-            <p class="mb-0">
-                {{ $ot->patente_remolque ?: 'No registrada' }}
-            </p>
-        </div>
+        @if($vehiculos->count())
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered mb-4">
+                    <thead class="thead-light">
+                        <tr>
+                            <th style="width: 80px;">#</th>
+                            <th>Conductor</th>
+                            <th>Patente camión</th>
+                            <th>Patente remolque</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($vehiculos as $i => $v)
+                            <tr>
+                                <td>
+                                    <span class="badge badge-secondary">{{ $i + 1 }}</span>
+                                </td>
+                                <td>{{ $v->conductor ?: 'No asignado' }}</td>
+                                <td>{{ $v->patente_camion ?: 'No registrada' }}</td>
+                                <td>{{ $v->patente_remolque ?: 'No registrada' }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @else
+            {{-- Fallback legacy (por si aún no hiciste backfill / OT antigua) --}}
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <h6 class="text-uppercase text-muted small mb-1">Conductor</h6>
+                        <p class="mb-0 font-weight-bold">{{ $ot->conductor ?: 'No asignado' }}</p>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <h6 class="text-uppercase text-muted small mb-1">Patente camión</h6>
+                        <p class="mb-0">{{ $ot->patente_camion ?: 'No registrada' }}</p>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <h6 class="text-uppercase text-muted small mb-1">Patente remolque</h6>
+                        <p class="mb-0">{{ $ot->patente_remolque ?: 'No registrada' }}</p>
+                    </div>
+                </div>
+            </div>
+        @endif
     </div>
 
     {{-- Estado --}}
@@ -128,7 +163,7 @@
                 {{ optional($ot->updated_at)->format('d/m/Y H:i') }}
             </p>
         </div>
-    </div>  
+    </div>
 </div>
 
 {{-- ========================= --}}
@@ -263,4 +298,3 @@
         </div>
     @endif
 </div>
-
