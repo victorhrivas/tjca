@@ -196,7 +196,23 @@
                         <label>OT</label>
                         <select name="ot_id" id="ot_id" class="form-control" required>
                             <option value="">Selecciona una OT...</option>
+
                             @foreach($ots as $otItem)
+                                @php
+                                    $vehiculosPayload = $otItem->vehiculos
+                                        ->filter(fn($v) => $v->inicioCargas->isEmpty())
+                                        ->map(function($v){
+                                            return [
+                                                'id' => $v->id,
+                                                'orden' => $v->orden,
+                                                'rol' => $v->rol,
+                                                'conductor' => $v->conductor,
+                                                'patente_camion' => $v->patente_camion,
+                                                'patente_remolque' => $v->patente_remolque,
+                                            ];
+                                        })->values();
+                                @endphp
+
                                 <option
                                     value="{{ $otItem->id }}"
                                     data-folio="{{ $otItem->folio }}"
@@ -220,9 +236,26 @@
                                         · {{ $otItem->origen }} → {{ $otItem->destino }}
                                     @endif
                                 </option>
+
+                                {{-- JSON seguro por OT (no se rompe por comillas) --}}
+                                <script type="application/json" id="vehiculos_ot_{{ $otItem->id }}">
+                                    {!! $vehiculosPayload->toJson() !!}
+                                </script>
                             @endforeach
                         </select>
                     </div>
+
+                    {{-- VEHÍCULO (se llena al elegir OT) --}}
+                    <div class="col-md-12 mb-3" id="vehiculo_block" style="display:none;">
+                        <label>Vehículo</label>
+                        <select name="ot_vehiculo_id" id="ot_vehiculo_id" class="form-control">
+                            <option value="">Selecciona un vehículo...</option>
+                        </select>
+                        <small class="text-muted" style="color: var(--muted);">
+                            Si la OT tiene varios vehículos, selecciona cuál realizará este inicio de carga.
+                        </small>
+                    </div>
+
 
                     {{-- Campo oculto requerido por BD --}}
                     <input type="hidden" name="tipo_carga" id="tipo_carga">
@@ -381,12 +414,11 @@
     <script>
         $(function () {
             const $otSelect   = $('#ot_id');
-
             const $autoBlock  = $('.auto-from-ot');
 
             const $folioOt    = $('#ot_folio');
             const $equipoOt   = $('#equipo_ot');
-            const $tipoCarga  = $('#tipo_carga'); // <-- BD
+            const $tipoCarga  = $('#tipo_carga');
 
             const $cliente    = $('#cliente');
             const $contacto   = $('#contacto');
@@ -398,80 +430,145 @@
 
             const $conductor  = $('#conductor');
 
-            if ($otSelect.length) {
-                $otSelect.select2({
-                    theme: 'bootstrap4',
-                    placeholder: 'Buscar OT por número o cliente',
-                    width: '100%',
-                    allowClear: true
-                });
+            const $vehiculoBlock  = $('#vehiculo_block');
+            const $vehiculoSelect = $('#ot_vehiculo_id');
 
-                $otSelect.on('change', function () {
-                    const otId = $(this).val();
-                    const $opt = $(this).find('option:selected');
+            const resetVehiculos = () => {
+                $vehiculoSelect.empty().append('<option value="">Selecciona un vehículo...</option>');
+                $vehiculoBlock.hide();
+            };
 
-                    if (!otId) {
-                        $autoBlock.hide();
-
-                        $folioOt.val('');
-                        $equipoOt.val('');
-                        $cliente.val('');
-                        $contacto.val('');
-                        $tel.val('');
-                        $correo.val('');
-                        $origen.val('').prop('readonly', false);
-                        $destino.val('').prop('readonly', false);
-                        $conductor.val('');
-                        $tipoCarga.val('');
-
-                        return;
-                    }
-
-                    const folio     = $opt.data('folio')     || '';
-                    const equipo    = $opt.data('equipo')    || '';
-                    const cliente   = $opt.data('cliente')   || '';
-                    const contacto  = $opt.data('contacto')  || '';
-                    const telefono  = $opt.data('telefono')  || '';
-                    const correo    = $opt.data('correo')    || '';
-                    const origen    = $opt.data('origen')    || '';
-                    const destino   = $opt.data('destino')   || '';
-                    const conductor = $opt.data('conductor') || '';
-
-                    $autoBlock.show();
-
-                    $folioOt.val(folio);
-                    $equipoOt.val(equipo);
-                    $tipoCarga.val(equipo); // 🔥 GUARDA EN BD
-
-                    $cliente.val(cliente);
-                    $contacto.val(contacto);
-                    $tel.val(telefono);
-                    $correo.val(correo);
-
-                    // Origen/Destino: si vienen desde OT, bloquea. Si no vienen, deja editable.
-                    if (origen) {
-                        $origen.val(origen).prop('readonly', true);
-                    } else {
-                        $origen.prop('readonly', false);
-                    }
-
-                    if (destino) {
-                        $destino.val(destino).prop('readonly', true);
-                    } else {
-                        $destino.prop('readonly', false);
-                    }
-
-                    $conductor.val(conductor);
-                });
-
-                // estado inicial
+            const resetForm = () => {
                 $autoBlock.hide();
-                if ($otSelect.val()) {
-                    $otSelect.trigger('change');
+
+                $folioOt.val('');
+                $equipoOt.val('');
+                $tipoCarga.val('');
+
+                $cliente.val('');
+                $contacto.val('');
+                $tel.val('');
+                $correo.val('');
+
+                $origen.val('').prop('readonly', false);
+                $destino.val('').prop('readonly', false);
+
+                $conductor.val('');
+
+                resetVehiculos();
+            };
+
+            const getVehiculosFromOt = (otId) => {
+                const el = document.getElementById(`vehiculos_ot_${otId}`);
+                if (!el) return [];
+                try {
+                    return JSON.parse(el.textContent || '[]') || [];
+                } catch (e) {
+                    return [];
                 }
-            }
+            };
+
+            if (!$otSelect.length) return;
+
+            $otSelect.select2({
+                theme: 'bootstrap4',
+                placeholder: 'Buscar OT por número o cliente',
+                width: '100%',
+                allowClear: true
+            });
+
+            // Cambio de vehículo -> setea conductor si viene
+            $vehiculoSelect.on('change', function () {
+                const vehId = $(this).val();
+                const $vopt = $(this).find('option:selected');
+
+                if (!vehId) {
+                    const $otOpt = $otSelect.find('option:selected');
+                    $conductor.val($otOpt.data('conductor') || '');
+                    return;
+                }
+
+                const vConductor = $vopt.data('conductor') || '';
+                if (vConductor) $conductor.val(vConductor);
+            });
+
+            // Cambio de OT
+            $otSelect.on('change', function () {
+                const otId = $(this).val();
+                const $opt = $(this).find('option:selected');
+
+                if (!otId) {
+                    resetForm();
+                    return;
+                }
+
+                const folio     = $opt.data('folio')     || '';
+                const equipo    = $opt.data('equipo')    || '';
+                const cliente   = $opt.data('cliente')   || '';
+                const contacto  = $opt.data('contacto')  || '';
+                const telefono  = $opt.data('telefono')  || '';
+                const correo    = $opt.data('correo')    || '';
+                const origen    = $opt.data('origen')    || '';
+                const destino   = $opt.data('destino')   || '';
+                const conductor = $opt.data('conductor') || '';
+
+                // Mostrar campos auto
+                $autoBlock.show();
+
+                // Poblar desde OT
+                $folioOt.val(folio);
+                $equipoOt.val(equipo);
+                $tipoCarga.val(equipo);
+
+                $cliente.val(cliente);
+                $contacto.val(contacto);
+                $tel.val(telefono);
+                $correo.val(correo);
+
+                if (origen) $origen.val(origen).prop('readonly', true);
+                else $origen.val('').prop('readonly', false);
+
+                if (destino) $destino.val(destino).prop('readonly', true);
+                else $destino.val('').prop('readonly', false);
+
+                // Vehículos
+                resetVehiculos();
+                const vehiculos = getVehiculosFromOt(otId);
+
+                if (vehiculos.length > 0) {
+                    vehiculos.forEach(v => {
+                        const parts = [];
+                        parts.push(`Vehículo ${v.orden ?? ''}`.trim());
+                        if (v.rol) parts.push(`(${v.rol})`);
+                        if (v.patente_camion) parts.push(`· ${v.patente_camion}`);
+                        if (v.patente_remolque) parts.push(`· Rem: ${v.patente_remolque}`);
+                        if (v.conductor) parts.push(`· ${v.conductor}`);
+
+                        const $o = $('<option/>', { value: v.id, text: parts.join(' ') });
+                        $o.data('conductor', v.conductor || '');
+                        $vehiculoSelect.append($o);
+                    });
+
+                    $vehiculoBlock.show();
+
+                    if (vehiculos.length === 1) {
+                        $vehiculoSelect.val(String(vehiculos[0].id)).trigger('change');
+                    } else {
+                        // hasta que elijan, deja conductor OT
+                        $conductor.val(conductor);
+                    }
+                } else {
+                    // sin vehículos: conductor OT
+                    $conductor.val(conductor);
+                }
+            });
+
+            // Inicial
+            resetForm();
+            if ($otSelect.val()) $otSelect.trigger('change');
         });
     </script>
+
 
     <script>
         function compressImage(file, maxWidth = 1280, maxHeight = 1280, quality = 0.8) {

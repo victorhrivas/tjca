@@ -31,4 +31,14 @@ class OtVehiculo extends Model
     {
         return $this->belongsTo(\App\Models\Ot::class, 'ot_id');
     }
+
+        public function inicioCargas()
+    {
+        return $this->hasMany(\App\Models\InicioCarga::class, 'ot_vehiculo_id');
+    }
+
+    public function entregas()
+    {
+        return $this->hasMany(\App\Models\Entrega::class, 'ot_vehiculo_id');
+    }
 }

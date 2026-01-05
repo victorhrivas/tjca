@@ -10,6 +10,7 @@ class Entrega extends Model
 
     protected $fillable = [
         'ot_id',
+        'ot_vehiculo_id',
         'cliente',
         'nombre_receptor',
         'rut_receptor',
@@ -33,6 +34,7 @@ class Entrega extends Model
         'ot_id'             => 'integer',
         'fecha_entrega'     => 'date',
         'conforme'          => 'boolean',
+        'ot_vehiculo_id' => 'integer',
     ];
 
     public static array $rules = [
@@ -44,4 +46,28 @@ class Entrega extends Model
     {
         return $this->belongsTo(\App\Models\Ot::class);
     }
+
+    public function otVehiculo()
+    {
+        return $this->belongsTo(\App\Models\OtVehiculo::class, 'ot_vehiculo_id');
+    }
+
+    public function getVehiculoLabelAttribute()
+    {
+        $v = $this->otVehiculo;
+        if (!$v) return null;
+
+        $label = trim((string) $v->patente_camion);
+
+        if (!empty($v->patente_remolque)) {
+            $label .= ' · Rem: ' . $v->patente_remolque;
+        }
+
+        if (!empty($v->conductor)) {
+            $label .= ' · ' . $v->conductor;
+        }
+
+        return $label ?: null;
+    }
+
 }

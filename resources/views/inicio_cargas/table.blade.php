@@ -3,8 +3,9 @@
         <table class="table" id="inicio-cargas-table">
             <thead>
             <tr>
-                <th>Ot Id</th>
+                <th>OT</th>
                 <th>Cliente</th>
+                <th>Vehículo</th>
                 <th>Origen</th>
                 <th>Destino</th>
                 <th>Tipo Carga</th>
@@ -17,10 +18,13 @@
                 <tr>
                     <td>{{ optional($inicioCarga->ot)->folio ?? '-' }}</td>
                     <td>{{ $inicioCarga->cliente }}</td>
+                    <td>{{ $inicioCarga->vehiculo_label ?? '—' }}</td>
                     <td>{{ $inicioCarga->origen }}</td>
                     <td>{{ $inicioCarga->destino }}</td>
                     <td>{{ $inicioCarga->tipo_carga }}</td>
-                    <td>{{ $inicioCarga->fecha_carga }}</td>
+                    <td>
+                        {{ \Illuminate\Support\Carbon::parse($inicioCarga->fecha_carga)->format('d/m/Y') }}
+                    </td>
                     <td style="width: 120px">
                         {!! Form::open([
                             'route'  => ['operacion.inicio-carga.destroy', $inicioCarga->id],

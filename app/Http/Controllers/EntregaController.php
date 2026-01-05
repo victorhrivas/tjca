@@ -25,7 +25,9 @@ class EntregaController extends AppBaseController
      */
     public function index(Request $request)
     {
-        $entregas = Entrega::orderBy('id', 'desc')->paginate(10);
+        $entregas = Entrega::with(['ot', 'otVehiculo'])
+        ->orderBy('id', 'desc')
+        ->paginate(10);
 
         return view('entregas.index', compact('entregas'));
     }
@@ -36,8 +38,15 @@ class EntregaController extends AppBaseController
      */
     public function create(Request $request)
     {
-        $ots = Ot::with('cotizacion')
-            ->where('estado', '=', 'en_transito')
+        $ots = Ot::with([
+                'cotizacion.solicitud.cliente',
+                'vehiculos' => fn($q) => $q->orderBy('orden')->with('entregas'),
+            ])
+            ->whereIn('estado', ['en_transito']) // si quieres incluir 'pendiente', agrega acá
+            // ✅ al menos 1 vehículo sin entrega
+            ->whereHas('vehiculos', function ($q) {
+                $q->whereDoesntHave('entregas');
+            })
             ->orderBy('id', 'desc')
             ->get();
 
@@ -48,6 +57,7 @@ class EntregaController extends AppBaseController
         return view('entregas.create', compact('ots', 'conductores'));
     }
 
+
     /**
      * Guardar entrega (se usa tanto en público como en panel).
      */
@@ -55,6 +65,7 @@ class EntregaController extends AppBaseController
     {
         $data = $request->validate([
             'ot_id'             => ['required', 'integer'],
+            'ot_vehiculo_id'    => ['required', 'integer', 'exists:ot_vehiculos,id'],
             'nombre_receptor'   => ['required', 'string', 'max:255'],
             'rut_receptor'      => ['nullable', 'string', 'max:50'],
             'telefono_receptor' => ['nullable', 'string', 'max:50'],
@@ -98,12 +109,45 @@ class EntregaController extends AppBaseController
             $data['foto_guia_despacho'] = $path;
         }
 
+        $ot = Ot::with(['vehiculos.entregas', 'cotizacion'])->findOrFail($request->ot_id);
+
+        // pertenencia
+        if (!$ot->vehiculos->contains('id', (int) $data['ot_vehiculo_id'])) {
+            return back()->withInput()->withErrors([
+                'ot_vehiculo_id' => 'El vehículo seleccionado no pertenece a la OT.',
+            ]);
+        }
+
+        // evitar duplicado
+        $yaExiste = \App\Models\Entrega::where('ot_id', $data['ot_id'])
+            ->where('ot_vehiculo_id', $data['ot_vehiculo_id'])
+            ->exists();
+
+        if ($yaExiste) {
+            return back()->withInput()->withErrors([
+                'ot_vehiculo_id' => 'Este vehículo ya registró entrega para esta OT.',
+            ]);
+        }
+
+
         // Crear entrega
         $entrega = $this->entregaRepository->create($data);
 
-        // Cambiar estado de la OT a entregada
-        $ot->estado = 'entregada';
-        $ot->save();
+        // ✅ Si todos los vehículos tienen al menos 1 entrega -> OT entregada
+        $ot->load('vehiculos.entregas');
+
+        $faltan = $ot->vehiculos->filter(fn($v) => $v->entregas->isEmpty())->count();
+
+        if ($faltan === 0) {
+            $ot->estado = 'entregada';
+            $ot->save();
+        } else {
+            // mantener en_transito
+            if ($ot->estado !== 'en_transito') {
+                $ot->estado = 'en_transito';
+                $ot->save();
+            }
+        }
 
         return view('entregas.success')->with([
             'success' => 'Entrega registrada correctamente.',

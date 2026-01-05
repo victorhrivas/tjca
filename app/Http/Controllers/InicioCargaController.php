@@ -37,20 +37,28 @@ class InicioCargaController extends AppBaseController
 
     public function create(Request $request)
     {
-        $ots = Ot::with(['cotizacion.solicitud.cliente'])
-            ->where('estado', '=', 'pendiente')
+        $ots = Ot::with([
+                'cotizacion.solicitud.cliente',
+                'vehiculos' => fn ($q) => $q->orderBy('orden')->with('inicioCargas'),
+            ])
+            // ✅ Solo estas OT
+            ->whereIn('estado', ['pendiente', 'en_transito'])
+
+            // ✅ Debe existir al menos 1 vehículo sin inicio de carga
+            ->whereHas('vehiculos', function ($q) {
+                $q->whereDoesntHave('inicioCargas');
+            })
+
             ->orderBy('id', 'desc')
             ->get()
             ->map(function ($ot) {
 
                 $cliente = optional(optional(optional($ot->cotizacion)->solicitud)->cliente);
 
-                // Cliente
                 if (is_null($ot->cliente)) {
                     $ot->cliente = $cliente?->razon_social;
                 }
 
-                // Origen / Destino
                 if (is_null($ot->origen)) {
                     $ot->origen = optional($ot->cotizacion)->origen;
                 }
@@ -59,12 +67,10 @@ class InicioCargaController extends AppBaseController
                     $ot->destino = optional($ot->cotizacion)->destino;
                 }
 
-                // Conductor
                 if (is_null($ot->conductor)) {
                     $ot->conductor = optional($ot->cotizacion)->conductor;
                 }
 
-                // Datos de contacto
                 $ot->contacto          = $cliente?->razon_social;
                 $ot->telefono_contacto = $cliente?->telefono ?? '';
                 $ot->correo_contacto   = $cliente?->correo   ?? '';
@@ -74,7 +80,8 @@ class InicioCargaController extends AppBaseController
 
         $ot = null;
         if ($request->has('ot_id')) {
-            $ot = Ot::find($request->get('ot_id'));
+            $ot = Ot::with(['vehiculos' => fn($q) => $q->orderBy('orden')->with('inicioCargas')])
+                ->find($request->get('ot_id'));
         }
 
         return view('inicio_cargas.create', compact('ots', 'ot'));
@@ -86,7 +93,9 @@ class InicioCargaController extends AppBaseController
     public function store(Request $request)
     {
         $data = $request->validate([
-            'ot_id'             => ['required', 'integer'],
+            'ot_id'             => ['required', 'integer', 'exists:ots,id'],
+            'ot_vehiculo_id'    => ['nullable', 'integer', 'exists:ot_vehiculos,id'],
+
             'cliente'           => ['required', 'string', 'max:255'],
             'contacto'          => ['nullable', 'string', 'max:255'],
             'telefono_contacto' => ['nullable', 'string', 'max:50'],
@@ -100,47 +109,67 @@ class InicioCargaController extends AppBaseController
             'conductor'         => ['nullable', 'string', 'max:255'],
             'observaciones'     => ['nullable', 'string'],
 
-            // NUEVO: validación de imágenes (máx 4 MB cada una)
             'foto_1'            => ['nullable', 'image', 'max:4096'],
             'foto_2'            => ['nullable', 'image', 'max:4096'],
             'foto_3'            => ['nullable', 'image', 'max:4096'],
-            'foto_guia_despacho' => ['nullable', 'image', 'max:4096'],
+            'foto_guia_despacho'=> ['nullable', 'image', 'max:4096'],
         ]);
+
+        // Validación de negocio: si OT tiene vehículos, exigir vehículo
+        $ot = Ot::with('vehiculos')->findOrFail($data['ot_id']);
+
+        if ($ot->vehiculos->count() > 0 && empty($data['ot_vehiculo_id'])) {
+            return back()->withInput()->withErrors([
+                'ot_vehiculo_id' => 'Debes seleccionar un vehículo para esta OT.',
+            ]);
+        }
+
+        // Asegurar que el vehículo pertenece a la OT
+        if (!empty($data['ot_vehiculo_id'])) {
+            $pertenece = $ot->vehiculos->contains('id', (int) $data['ot_vehiculo_id']);
+            if (!$pertenece) {
+                return back()->withInput()->withErrors([
+                    'ot_vehiculo_id' => 'El vehículo seleccionado no pertenece a la OT.',
+                ]);
+            }
+        }
 
         // Manejo de archivos (disco 'public')
         if ($request->hasFile('foto_1')) {
             $data['foto_1'] = $request->file('foto_1')->store('inicio_cargas', 'public');
         }
-
         if ($request->hasFile('foto_2')) {
             $data['foto_2'] = $request->file('foto_2')->store('inicio_cargas', 'public');
         }
-
         if ($request->hasFile('foto_3')) {
             $data['foto_3'] = $request->file('foto_3')->store('inicio_cargas', 'public');
         }
-
         if ($request->hasFile('foto_guia_despacho')) {
-            $path = $request->file('foto_guia_despacho')->store('inicio_cargas', 'public');
-            $data['foto_guia_despacho'] = $path;
+            $data['foto_guia_despacho'] = $request->file('foto_guia_despacho')->store('inicio_cargas', 'public');
+        }
+
+        $exists = \App\Models\InicioCarga::where('ot_id', $data['ot_id'])
+            ->where('ot_vehiculo_id', $data['ot_vehiculo_id'])
+            ->exists();
+
+        if ($exists) {
+            return back()->withInput()->withErrors([
+                'ot_vehiculo_id' => 'Este vehículo ya registró inicio de carga para esta OT.',
+            ]);
         }
 
         // Crear inicio de carga
         $inicioCarga = InicioCarga::create($data);
 
         // Cambiar estado de la OT a "en_transito"
-        $ot = Ot::find($data['ot_id']);
-        if ($ot) {
-            $ot->estado = 'en_transito';
-            $ot->save();
-        }
+        $ot->estado = 'en_transito';
+        $ot->save();
 
         return view('inicio_cargas.success', [
             'success'     => 'Inicio de carga registrado correctamente.',
             'inicioCarga' => $inicioCarga,
         ]);
     }
-
 
     /**
      * Display the specified InicioCarga.

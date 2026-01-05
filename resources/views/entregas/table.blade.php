@@ -2,23 +2,27 @@
     <div class="table-responsive">
         <table class="table" id="entregas-table">
             <thead>
-            <tr>
-                <th>OT</th>
-                <th>Nombre Receptor</th>
-                <th>Lugar Entrega</th>
-                <th>Fecha Entrega</th>
-                <th>Conforme</th>
-                <th colspan="3">Acción</th>
-            </tr>
+                <tr>
+                    <th>OT</th>
+                    <th>Vehículo</th>
+                    <th>Nombre Receptor</th>
+                    <th>Lugar Entrega</th>
+                    <th>Fecha Entrega</th>
+                    <th>Conforme</th>
+                    <th colspan="3">Acción</th>
+                </tr>
             </thead>
             <tbody>
             @foreach($entregas as $entrega)
                 <tr>
                     <td>{{ optional($entrega->ot)->folio ?? '-' }}</td>
+                    <td>{{ $entrega->vehiculo_label ?? '—' }}</td>
                     <td>{{ $entrega->nombre_receptor }}</td>
                     <td>{{ $entrega->lugar_entrega }}</td>
-                    <td>{{ $entrega->fecha_entrega }}</td>
-                    <td>{{ $entrega->conforme }}</td>
+                    <td>
+                        {{ \Illuminate\Support\Carbon::parse($entrega->fecha_entrega)->format('d/m/Y') }}
+                    </td>
+                    <td>{{ $entrega->conforme ? 'Sí' : 'No' }}</td>
                     <td style="width: 120px">
                         {!! Form::open([
                             'route'  => ['operacion.entrega.destroy', $entrega->id],

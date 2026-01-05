@@ -162,6 +162,21 @@
                         <select name="ot_id" id="ot_id" class="form-control" required>
                             <option value="">Selecciona una OT...</option>
                             @foreach($ots as $otItem)
+                                @php
+                                    $vehiculosPayload = $otItem->vehiculos
+                                        ->filter(fn($v) => $v->entregas->isEmpty()) // solo pendientes de entrega
+                                        ->map(function($v){
+                                            return [
+                                                'id' => $v->id,
+                                                'orden' => $v->orden,
+                                                'rol' => $v->rol,
+                                                'conductor' => $v->conductor,
+                                                'patente_camion' => $v->patente_camion,
+                                                'patente_remolque' => $v->patente_remolque,
+                                            ];
+                                        })->values();
+                                @endphp
+
                                 <option
                                     value="{{ $otItem->id }}"
                                     data-cliente="{{ $otItem->cotizacion->solicitud->cliente->razon_social ?? '' }}"
@@ -177,10 +192,26 @@
                                         @endif
                                     @endif
                                 </option>
+
+                                {{-- JSON seguro por OT --}}
+                                <script type="application/json" id="vehiculos_ot_{{ $otItem->id }}">
+                                    {!! $vehiculosPayload->toJson() !!}
+                                </script>
                             @endforeach
                         </select>
                         <div class="helper-text">
                             Selecciona la OT sobre la cual se está registrando esta entrega.
+                        </div>
+                    </div>
+
+                    {{-- VEHÍCULO (se llena al elegir OT) --}}
+                    <div class="col-md-6 mb-3" id="vehiculo_block" style="display:none;">
+                        <label>Vehículo</label>
+                        <select name="ot_vehiculo_id" id="ot_vehiculo_id" class="form-control" required>
+                            <option value="">Selecciona un vehículo...</option>
+                        </select>
+                        <div class="helper-text">
+                            Solo se muestran vehículos que aún no registran entrega.
                         </div>
                     </div>
 
@@ -415,42 +446,106 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
 
-        const otSelect       = document.getElementById('ot_id');
-        const clienteInput   = document.getElementById('cliente_ot');
-        const lugarInput     = document.getElementById('lugar_entrega');
+            const otSelect        = document.getElementById('ot_id');
+            const clienteInput    = document.getElementById('cliente_ot');
+            const lugarInput      = document.getElementById('lugar_entrega');
 
-        function syncFromOt() {
-            const opt = otSelect.options[otSelect.selectedIndex];
-            if (!opt) return;
+            const vehiculoBlock   = document.getElementById('vehiculo_block');
+            const vehiculoSelect  = document.getElementById('ot_vehiculo_id');
 
-            const cliente   = opt.getAttribute('data-cliente')   || '';
-            const destino   = opt.getAttribute('data-destino')   || '';
-            const origen    = opt.getAttribute('data-origen')    || '';
-            const conductor = opt.getAttribute('data-conductor') || '';
-
-            // Cliente OT visual
-            clienteInput.value = cliente;
-
-            // Cargar destino como lugar de entrega (se puede editar)
-            if (!lugarInput.value || lugarInput.value.length === 0) {
-                lugarInput.value = destino;
+            function resetVehiculos() {
+                vehiculoSelect.innerHTML = '<option value="">Selecciona un vehículo...</option>';
+                vehiculoBlock.style.display = 'none';
             }
 
-            // Seleccionar conductor automáticamente si coincide
-            const conductorSelect = document.querySelector('select[name="conductor_id"]');
-            if (conductorSelect && conductor) {
-                [...conductorSelect.options].forEach(opt => {
-                    if (opt.text.trim() === conductor.trim()) {
-                        opt.selected = true;
+            function getVehiculosFromOt(otId) {
+                const el = document.getElementById(`vehiculos_ot_${otId}`);
+                if (!el) return [];
+                try {
+                    return JSON.parse(el.textContent || '[]') || [];
+                } catch (e) {
+                    return [];
+                }
+            }
+
+            function syncFromOt() {
+                const opt = otSelect.options[otSelect.selectedIndex];
+                if (!opt) return;
+
+                const otId      = otSelect.value;
+                const cliente   = opt.getAttribute('data-cliente')   || '';
+                const destino   = opt.getAttribute('data-destino')   || '';
+                const conductor = opt.getAttribute('data-conductor') || '';
+
+                // Cliente OT visual
+                clienteInput.value = cliente;
+
+                // Cargar destino como lugar de entrega (solo si está vacío)
+                if (!lugarInput.value || lugarInput.value.length === 0) {
+                    lugarInput.value = destino;
+                }
+
+                // Vehículos pendientes de entrega
+                resetVehiculos();
+                if (otId) {
+                    const vehiculos = getVehiculosFromOt(otId);
+
+                    if (vehiculos.length > 0) {
+                        vehiculos.forEach(v => {
+                            const parts = [];
+                            parts.push(`Vehículo ${v.orden ?? ''}`.trim());
+                            if (v.rol) parts.push(`(${v.rol})`);
+                            if (v.patente_camion) parts.push(`· ${v.patente_camion}`);
+                            if (v.patente_remolque) parts.push(`· Rem: ${v.patente_remolque}`);
+                            if (v.conductor) parts.push(`· ${v.conductor}`);
+
+                            const o = document.createElement('option');
+                            o.value = v.id;
+                            o.textContent = parts.join(' ');
+                            o.dataset.conductor = v.conductor || '';
+                            vehiculoSelect.appendChild(o);
+                        });
+
+                        vehiculoBlock.style.display = 'block';
+
+                        if (vehiculos.length === 1) {
+                            vehiculoSelect.value = String(vehiculos[0].id);
+                            vehiculoSelect.dispatchEvent(new Event('change'));
+                        }
                     }
-                });
-            }
-        }
+                }
 
-        otSelect.addEventListener('change', syncFromOt);
-        syncFromOt(); // inicial
-    });
+                // Seleccionar conductor automáticamente si coincide (por OT o por vehículo después)
+                const conductorSelect = document.querySelector('select[name="conductor_id"]');
+                if (conductorSelect && conductor) {
+                    [...conductorSelect.options].forEach(o => {
+                        if (o.text.trim() === conductor.trim()) o.selected = true;
+                    });
+                }
+            }
+
+            // Si cambian vehículo, puedes opcionalmente setear conductor_id por nombre (si coincide)
+            vehiculoSelect.addEventListener('change', function () {
+                const optVeh = vehiculoSelect.options[vehiculoSelect.selectedIndex];
+                const vConductor = optVeh?.dataset?.conductor || '';
+
+                if (!vConductor) return;
+
+                const conductorSelect = document.querySelector('select[name="conductor_id"]');
+                if (!conductorSelect) return;
+
+                [...conductorSelect.options].forEach(o => {
+                    if (o.text.trim() === vConductor.trim()) o.selected = true;
+                });
+            });
+
+            otSelect.addEventListener('change', syncFromOt);
+
+            resetVehiculos();
+            syncFromOt(); // inicial
+        });
     </script>
+
     <script>
         // Comprime y escala una imagen a un máximo de ancho/alto
         function compressImage(file, maxWidth = 1280, maxHeight = 1280, quality = 0.8) {
