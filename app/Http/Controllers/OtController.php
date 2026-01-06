@@ -313,10 +313,12 @@ class OtController extends AppBaseController
 
         // Cargar relaciones necesarias para el detalle (incluye fotos)
         $ot->load([
-            'cotizacion',     // ya la usas en show_fields
-            'inicioCargas',   // para fotos de inicio de carga
-            'entregas',       // para fotos de entrega
+            'cotizacion',
             'vehiculos',
+
+            // nested eager load
+            'inicioCargas.otVehiculo',
+            'entregas.otVehiculo',
         ]);
 
         return view('ots.show')->with('ot', $ot);

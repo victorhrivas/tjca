@@ -188,8 +188,23 @@
                 <div class="col-12 mb-2">
                     <small class="text-muted">
                         Inicio de carga #{{ $inicioCarga->id }}
+
                         @if($inicioCarga->created_at)
                             · {{ $inicioCarga->created_at->format('d/m/Y H:i') }}
+                        @endif
+
+                        @php
+                            // Preferir el vínculo a ot_vehiculo; si no existe, fallback al campo legacy conductor
+                            $vehiculoLabel = $inicioCarga->vehiculo_label;
+                            if (!$vehiculoLabel && !empty($inicioCarga->conductor)) {
+                                $vehiculoLabel = $inicioCarga->conductor;
+                            }
+                        @endphp
+
+                        @if($vehiculoLabel)
+                            · <span class="badge badge-dark">{{ $vehiculoLabel }}</span>
+                        @else
+                            · <span class="text-muted">Sin vehículo/chofer asociado</span>
                         @endif
                     </small>
                 </div>
@@ -238,11 +253,26 @@
                 <div class="col-12 mb-2">
                     <small class="text-muted">
                         Entrega #{{ $entrega->id }}
+
                         @if($entrega->fecha_entrega)
                             · {{ \Carbon\Carbon::parse($entrega->fecha_entrega)->format('d/m/Y') }}
                         @endif
+
                         @if($entrega->nombre_receptor)
                             · Receptor: {{ $entrega->nombre_receptor }}
+                        @endif
+
+                        @php
+                            $vehiculoLabel = $entrega->vehiculo_label;
+                            if (!$vehiculoLabel && !empty($entrega->conductor)) {
+                                $vehiculoLabel = $entrega->conductor;
+                            }
+                        @endphp
+
+                        @if($vehiculoLabel)
+                            · <span class="badge badge-dark">{{ $vehiculoLabel }}</span>
+                        @else
+                            · <span class="text-muted">Sin vehículo/chofer asociado</span>
                         @endif
                     </small>
                 </div>
