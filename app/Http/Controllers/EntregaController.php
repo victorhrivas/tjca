@@ -169,7 +169,7 @@ class EntregaController extends AppBaseController
         $to = $data['email_envio'];
 
         Mail::to($to)
-            ->cc(['vhrivas.c@gmail.com', 'victorhugorivaasc@gmail.com'])
+            ->cc(['jgcontador@tjca.cl','fhenott@tjca.cl'])
             ->send(new EntregaRegistradaMail($entrega->fresh(), $ot));
 
         return view('entregas.success')->with([
