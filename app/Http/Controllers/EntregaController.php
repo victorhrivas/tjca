@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\AppBaseController;
 use App\Repositories\EntregaRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\EntregaRegistradaMail;
+use App\Models\Cliente;
 use App\Models\Entrega;
 use App\Models\Ot;
 use App\Models\Conductor;
@@ -32,7 +35,6 @@ class EntregaController extends AppBaseController
         return view('entregas.index', compact('entregas'));
     }
 
-
     /**
      * Formulario público (resource 'entregas') o interno si lo llamas.
      */
@@ -42,13 +44,33 @@ class EntregaController extends AppBaseController
                 'cotizacion.solicitud.cliente',
                 'vehiculos' => fn($q) => $q->orderBy('orden')->with('entregas'),
             ])
-            ->whereIn('estado', ['en_transito']) // si quieres incluir 'pendiente', agrega acá
-            // ✅ al menos 1 vehículo sin entrega
+            ->whereIn('estado', ['en_transito'])
             ->whereHas('vehiculos', function ($q) {
                 $q->whereDoesntHave('entregas');
             })
             ->orderBy('id', 'desc')
-            ->get();
+            ->get()
+            ->map(function ($ot) {
+                $clienteRel = optional(optional(optional($ot->cotizacion)->solicitud)->cliente);
+
+                // Defaults visuales (si algo viene nulo)
+                if (is_null($ot->cliente)) {
+                    $ot->cliente = $clienteRel?->razon_social;
+                }
+
+                if (is_null($ot->origen)) {
+                    $ot->origen = optional($ot->cotizacion)->origen;
+                }
+
+                if (is_null($ot->destino)) {
+                    $ot->destino = optional($ot->cotizacion)->destino;
+                }
+
+                // Correo REAL del cliente
+                $ot->correo_cliente = $clienteRel?->correo ?? '';
+
+                return $ot;
+            });
 
         $conductores = Conductor::where('activo', true)
             ->orderBy('nombre')
@@ -56,7 +78,6 @@ class EntregaController extends AppBaseController
 
         return view('entregas.create', compact('ots', 'conductores'));
     }
-
 
     /**
      * Guardar entrega (se usa tanto en público como en panel).
@@ -66,6 +87,7 @@ class EntregaController extends AppBaseController
         $data = $request->validate([
             'ot_id'             => ['required', 'integer'],
             'ot_vehiculo_id'    => ['required', 'integer', 'exists:ot_vehiculos,id'],
+
             'nombre_receptor'   => ['required', 'string', 'max:255'],
             'rut_receptor'      => ['nullable', 'string', 'max:50'],
             'telefono_receptor' => ['nullable', 'string', 'max:50'],
@@ -78,38 +100,35 @@ class EntregaController extends AppBaseController
             'conforme'          => ['nullable', 'boolean'],
             'observaciones'     => ['nullable', 'string'],
 
-            // 3 fotos opcionales, máximo ~3MB cada una
-            'foto_1' => ['nullable', 'image', 'max:10240'], // 10MB
-            'foto_2' => ['nullable', 'image', 'max:10240'], // 10MB
-            'foto_3' => ['nullable', 'image', 'max:10240'], // 10MB
-            'foto_guia_despacho' => ['required', 'nullable', 'image', 'max:10240'],
+            'foto_1' => ['nullable', 'image', 'max:10240'],
+            'foto_2' => ['nullable', 'image', 'max:10240'],
+            'foto_3' => ['nullable', 'image', 'max:10240'],
+            'foto_guia_despacho' => ['nullable', 'image', 'max:10240'],
+
+            // ✅ nuevo
+            'email_envio' => ['required', 'email', 'max:255'],
         ]);
 
-        // Normalizar boolean
         $data['conforme'] = $request->has('conforme') ? (bool) $request->conforme : null;
 
-        // Cliente desde OT / cotización
-        $ot = Ot::with('cotizacion')->findOrFail($request->ot_id);
-        $data['cliente'] = $ot->cotizacion->cliente ?? 'SIN CLIENTE';
+        // OT + cliente
+        $ot = Ot::with('cotizacion.solicitud.cliente', 'vehiculos.entregas')->findOrFail($request->ot_id);
 
-        // Nombre conductor opcional
+        $data['cliente'] = optional($ot->cotizacion)->cliente ?? 'SIN CLIENTE';
+
         if ($request->filled('conductor_id')) {
             $data['conductor'] = Conductor::find($request->conductor_id)?->nombre;
         }
 
-        // Guardar fotos en storage/app/public/entregas
         foreach (['foto_1', 'foto_2', 'foto_3'] as $campo) {
             if ($request->hasFile($campo) && $request->file($campo)->isValid()) {
                 $data[$campo] = $request->file($campo)->store('entregas', 'public');
             }
         }
 
-        if ($request->hasFile('foto_guia_despacho')) {
-            $path = $request->file('foto_guia_despacho')->store('entregas', 'public');
-            $data['foto_guia_despacho'] = $path;
+        if ($request->hasFile('foto_guia_despacho') && $request->file('foto_guia_despacho')->isValid()) {
+            $data['foto_guia_despacho'] = $request->file('foto_guia_despacho')->store('entregas', 'public');
         }
-
-        $ot = Ot::with(['vehiculos.entregas', 'cotizacion'])->findOrFail($request->ot_id);
 
         // pertenencia
         if (!$ot->vehiculos->contains('id', (int) $data['ot_vehiculo_id'])) {
@@ -119,7 +138,7 @@ class EntregaController extends AppBaseController
         }
 
         // evitar duplicado
-        $yaExiste = \App\Models\Entrega::where('ot_id', $data['ot_id'])
+        $yaExiste = Entrega::where('ot_id', $data['ot_id'])
             ->where('ot_vehiculo_id', $data['ot_vehiculo_id'])
             ->exists();
 
@@ -129,25 +148,29 @@ class EntregaController extends AppBaseController
             ]);
         }
 
-
         // Crear entrega
         $entrega = $this->entregaRepository->create($data);
 
-        // ✅ Si todos los vehículos tienen al menos 1 entrega -> OT entregada
+        // Estados OT
         $ot->load('vehiculos.entregas');
-
         $faltan = $ot->vehiculos->filter(fn($v) => $v->entregas->isEmpty())->count();
 
         if ($faltan === 0) {
             $ot->estado = 'entregada';
             $ot->save();
         } else {
-            // mantener en_transito
             if ($ot->estado !== 'en_transito') {
                 $ot->estado = 'en_transito';
                 $ot->save();
             }
         }
+
+        // ✅ ENVIAR CORREO
+        $to = $data['email_envio'];
+
+        Mail::to($to)
+            ->cc(['vhrivas.c@gmail.com', 'victorhugorivaasc@gmail.com'])
+            ->send(new EntregaRegistradaMail($entrega->fresh(), $ot));
 
         return view('entregas.success')->with([
             'success' => 'Entrega registrada correctamente.',

@@ -40,42 +40,47 @@
             .form-head .subtitle{font-size:0.85rem;}
 
             .card-section{background:var(--bg-2);border-radius:14px;padding:20px;border:1px solid var(--line);}
-            .form-control{background:#2a2f38;border:1px solid var(--line);color:var(--ink);border-radius:10px;}
-            .form-control:focus{background:#2d333d;border-color:var(--accent);box-shadow:0 0 0 .15rem rgba(246,199,0,.2);color:#fff}
+
+            .form-control{
+                background:#2a2f38;
+                border:1px solid var(--line);
+                color:var(--ink);
+                border-radius:10px;
+            }
+            .form-control:focus{
+                background:#2d333d;
+                border-color:var(--accent);
+                box-shadow:0 0 0 .15rem rgba(246,199,0,.2);
+                color:#fff
+            }
+            .form-control::placeholder{ color: rgba(167,173,183,.75); }
+
+            .form-control[readonly],
+            .form-control:disabled{
+                background:#222834 !important;
+                color:var(--ink) !important;
+                opacity:1 !important;
+                -webkit-text-fill-color: var(--ink) !important;
+            }
+
             label{font-size:0.85rem;color:var(--muted);}
+
             .btn{border-radius:10px;font-weight:700;letter-spacing:.3px;}
             .btn-accent{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);}
             .btn-accent:hover{background:var(--accent-hover);border-color:var(--accent-hover);box-shadow:0 10px 24px rgba(246,199,0,.28);transform:translateY(-1px);}
+
             .back-link{font-size:0.85rem;color:var(--muted);}
             .back-link a{color:var(--accent);}
+
             .radio-row{display:flex;gap:16px;margin-top:4px;}
-            .radio-row label{color:var(--ink);font-size:0.85rem;margin-left:4px;}
+            .radio-row label{color:var(--ink);font-size:0.85rem;margin-left:6px; margin-bottom:0;}
 
-            .helper-text{
-                font-size:0.75rem;
-                color:var(--muted);
-                margin-top:4px;
-            }
+            .helper-text{font-size:0.75rem;color:var(--muted);margin-top:4px;}
 
-            #cliente_ot {
-                background: #1c1f24;
-                color: var(--ink);
-            }
-        </style>
-        <style>
-            :root{
-                --bg-0:#101114;--bg-1:#15171b;--bg-2:#1c1f24;--bg-3:#23272e;
-                --line:#2c3139;--ink:#e6e7ea;--muted:#a7adb7;
-                --accent:#d4ad18;--accent-hover:#e1ba1f;--accent-ink:#0b0c0e;
-                --shadow:0 14px 40px rgba(0,0,0,.45);
-            }
-            /* ... LO QUE YA TENÍAS ... */
+            #cliente_ot { background: #1c1f24; color: var(--ink); }
 
-            .photo-grid{
-                display:flex;
-                flex-wrap:wrap;
-                gap:16px;
-            }
+            /* Fotos */
+            .photo-grid{display:flex;flex-wrap:wrap;gap:16px;}
             .photo-card{
                 flex:1 1 0;
                 min-width:180px;
@@ -89,12 +94,7 @@
                 justify-content:space-between;
                 transition:.15s all ease-out;
             }
-            .photo-card:hover{
-                border-style:solid;
-                border-color:var(--accent);
-                box-shadow:0 10px 24px rgba(0,0,0,.4);
-                transform:translateY(-1px);
-            }
+            .photo-card:hover{border-style:solid;border-color:var(--accent);box-shadow:0 10px 24px rgba(0,0,0,.4);transform:translateY(-1px);}
             .photo-upload-label{
                 cursor:pointer;
                 display:flex;
@@ -105,18 +105,11 @@
                 text-align:center;
                 color:var(--muted);
                 min-height:130px;
+                margin:0;
             }
-            .photo-upload-label i{
-                font-size:1.8rem;
-                color:var(--accent);
-            }
-            .photo-upload-label span{
-                font-size:.8rem;
-            }
-            .photo-preview{
-                margin-top:8px;
-                display:none;
-            }
+            .photo-upload-label i{font-size:1.8rem;color:var(--accent);}
+            .photo-upload-label span{font-size:.8rem;}
+            .photo-preview{margin-top:8px;display:none;}
             .photo-preview img{
                 max-width:100%;
                 max-height:140px;
@@ -124,8 +117,27 @@
                 object-fit:cover;
                 border:1px solid var(--line);
             }
-        </style>
 
+            /* Modal oscuro */
+            .modal-content{
+                background: var(--bg-2);
+                border: 1px solid var(--line);
+                border-radius: 14px;
+                color: var(--ink);
+            }
+            .modal-header, .modal-footer{ border-color: var(--line); }
+            .modal-title{ color: var(--ink); }
+            .modal .close{ color: var(--ink); text-shadow:none; opacity:.9; }
+            .modal .text-muted{ color: var(--muted) !important; }
+
+            /* Alert legible en dark */
+            .alert-danger{
+                background:#3a1f24;
+                border-color:#7a2b36;
+                color:#ffd6dc;
+            }
+            .alert-danger strong{ color:#fff; }
+        </style>
     </head>
 
     <body>
@@ -140,11 +152,13 @@
 
         <div class="card-section">
             @php
-                $otIdDefault = old('ot_id', isset($ot) ? $ot->id : '');
+                // Por defecto, email vacío (se completa al elegir OT)
+                $emailDefault = old('email_envio', '');
             @endphp
 
-            <form method="POST" action="{{ route('entregas.store') }}" enctype="multipart/form-data">
+            <form method="POST" action="{{ route('entregas.store') }}" enctype="multipart/form-data" id="entrega-form" novalidate>
                 @csrf
+
                 @if ($errors->any())
                     <div class="alert alert-danger">
                         <strong>Ocurrieron errores al registrar la entrega:</strong>
@@ -155,16 +169,18 @@
                         </ul>
                     </div>
                 @endif
+
                 <div class="row">
                     {{-- OT asociada (SELECT) --}}
                     <div class="col-md-6 mb-3">
                         <label>OT asociada</label>
                         <select name="ot_id" id="ot_id" class="form-control" required>
                             <option value="">Selecciona una OT...</option>
+
                             @foreach($ots as $otItem)
                                 @php
                                     $vehiculosPayload = $otItem->vehiculos
-                                        ->filter(fn($v) => $v->entregas->isEmpty()) // solo pendientes de entrega
+                                        ->filter(fn($v) => $v->entregas->isEmpty())
                                         ->map(function($v){
                                             return [
                                                 'id' => $v->id,
@@ -175,25 +191,32 @@
                                                 'patente_remolque' => $v->patente_remolque,
                                             ];
                                         })->values();
+
+                                    $clienteNombre = optional(optional(optional($otItem->cotizacion)->solicitud)->cliente)->razon_social ?? '';
+                                    $correoCliente = optional(optional(optional($otItem->cotizacion)->solicitud)->cliente)->correo ?? '';
+                                    $origen = optional($otItem->cotizacion)->origen ?? '';
+                                    $destino = optional($otItem->cotizacion)->destino ?? '';
+                                    $conductor = $otItem->conductor ?? (optional($otItem->cotizacion)->conductor ?? '');
                                 @endphp
 
                                 <option
                                     value="{{ $otItem->id }}"
-                                    data-cliente="{{ $otItem->cotizacion->solicitud->cliente->razon_social ?? '' }}"
-                                    data-origen="{{ $otItem->cotizacion->origen ?? '' }}"
-                                    data-destino="{{ $otItem->cotizacion->destino ?? '' }}"
-                                    data-conductor="{{ $otItem->conductor ?? ($otItem->cotizacion->conductor ?? '') }}"
+                                    data-cliente="{{ $clienteNombre }}"
+                                    data-origen="{{ $origen }}"
+                                    data-destino="{{ $destino }}"
+                                    data-conductor="{{ $conductor }}"
+                                    data-correo="{{ $correoCliente }}"
+                                    {{ old('ot_id') == $otItem->id ? 'selected' : '' }}
                                 >
                                     OT #{{ $otItem->folio ?? $otItem->id }}
                                     @if($otItem->cotizacion)
                                         · {{ $otItem->cotizacion->cliente ?? '' }}
-                                        @if($otItem->cotizacion->origen || $otItem->cotizacion->destino)
-                                            · {{ $otItem->cotizacion->origen ?? '' }} → {{ $otItem->cotizacion->destino ?? '' }}
+                                        @if($origen || $destino)
+                                            · {{ $origen }} → {{ $destino }}
                                         @endif
                                     @endif
                                 </option>
 
-                                {{-- JSON seguro por OT --}}
                                 <script type="application/json" id="vehiculos_ot_{{ $otItem->id }}">
                                     {!! $vehiculosPayload->toJson() !!}
                                 </script>
@@ -204,7 +227,7 @@
                         </div>
                     </div>
 
-                    {{-- VEHÍCULO (se llena al elegir OT) --}}
+                    {{-- VEHÍCULO --}}
                     <div class="col-md-6 mb-3" id="vehiculo_block" style="display:none;">
                         <label>Vehículo</label>
                         <select name="ot_vehiculo_id" id="ot_vehiculo_id" class="form-control" required>
@@ -213,85 +236,79 @@
                         <div class="helper-text">
                             Solo se muestran vehículos que aún no registran entrega.
                         </div>
+                        @error('ot_vehiculo_id')
+                            <div style="color:#ff6b6b; margin-top:8px; font-size:.85rem;">{{ $message }}</div>
+                        @enderror
                     </div>
 
-                    {{-- Conductor que entrega (SELECT) --}}
+                    {{-- Conductor --}}
                     <div class="col-md-6 mb-3">
                         <label>Conductor que entrega</label>
-                        <select name="conductor_id" class="form-control" required>
+                        <select name="conductor_id" id="conductor_id" class="form-control" required>
                             <option value="">Selecciona un conductor...</option>
                             @foreach($conductores as $conductor)
-                                <option value="{{ $conductor->id }}"
-                                    {{ old('conductor_id') == $conductor->id ? 'selected' : '' }}>
+                                <option value="{{ $conductor->id }}" {{ old('conductor_id') == $conductor->id ? 'selected' : '' }}>
                                     {{ $conductor->nombre }}
                                 </option>
                             @endforeach
                         </select>
-                        <div class="helper-text">
-                            Conductor responsable de la entrega al cliente.
-                        </div>
+                        <div class="helper-text">Conductor responsable de la entrega al cliente.</div>
+                        @error('conductor_id')
+                            <div style="color:#ff6b6b; margin-top:8px; font-size:.85rem;">{{ $message }}</div>
+                        @enderror
                     </div>
 
-                    {{-- Cliente asociado a la OT (solo visual) --}}
+                    {{-- Cliente visual --}}
                     <div class="col-md-12 mb-3">
                         <label>Cliente</label>
-                        <input type="text"
-                               id="cliente_ot"
-                               class="form-control"
-                               value=""
-                               readonly>
-                        <div class="helper-text">
-                            Cliente asociado a la OT seleccionada.
-                        </div>
+                        <input type="text" id="cliente_ot" class="form-control" value="" readonly>
+                        <div class="helper-text">Cliente asociado a la OT seleccionada.</div>
                     </div>
 
                     {{-- Nombre receptor --}}
                     <div class="col-md-8 mb-3">
                         <label>Nombre receptor</label>
-                        <input type="text"
-                               name="nombre_receptor"
-                               class="form-control"
-                               value="{{ old('nombre_receptor') }}"
-                               required>
+                        <input type="text" name="nombre_receptor" class="form-control" value="{{ old('nombre_receptor') }}" required>
+                        @error('nombre_receptor')
+                            <div style="color:#ff6b6b; margin-top:8px; font-size:.85rem;">{{ $message }}</div>
+                        @enderror
                     </div>
 
-                    {{-- Lugar / Fecha --}}
+                    {{-- Lugar / Fecha / Hora --}}
                     <div class="col-md-6 mb-3">
                         <label>Lugar de entrega</label>
-                        <input type="text"
-                               name="lugar_entrega"
-                               id="lugar_entrega"
-                               class="form-control"
-                               value="{{ old('lugar_entrega') }}"
-                               placeholder="Dirección o referencia del lugar"
-                               required>
+                        <input type="text" name="lugar_entrega" id="lugar_entrega" class="form-control"
+                               value="{{ old('lugar_entrega') }}" placeholder="Dirección o referencia del lugar" required>
+                        @error('lugar_entrega')
+                            <div style="color:#ff6b6b; margin-top:8px; font-size:.85rem;">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     <div class="col-md-3 mb-3">
                         <label>Fecha de entrega</label>
-                        <input type="date"
-                               name="fecha_entrega"
-                               class="form-control"
-                               value="{{ old('fecha_entrega') }}"
-                               required>
+                        <input type="date" name="fecha_entrega" class="form-control" value="{{ old('fecha_entrega') }}" required>
+                        @error('fecha_entrega')
+                            <div style="color:#ff6b6b; margin-top:8px; font-size:.85rem;">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     <div class="col-md-3 mb-3">
+                        <label>Hora de entrega</label>
+                        <input type="time" name="hora_entrega" class="form-control" value="{{ old('hora_entrega') }}">
+                        @error('hora_entrega')
+                            <div style="color:#ff6b6b; margin-top:8px; font-size:.85rem;">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    {{-- Guía / Interno --}}
+                    <div class="col-md-3 mb-3">
                         <label>N° Guía</label>
-                        <input type="text"
-                            name="numero_guia"
-                            class="form-control"
-                            value="{{ old('numero_guia') }}"
-                            placeholder="Ej: 123456">
+                        <input type="text" name="numero_guia" class="form-control" value="{{ old('numero_guia') }}" placeholder="Ej: 123456">
                     </div>
 
                     <div class="col-md-3 mb-3">
                         <label>N° Interno</label>
-                        <input type="text"
-                            name="numero_interno"
-                            class="form-control"
-                            value="{{ old('numero_interno') }}"
-                            placeholder="Ej: INT-00123">
+                        <input type="text" name="numero_interno" class="form-control" value="{{ old('numero_interno') }}" placeholder="Ej: INT-00123">
                     </div>
 
                     {{-- Conforme --}}
@@ -299,19 +316,11 @@
                         <label>Conforme</label>
                         <div class="radio-row">
                             <div class="d-flex align-items-center">
-                                <input type="radio"
-                                       id="conforme_si"
-                                       name="conforme"
-                                       value="1"
-                                       {{ old('conforme', '1') == '1' ? 'checked' : '' }}>
+                                <input type="radio" id="conforme_si" name="conforme" value="1" {{ old('conforme', '1') == '1' ? 'checked' : '' }}>
                                 <label for="conforme_si">Sí, conforme</label>
                             </div>
                             <div class="d-flex align-items-center">
-                                <input type="radio"
-                                       id="conforme_no"
-                                       name="conforme"
-                                       value="0"
-                                       {{ old('conforme') === '0' ? 'checked' : '' }}>
+                                <input type="radio" id="conforme_no" name="conforme" value="0" {{ old('conforme') === '0' ? 'checked' : '' }}>
                                 <label for="conforme_no">No conforme</label>
                             </div>
                         </div>
@@ -320,72 +329,70 @@
                     {{-- Observaciones --}}
                     <div class="col-md-12 mb-3">
                         <label>Observaciones</label>
-                        <textarea name="observaciones"
-                                  rows="3"
-                                  class="form-control"
+                        <textarea name="observaciones" rows="3" class="form-control"
                                   placeholder="Comentarios adicionales de la entrega">{{ old('observaciones') }}</textarea>
                     </div>
 
-                    {{-- Fotos de la carga (opcional) --}}
+                    {{-- ✅ Correo de envío (modal) --}}
+                    <div class="col-md-12 mb-3">
+                        <input type="hidden" name="email_envio" id="email_envio" value="{{ $emailDefault }}">
+
+                        <label>Correo de envío</label>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <input type="text" class="form-control" id="email_envio_preview" value="{{ $emailDefault }}" readonly>
+                            <button type="button" class="btn btn-default" data-toggle="modal" data-target="#modalEmailEnvio">
+                                Cambiar
+                            </button>
+                        </div>
+
+                        @error('email_envio')
+                            <div style="color:#ff6b6b; margin-top:8px; font-size:.85rem;">{{ $message }}</div>
+                        @enderror
+
+                        <div class="helper-text">
+                            Por defecto se usa el correo del cliente (desde Cliente). Puedes cambiarlo solo para este envío.
+                        </div>
+                    </div>
+
+                    {{-- Fotos opcionales --}}
                     <div class="col-md-12 mb-3">
                         <label>Fotos de la carga (opcional)</label>
 
                         <div class="photo-grid">
-                            {{-- FOTO 1 --}}
                             <div class="photo-card">
                                 <label class="photo-upload-label" for="foto_1">
                                     <i class="fas fa-camera"></i>
                                     <strong>Tomar / subir foto 1</strong>
                                     <span>Toca aquí para abrir la cámara o la galería.</span>
-
-                                    <input type="file"
-                                        name="foto_1"
-                                        id="foto_1"
-                                        class="d-none"
-                                        accept="image/*"
-                                        onchange="previewPhoto(this, 'preview_foto_1')">
+                                    <input type="file" name="foto_1" id="foto_1" class="d-none" accept="image/*"
+                                           onchange="previewPhoto(this, 'preview_foto_1')">
                                 </label>
-
                                 <div id="preview_foto_1" class="photo-preview">
                                     <img src="#" alt="Vista previa foto 1">
                                 </div>
                             </div>
 
-                            {{-- FOTO 2 --}}
                             <div class="photo-card">
                                 <label class="photo-upload-label" for="foto_2">
                                     <i class="fas fa-camera"></i>
                                     <strong>Tomar / subir foto 2</strong>
                                     <span>Opcional, para más ángulos.</span>
-
-                                    <input type="file"
-                                        name="foto_2"
-                                        id="foto_2"
-                                        class="d-none"
-                                        accept="image/*"
-                                        onchange="previewPhoto(this, 'preview_foto_2')">
+                                    <input type="file" name="foto_2" id="foto_2" class="d-none" accept="image/*"
+                                           onchange="previewPhoto(this, 'preview_foto_2')">
                                 </label>
-
                                 <div id="preview_foto_2" class="photo-preview">
                                     <img src="#" alt="Vista previa foto 2">
                                 </div>
                             </div>
 
-                            {{-- FOTO 3 --}}
                             <div class="photo-card">
                                 <label class="photo-upload-label" for="foto_3">
                                     <i class="fas fa-camera"></i>
                                     <strong>Tomar / subir foto 3</strong>
                                     <span>Opcional.</span>
-
-                                    <input type="file"
-                                        name="foto_3"
-                                        id="foto_3"
-                                        class="d-none"
-                                        accept="image/*"
-                                        onchange="previewPhoto(this, 'preview_foto_3')">
+                                    <input type="file" name="foto_3" id="foto_3" class="d-none" accept="image/*"
+                                           onchange="previewPhoto(this, 'preview_foto_3')">
                                 </label>
-
                                 <div id="preview_foto_3" class="photo-preview">
                                     <img src="#" alt="Vista previa foto 3">
                                 </div>
@@ -393,13 +400,13 @@
                         </div>
 
                         <small class="text-muted" style="color: var(--muted);">
-                            Formatos permitidos: JPG, PNG. Máx 4 MB por archivo.
+                            Formatos permitidos: JPG, PNG. Máx 5 MB por archivo.
                         </small>
                     </div>
 
-                    {{-- Foto guía de despacho (opcional) --}}
+                    {{-- Foto guía (requerida por tu input actual) --}}
                     <div class="col-md-12 mb-3">
-                        <label>Foto guía de despacho (opcional)</label>
+                        <label>Foto guía de despacho <span style="color:#ff6b6b">*</span></label>
 
                         <div class="photo-grid">
                             <div class="photo-card">
@@ -408,13 +415,9 @@
                                     <strong>Tomar / subir guía de despacho</strong>
                                     <span>Foto clara donde se lea el documento.</span>
 
-                                    <input type="file"
-                                        name="foto_guia_despacho"
-                                        id="foto_guia_despacho"
-                                        class="d-none"
-                                        accept="image/*"
-                                        required
-                                        onchange="previewPhoto(this, 'preview_foto_guia_despacho')">
+                                    <input type="file" name="foto_guia_despacho" id="foto_guia_despacho"
+                                           class="d-none" accept="image/*" required
+                                           onchange="previewPhoto(this, 'preview_foto_guia_despacho')">
                                 </label>
 
                                 <div id="preview_foto_guia_despacho" class="photo-preview">
@@ -423,19 +426,50 @@
                             </div>
                         </div>
 
+                        @error('foto_guia_despacho')
+                            <div style="color:#ff6b6b; margin-top:8px; font-size:.85rem;">{{ $message }}</div>
+                        @enderror
+
                         <small class="text-muted" style="color: var(--muted);">
-                            Formatos permitidos: JPG, PNG. Máx 4 MB por archivo.
+                            Formatos permitidos: JPG, PNG. Máx 5 MB por archivo.
                         </small>
                     </div>
+                </div>
 
-                    
+                {{-- Modal correo --}}
+                <div class="modal fade" id="modalEmailEnvio" tabindex="-1" role="dialog" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+
+                            <div class="modal-header">
+                                <h5 class="modal-title">Cambiar correo de envío</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+
+                            <div class="modal-body">
+                                <div class="form-group">
+                                    <label for="email_envio_input">Correo</label>
+                                    <input type="email" class="form-control" id="email_envio_input" value="{{ $emailDefault }}" required>
+                                    <small class="text-muted">Este correo se usará solo para este envío.</small>
+                                </div>
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                                <button type="button" class="btn btn-primary" id="btnGuardarEmailEnvio">Guardar</button>
+                            </div>
+
+                        </div>
+                    </div>
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center mt-3">
                     <div class="back-link">
                         <a href="{{ route('login') }}">Volver al portal</a>
                     </div>
-                    <button type="submit" class="btn btn-accent">
+                    <button type="submit" class="btn btn-accent" id="btnSubmitEntrega">
                         Registrar entrega
                     </button>
                 </div>
@@ -443,8 +477,14 @@
         </div>
     </div>
 
+    {{-- JS base (para modal y compat) --}}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+
+            const form            = document.getElementById('entrega-form');
 
             const otSelect        = document.getElementById('ot_id');
             const clienteInput    = document.getElementById('cliente_ot');
@@ -452,6 +492,13 @@
 
             const vehiculoBlock   = document.getElementById('vehiculo_block');
             const vehiculoSelect  = document.getElementById('ot_vehiculo_id');
+
+            const conductorSelect = document.getElementById('conductor_id');
+
+            // Email envío (hidden + preview + modal input)
+            const emailHidden  = document.getElementById('email_envio');
+            const emailPreview = document.getElementById('email_envio_preview');
+            const emailInput   = document.getElementById('email_envio_input');
 
             function resetVehiculos() {
                 vehiculoSelect.innerHTML = '<option value="">Selecciona un vehículo...</option>';
@@ -461,11 +508,16 @@
             function getVehiculosFromOt(otId) {
                 const el = document.getElementById(`vehiculos_ot_${otId}`);
                 if (!el) return [];
-                try {
-                    return JSON.parse(el.textContent || '[]') || [];
-                } catch (e) {
-                    return [];
-                }
+                try { return JSON.parse(el.textContent || '[]') || []; }
+                catch (e) { return []; }
+            }
+
+            function syncEmailFromOt(opt){
+                if (!emailHidden || !emailPreview || !emailInput) return;
+                const correo = opt.getAttribute('data-correo') || '';
+                emailHidden.value = correo;
+                emailPreview.value = correo;
+                emailInput.value = correo;
             }
 
             function syncFromOt() {
@@ -480,10 +532,13 @@
                 // Cliente OT visual
                 clienteInput.value = cliente;
 
-                // Cargar destino como lugar de entrega (solo si está vacío)
+                // Lugar entrega: si está vacío, se sugiere destino
                 if (!lugarInput.value || lugarInput.value.length === 0) {
                     lugarInput.value = destino;
                 }
+
+                // Email envío: se sincroniza por defecto al correo del cliente
+                syncEmailFromOt(opt);
 
                 // Vehículos pendientes de entrega
                 resetVehiculos();
@@ -515,34 +570,77 @@
                     }
                 }
 
-                // Seleccionar conductor automáticamente si coincide (por OT o por vehículo después)
-                const conductorSelect = document.querySelector('select[name="conductor_id"]');
+                // Seleccionar conductor automáticamente por nombre si coincide
                 if (conductorSelect && conductor) {
                     [...conductorSelect.options].forEach(o => {
-                        if (o.text.trim() === conductor.trim()) o.selected = true;
+                        if ((o.text || '').trim() === conductor.trim()) o.selected = true;
                     });
                 }
             }
 
-            // Si cambian vehículo, puedes opcionalmente setear conductor_id por nombre (si coincide)
+            // Si cambian vehículo, setear conductor por nombre si coincide
             vehiculoSelect.addEventListener('change', function () {
                 const optVeh = vehiculoSelect.options[vehiculoSelect.selectedIndex];
                 const vConductor = optVeh?.dataset?.conductor || '';
-
-                if (!vConductor) return;
-
-                const conductorSelect = document.querySelector('select[name="conductor_id"]');
-                if (!conductorSelect) return;
+                if (!vConductor || !conductorSelect) return;
 
                 [...conductorSelect.options].forEach(o => {
-                    if (o.text.trim() === vConductor.trim()) o.selected = true;
+                    if ((o.text || '').trim() === vConductor.trim()) o.selected = true;
                 });
             });
 
             otSelect.addEventListener('change', syncFromOt);
 
+            // Guardar email desde modal
+            const btnGuardarEmail = document.getElementById('btnGuardarEmailEnvio');
+            if (btnGuardarEmail) {
+                function forceModalCleanup() {
+                    // limpia backdrop y estado del body si quedó pegado
+                    document.body.classList.remove('modal-open');
+                    document.body.style.removeProperty('padding-right');
+                    document.body.style.removeProperty('overflow');
+
+                    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+                }
+
+                btnGuardarEmail.addEventListener('click', function () {
+                    const email = (emailInput?.value || '').trim();
+                    if (!email || !email.includes('@')) {
+                        alert('Ingresa un correo válido.');
+                        return;
+                    }
+
+                    emailHidden.value = email;
+                    emailPreview.value = email;
+
+                    const $modal = $('#modalEmailEnvio');
+                    $modal.modal('hide');
+
+                    // ✅ si por conflicto no se limpia bien, lo forzamos
+                    setTimeout(forceModalCleanup, 150);
+                });
+
+                // ✅ cada vez que el modal se cierre, dejamos el DOM limpio
+                $('#modalEmailEnvio').on('hidden.bs.modal', function () {
+                    forceModalCleanup();
+                });
+
+            }
+
+            // Evitar doble submit y forzar validación HTML5 visible
+            if (form) {
+                form.addEventListener('submit', function () {
+                    const btn = document.getElementById('btnSubmitEntrega');
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.textContent = 'Enviando...';
+                    }
+                });
+            }
+
+            // Inicial
             resetVehiculos();
-            syncFromOt(); // inicial
+            syncFromOt();
         });
     </script>
 
@@ -556,19 +654,10 @@
                 img.onload = () => {
                     let width = img.width;
                     let height = img.height;
-
-                    // Mantener proporciones
                     const aspectRatio = width / height;
 
-                    if (width > maxWidth) {
-                        width = maxWidth;
-                        height = Math.round(width / aspectRatio);
-                    }
-
-                    if (height > maxHeight) {
-                        height = maxHeight;
-                        width = Math.round(height * aspectRatio);
-                    }
+                    if (width > maxWidth) { width = maxWidth; height = Math.round(width / aspectRatio); }
+                    if (height > maxHeight) { height = maxHeight; width = Math.round(height * aspectRatio); }
 
                     const canvas = document.createElement('canvas');
                     canvas.width = width;
@@ -580,28 +669,19 @@
                     canvas.toBlob(
                         (blob) => {
                             URL.revokeObjectURL(url);
-                            if (!blob) {
-                                reject(new Error('No se pudo generar el blob'));
-                                return;
-                            }
+                            if (!blob) return reject(new Error('No se pudo generar el blob'));
 
                             const compressedFile = new File([blob], file.name, {
                                 type: 'image/jpeg',
                                 lastModified: Date.now(),
                             });
 
-                            // También devolvemos un dataURL para la vista previa
                             const reader = new FileReader();
-                            reader.onload = () => {
-                                resolve({
-                                    file: compressedFile,
-                                    dataUrl: reader.result,
-                                });
-                            };
+                            reader.onload = () => resolve({ file: compressedFile, dataUrl: reader.result });
                             reader.readAsDataURL(blob);
                         },
-                        'image/jpeg', // salida en JPG
-                        quality       // calidad 0–1
+                        'image/jpeg',
+                        quality
                     );
                 };
 
@@ -614,32 +694,26 @@
             });
         }
 
-        // Maneja el cambio del input, comprime y muestra preview
         async function previewPhoto(input, previewId) {
             const file = input.files && input.files[0];
             const previewWrap = document.getElementById(previewId);
             if (!file || !previewWrap) return;
 
             try {
-                // Comprimir/reescalar
                 const { file: compressedFile, dataUrl } = await compressImage(file);
 
-                // Reemplazar el archivo del input por el comprimido
                 const dt = new DataTransfer();
                 dt.items.add(compressedFile);
                 input.files = dt.files;
 
-                // Si aún así pesa > 5MB, avisar
                 const maxBytes = 5 * 1024 * 1024;
                 if (compressedFile.size > maxBytes) {
                     alert('La imagen sigue pesando más de 5MB. Intenta con una foto más liviana.');
                 }
 
-                // Mostrar vista previa
                 const img = previewWrap.querySelector('img');
                 img.src = dataUrl;
                 previewWrap.style.display = 'block';
-
             } catch (e) {
                 console.error(e);
                 alert('No se pudo procesar la imagen seleccionada.');

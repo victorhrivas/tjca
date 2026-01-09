@@ -6,6 +6,8 @@ use App\Http\Requests\CreateInicioCargaRequest;
 use App\Http\Requests\UpdateInicioCargaRequest;
 use App\Http\Controllers\AppBaseController;
 use App\Repositories\InicioCargaRepository;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\InicioCargaMail;
 use Illuminate\Http\Request;
 use App\Models\InicioCarga;
 use App\Models\Ot;
@@ -41,18 +43,13 @@ class InicioCargaController extends AppBaseController
                 'cotizacion.solicitud.cliente',
                 'vehiculos' => fn ($q) => $q->orderBy('orden')->with('inicioCargas'),
             ])
-            // ✅ Solo estas OT
             ->whereIn('estado', ['pendiente', 'en_transito'])
-
-            // ✅ Debe existir al menos 1 vehículo sin inicio de carga
             ->whereHas('vehiculos', function ($q) {
                 $q->whereDoesntHave('inicioCargas');
             })
-
             ->orderBy('id', 'desc')
             ->get()
             ->map(function ($ot) {
-
                 $cliente = optional(optional(optional($ot->cotizacion)->solicitud)->cliente);
 
                 if (is_null($ot->cliente)) {
@@ -71,6 +68,7 @@ class InicioCargaController extends AppBaseController
                     $ot->conductor = optional($ot->cotizacion)->conductor;
                 }
 
+                // ✅ Estos son los que usas en la vista (data-telefono / data-correo)
                 $ot->contacto          = $cliente?->razon_social;
                 $ot->telefono_contacto = $cliente?->telefono ?? '';
                 $ot->correo_contacto   = $cliente?->correo   ?? '';
@@ -79,9 +77,37 @@ class InicioCargaController extends AppBaseController
             });
 
         $ot = null;
-        if ($request->has('ot_id')) {
-            $ot = Ot::with(['vehiculos' => fn($q) => $q->orderBy('orden')->with('inicioCargas')])
+
+        // ✅ Si viene ot_id, carga TAMBIÉN las relaciones para obtener correo desde cliente
+        if ($request->filled('ot_id')) {
+            $ot = Ot::with([
+                    'cotizacion.solicitud.cliente', // ✅ necesario para $ot->cotizacion->solicitud->cliente->correo
+                    'vehiculos' => fn($q) => $q->orderBy('orden')->with('inicioCargas'),
+                ])
                 ->find($request->get('ot_id'));
+
+            // ✅ Opcional: setear los campos derivados igual que arriba,
+            // para que el $ot preseleccionado tenga correo_contacto, etc.
+            if ($ot) {
+                $cliente = optional(optional(optional($ot->cotizacion)->solicitud)->cliente);
+
+                if (is_null($ot->cliente)) {
+                    $ot->cliente = $cliente?->razon_social;
+                }
+                if (is_null($ot->origen)) {
+                    $ot->origen = optional($ot->cotizacion)->origen;
+                }
+                if (is_null($ot->destino)) {
+                    $ot->destino = optional($ot->cotizacion)->destino;
+                }
+                if (is_null($ot->conductor)) {
+                    $ot->conductor = optional($ot->cotizacion)->conductor;
+                }
+
+                $ot->contacto          = $cliente?->razon_social;
+                $ot->telefono_contacto = $cliente?->telefono ?? '';
+                $ot->correo_contacto   = $cliente?->correo   ?? '';
+            }
         }
 
         return view('inicio_cargas.create', compact('ots', 'ot'));
@@ -99,7 +125,9 @@ class InicioCargaController extends AppBaseController
             'cliente'           => ['required', 'string', 'max:255'],
             'contacto'          => ['nullable', 'string', 'max:255'],
             'telefono_contacto' => ['nullable', 'string', 'max:50'],
-            'correo_contacto'   => ['nullable', 'string', 'max:255'],
+            'correo_contacto'   => ['nullable', 'string', 'max:255'], // lo mantienes si lo usas
+            'email_envio'       => ['required', 'email'],             // ✅ NUEVO (editable)
+
             'origen'            => ['required', 'string', 'max:255'],
             'destino'           => ['required', 'string', 'max:255'],
             'tipo_carga'        => ['nullable', 'string', 'max:255'],
@@ -114,6 +142,9 @@ class InicioCargaController extends AppBaseController
             'foto_3'            => ['nullable', 'image', 'max:4096'],
             'foto_guia_despacho'=> ['nullable', 'image', 'max:4096'],
         ]);
+
+        $emailCliente = $data['email_envio'];
+        unset($data['email_envio']); // no lo guardes en la tabla (a menos que quieras)
 
         // Validación de negocio: si OT tiene vehículos, exigir vehículo
         $ot = Ot::with('vehiculos')->findOrFail($data['ot_id']);
@@ -161,9 +192,16 @@ class InicioCargaController extends AppBaseController
         // Crear inicio de carga
         $inicioCarga = InicioCarga::create($data);
 
-        // Cambiar estado de la OT a "en_transito"
+        $ot = Ot::with('vehiculos')->findOrFail($data['ot_id']);
         $ot->estado = 'en_transito';
         $ot->save();
+
+        // ✅ Enviar correo
+        $inicioCarga->load('ot');
+
+        Mail::to($emailCliente)
+            ->cc(['vhrivas.c@gmail.com', 'victorhugorivaasc@gmail.com'])
+            ->send(new InicioCargaMail($inicioCarga));
 
         return view('inicio_cargas.success', [
             'success'     => 'Inicio de carga registrado correctamente.',
