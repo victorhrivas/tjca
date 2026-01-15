@@ -307,22 +307,24 @@ class OtController extends AppBaseController
 
         if (empty($ot)) {
             Flash::error('Ot not found');
-
             return redirect(route('ots.index'));
         }
 
-        // Cargar relaciones necesarias para el detalle (incluye fotos)
         $ot->load([
             'cotizacion',
             'vehiculos',
 
             // nested eager load
             'inicioCargas.otVehiculo',
+
+            // entregas + vehículo + guías (N fotos)
             'entregas.otVehiculo',
+            'entregas.guias',
         ]);
 
         return view('ots.show')->with('ot', $ot);
     }
+
 
     public function pdf($id)
     {

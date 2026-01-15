@@ -1,134 +1,193 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Entrega registrada - OT {{ $ot->folio ?? $ot->id ?? $entrega->ot_id }}</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <title>Entrega registrada - OT {{ $ot->folio ?? $ot->id ?? $entrega->ot_id }}</title>
 </head>
-<body style="margin:0; padding:0; background-color:#f4f6f8; font-family: Arial, Helvetica, sans-serif;">
 
+<body style="margin:0; padding:0; background-color:#f4f6f8;">
 @php
-    $clienteNombre = $entrega->cliente ?? (optional($ot->cotizacion)->cliente ?? 'Cliente');
-    $folioOt = $ot->folio ?? $ot->id ?? $entrega->ot_id;
+  $clienteNombre = $entrega->cliente ?? (optional($ot->cotizacion)->cliente ?? 'Cliente');
+  $folioOt = $ot->folio ?? $ot->id ?? $entrega->ot_id;
 
-    $fechaEntrega = $entrega->fecha_entrega
-        ? \Carbon\Carbon::parse($entrega->fecha_entrega)->format('d-m-Y')
-        : null;
+  $fechaEntrega = $entrega->fecha_entrega
+    ? \Carbon\Carbon::parse($entrega->fecha_entrega)->format('d-m-Y')
+    : null;
 
-    $rows = [
-        'OT'                => $folioOt,
-        'Cliente'           => $clienteNombre,
-        'Lugar de entrega'  => $entrega->lugar_entrega ?? null,
-        'Fecha de entrega'  => $fechaEntrega,
-        'Hora de entrega'   => $entrega->hora_entrega ?? null,
-        'Receptor'          => $entrega->nombre_receptor ?? null,
-        'RUT receptor'      => $entrega->rut_receptor ?? null,
-        'Teléfono receptor' => $entrega->telefono_receptor ?? null,
-        'Correo receptor'   => $entrega->correo_receptor ?? null,
-        'N° guía'           => $entrega->numero_guia ?? null,
-        'N° interno'        => $entrega->numero_interno ?? null,
-        'Conductor'         => $entrega->conductor ?? null,
-        'Conforme'          => is_null($entrega->conforme) ? null : ($entrega->conforme ? 'Sí' : 'No'),
-    ];
+  $rows = [
+    'OT'                => $folioOt,
+    'Cliente'           => $clienteNombre,
+    'Lugar de entrega'  => $entrega->lugar_entrega ?? null,
+    'Fecha de entrega'  => $fechaEntrega,
+    'Hora de entrega'   => $entrega->hora_entrega ?? null,
+    'Receptor'          => $entrega->nombre_receptor ?? null,
+    'RUT receptor'      => $entrega->rut_receptor ?? null,
+    'Teléfono receptor' => $entrega->telefono_receptor ?? null,
+    'Correo receptor'   => $entrega->correo_receptor ?? null,
+    'N° guía'           => $entrega->numero_guia ?? null,
+    'N° interno'        => $entrega->numero_interno ?? null,
+    'Conductor'         => $entrega->conductor ?? null,
+    'Conforme'          => is_null($entrega->conforme) ? null : ($entrega->conforme ? 'Sí' : 'No'),
+  ];
 @endphp
 
-<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6f8; padding:30px 0;">
+  <!-- Preheader (oculto) -->
+  <div style="display:none; font-size:1px; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden; mso-hide:all;">
+    Entrega registrada para OT {{ $folioOt }}.
+  </div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+         bgcolor="#f4f6f8"
+         style="background-color:#f4f6f8; mso-table-lspace:0pt; mso-table-rspace:0pt; border-collapse:collapse;">
     <tr>
-        <td align="center">
+      <td align="center" style="padding:30px 12px;">
 
-            <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:6px; overflow:hidden;">
+        <!--[if (mso)|(IE)]>
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+          <tr>
+            <td>
+        <![endif]-->
 
-                {{-- HEADER --}}
+        <!-- Card -->
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0"
+               width="600"
+               bgcolor="#ffffff"
+               style="width:600px; max-width:600px; background-color:#ffffff;
+                      border-collapse:separate; mso-table-lspace:0pt; mso-table-rspace:0pt;
+                      border:1px solid #e5e7eb; border-radius:8px;">
+
+          <!-- HEADER -->
+          <tr>
+            <td align="center" bgcolor="#1f2933"
+                style="background-color:#1f2933; padding:22px; border-top-left-radius:8px; border-top-right-radius:8px;">
+              <img
+                src="{{ $message->embed(public_path('images/logo.png')) }}"
+                alt="Logo {{ config('app.name') }}"
+                width="140"
+                border="0"
+                style="display:block; width:140px; height:auto; border:0; outline:none; text-decoration:none; -ms-interpolation-mode:bicubic;">
+            </td>
+          </tr>
+
+          <!-- BODY -->
+          <tr>
+            <td style="padding:30px; font-family:Arial, Helvetica, sans-serif; color:#333333;
+                       font-size:14px; line-height:22px; mso-line-height-rule:exactly;">
+
+              <p style="margin:0 0 14px 0;">
+                Estimado/a <strong>{{ $clienteNombre }}</strong>,
+              </p>
+
+              <p style="margin:0 0 14px 0;">
+                Junto con saludar, le informamos que se registró correctamente la
+                <strong>entrega</strong> asociada a la <strong>OT #{{ $folioOt }}</strong>.
+              </p>
+
+              <!-- Resumen de la entrega (sin border-radius/overflow para Outlook) -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                     style="border-collapse:collapse; margin:18px 0; border:1px solid #e5e7eb;">
                 <tr>
-                    <td style="background:#1f2933; padding:20px; text-align:center;">
-                        <img
-                            src="{{ $message->embed(public_path('images/logo.png')) }}"
-                            alt="Logo {{ config('app.name') }}"
-                            style="max-height:90px; display:block; margin:0 auto;"
-                        >
-                    </td>
+                  <td bgcolor="#f9fafb"
+                      style="background-color:#f9fafb; padding:12px 16px; font-family:Arial, Helvetica, sans-serif;
+                             font-weight:bold; color:#111827; font-size:13px; line-height:18px; mso-line-height-rule:exactly;">
+                    Resumen de la entrega
+                  </td>
                 </tr>
-
-                {{-- BODY --}}
                 <tr>
-                    <td style="padding:30px; color:#333333; font-size:14px; line-height:1.6;">
-
-                        <p style="margin-top:0;">
-                            Estimado/a <strong>{{ $clienteNombre }}</strong>,
-                        </p>
-
-                        <p>
-                            Junto con saludar, le informamos que se registró correctamente la
-                            <strong>entrega</strong> asociada a la <strong>OT #{{ $folioOt }}</strong>.
-                        </p>
-
-                        {{-- Resumen --}}
-                        <table width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0; border:1px solid #e5e7eb; border-radius:6px; overflow:hidden;">
-                            <tr>
-                                <td style="background:#f9fafb; padding:12px 16px; font-weight:bold; color:#111827; font-size:13px;">
-                                    Resumen de la entrega
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="padding:14px 16px;">
-                                    <table width="100%" cellpadding="0" cellspacing="0" style="font-size:13px; color:#374151;">
-                                        @foreach($rows as $label => $value)
-                                            @if(!empty($value))
-                                                <tr>
-                                                    <td style="padding:6px 0; width:42%; color:#6b7280;">
-                                                        {{ $label }}
-                                                    </td>
-                                                    <td style="padding:6px 0; font-weight:600; color:#111827;">
-                                                        {{ $value }}
-                                                    </td>
-                                                </tr>
-                                            @endif
-                                        @endforeach
-                                    </table>
-                                </td>
-                            </tr>
-                        </table>
-
-                        @if(!empty($entrega->observaciones))
-                            <div style="margin-top:16px;">
-                                <div style="font-weight:bold; color:#111827; margin-bottom:6px; font-size:13px;">
-                                    Observaciones
-                                </div>
-                                <div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:6px; padding:12px 14px; color:#374151; font-size:13px;">
-                                    {!! nl2br(e($entrega->observaciones)) !!}
-                                </div>
-                            </div>
+                  <td style="padding:14px 16px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                           style="border-collapse:collapse; font-family:Arial, Helvetica, sans-serif; font-size:13px;
+                                  color:#374151; line-height:18px; mso-line-height-rule:exactly;">
+                      @foreach($rows as $label => $value)
+                        @if(!empty($value))
+                          <tr>
+                            <td valign="top" style="padding:6px 0; width:42%; color:#6b7280;">
+                              {{ $label }}
+                            </td>
+                            <td valign="top" style="padding:6px 0; font-weight:bold; color:#111827;">
+                              {{ $value }}
+                            </td>
+                          </tr>
                         @endif
-
-                        <p style="margin:18px 0 0 0;">
-                            Si necesita más información, por favor contáctenos por los canales habituales.
-                        </p>
-
-                    </td>
+                      @endforeach
+                    </table>
+                  </td>
                 </tr>
+              </table>
 
-                {{-- AVISO --}}
+              @if(!empty($entrega->observaciones))
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse; margin-top:16px;">
+                  <tr>
+                    <td style="font-family:Arial, Helvetica, sans-serif; font-weight:bold; color:#111827; font-size:13px; line-height:18px; mso-line-height-rule:exactly; padding:0 0 6px 0;">
+                      Observaciones
+                    </td>
+                  </tr>
+                  <tr>
+                    <td bgcolor="#f9fafb"
+                        style="background-color:#f9fafb; border:1px solid #e5e7eb; padding:12px 14px;
+                               font-family:Arial, Helvetica, sans-serif; color:#374151; font-size:13px; line-height:18px; mso-line-height-rule:exactly;">
+                      {!! nl2br(e($entrega->observaciones)) !!}
+                    </td>
+                  </tr>
+                </table>
+              @endif
+
+              <p style="margin:18px 0 0 0;">
+                Si necesita más información, por favor contáctenos por los canales habituales.
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- DIVIDER -->
+          <tr>
+            <td style="padding:0 30px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
                 <tr>
-                    <td style="padding:20px 30px; background:#f9fafb; color:#6b7280; font-size:12px;">
-                        <strong>Importante:</strong><br>
-                        Este correo ha sido generado automáticamente.
-                        Por favor <strong>no responda a este mensaje</strong>,
-                        ya que esta casilla no se encuentra habilitada para recibir respuestas.
-                    </td>
+                  <td style="height:1px; line-height:1px; font-size:0; background-color:#eef2f7;">&nbsp;</td>
                 </tr>
+              </table>
+            </td>
+          </tr>
 
-                {{-- FOOTER --}}
-                <tr>
-                    <td style="padding:20px; text-align:center; font-size:12px; color:#9ca3af;">
-                        © {{ date('Y') }} {{ config('app.name') }}<br>
-                        Todos los derechos reservados.
-                    </td>
-                </tr>
+          <!-- AVISO -->
+          <tr>
+            <td bgcolor="#f9fafb"
+                style="background-color:#f9fafb; padding:18px 30px;
+                       font-family:Arial, Helvetica, sans-serif; color:#6b7280;
+                       font-size:12px; line-height:18px; mso-line-height-rule:exactly;">
+              <strong>Importante:</strong><br>
+              Este correo ha sido generado automáticamente.
+              Por favor <strong>no responda a este mensaje</strong>,
+              ya que esta casilla no se encuentra habilitada para recibir respuestas.
+            </td>
+          </tr>
 
-            </table>
+          <!-- FOOTER -->
+          <tr>
+            <td align="center"
+                style="padding:18px 20px; font-family:Arial, Helvetica, sans-serif; color:#9ca3af;
+                       font-size:12px; line-height:18px; mso-line-height-rule:exactly;
+                       border-bottom-left-radius:8px; border-bottom-right-radius:8px;">
+              © {{ date('Y') }} {{ config('app.name') }}<br>
+              Todos los derechos reservados.
+            </td>
+          </tr>
 
-        </td>
+        </table>
+        <!-- /Card -->
+
+        <!--[if (mso)|(IE)]>
+            </td>
+          </tr>
+        </table>
+        <![endif]-->
+
+      </td>
     </tr>
-</table>
+  </table>
 
 </body>
 </html>

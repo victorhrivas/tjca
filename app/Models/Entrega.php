@@ -70,4 +70,9 @@ class Entrega extends Model
         return $label ?: null;
     }
 
+    public function guias()
+    {
+        return $this->hasMany(\App\Models\EntregaGuia::class, 'entrega_id')
+            ->orderBy('orden');
+    }
 }

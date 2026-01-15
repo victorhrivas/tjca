@@ -404,34 +404,50 @@
                         </small>
                     </div>
 
-                    {{-- Foto guía (requerida por tu input actual) --}}
+                    {{-- Fotos guías de despacho (requeridas: al menos 1) --}}
                     <div class="col-md-12 mb-3">
-                        <label>Foto guía de despacho <span style="color:#ff6b6b">*</span></label>
+                        <label>Fotos guías de despacho <span style="color:#ff6b6b">*</span></label>
 
-                        <div class="photo-grid">
-                            <div class="photo-card">
-                                <label class="photo-upload-label" for="foto_guia_despacho">
+                        <div class="photo-grid" id="guias_grid">
+                            {{-- item 1 por defecto --}}
+                            <div class="photo-card guia-item">
+                                <label class="photo-upload-label">
                                     <i class="fas fa-camera"></i>
-                                    <strong>Tomar / subir guía de despacho</strong>
+                                    <strong>Tomar / subir guía #1</strong>
                                     <span>Foto clara donde se lea el documento.</span>
 
-                                    <input type="file" name="foto_guia_despacho" id="foto_guia_despacho"
-                                           class="d-none" accept="image/*" required
-                                           onchange="previewPhoto(this, 'preview_foto_guia_despacho')">
+                                    <input
+                                        type="file"
+                                        name="guias_despacho[]"
+                                        class="d-none guia-input"
+                                        accept="image/*"
+                                        required
+                                    >
                                 </label>
 
-                                <div id="preview_foto_guia_despacho" class="photo-preview">
-                                    <img src="#" alt="Vista previa guía despacho">
+                                <div class="photo-preview">
+                                    <img src="#" alt="Vista previa guía">
                                 </div>
+
+                                <button type="button" class="btn btn-sm btn-danger mt-2 btn-remove-guia" style="display:none;">
+                                    Quitar
+                                </button>
                             </div>
                         </div>
 
-                        @error('foto_guia_despacho')
+                        <button type="button" class="btn btn-default mt-2" id="btnAddGuia">
+                            Agregar otra guía
+                        </button>
+
+                        @error('guias_despacho')
+                            <div style="color:#ff6b6b; margin-top:8px; font-size:.85rem;">{{ $message }}</div>
+                        @enderror
+                        @error('guias_despacho.*')
                             <div style="color:#ff6b6b; margin-top:8px; font-size:.85rem;">{{ $message }}</div>
                         @enderror
 
                         <small class="text-muted" style="color: var(--muted);">
-                            Formatos permitidos: JPG, PNG. Máx 5 MB por archivo.
+                            Formatos permitidos: JPG, PNG. Máx 5 MB por archivo. Debe existir al menos 1 guía.
                         </small>
                     </div>
                 </div>
@@ -719,6 +735,98 @@
                 alert('No se pudo procesar la imagen seleccionada.');
             }
         }
+    </script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+
+            const grid = document.getElementById('guias_grid');
+            const btnAdd = document.getElementById('btnAddGuia');
+
+            function updateGuiaTitles() {
+                const items = grid.querySelectorAll('.guia-item');
+                items.forEach((item, idx) => {
+                    const strong = item.querySelector('strong');
+                    if (strong) strong.textContent = `Tomar / subir guía #${idx + 1}`;
+
+                    const input = item.querySelector('.guia-input');
+                    if (input) input.required = (idx === 0); // requerido al menos 1 (HTML)
+                });
+
+                // botón quitar: solo mostrar si hay más de 1
+                const showRemove = items.length > 1;
+                items.forEach(item => {
+                    const rm = item.querySelector('.btn-remove-guia');
+                    if (rm) rm.style.display = showRemove ? 'inline-block' : 'none';
+                });
+            }
+
+            function bindGuiaItemEvents(item) {
+                const input = item.querySelector('.guia-input');
+                const previewWrap = item.querySelector('.photo-preview');
+                const img = previewWrap?.querySelector('img');
+
+                if (input) {
+                    input.addEventListener('change', async function () {
+                        const file = input.files && input.files[0];
+                        if (!file) return;
+
+                        try {
+                            const { file: compressedFile, dataUrl } = await compressImage(file);
+
+                            const dt = new DataTransfer();
+                            dt.items.add(compressedFile);
+                            input.files = dt.files;
+
+                            const maxBytes = 5 * 1024 * 1024;
+                            if (compressedFile.size > maxBytes) {
+                                alert('La imagen sigue pesando más de 5MB. Intenta con una foto más liviana.');
+                            }
+
+                            if (img) img.src = dataUrl;
+                            if (previewWrap) previewWrap.style.display = 'block';
+                        } catch (e) {
+                            console.error(e);
+                            alert('No se pudo procesar la imagen seleccionada.');
+                        }
+                    });
+                }
+
+                const btnRemove = item.querySelector('.btn-remove-guia');
+                if (btnRemove) {
+                    btnRemove.addEventListener('click', function () {
+                        const items = grid.querySelectorAll('.guia-item');
+                        if (items.length <= 1) return; // nunca dejar 0
+                        item.remove();
+                        updateGuiaTitles();
+                    });
+                }
+            }
+
+            btnAdd.addEventListener('click', function () {
+                const template = grid.querySelector('.guia-item');
+                const clone = template.cloneNode(true);
+
+                // limpiar estado del clon
+                const input = clone.querySelector('.guia-input');
+                if (input) input.value = '';
+
+                const previewWrap = clone.querySelector('.photo-preview');
+                if (previewWrap) {
+                    previewWrap.style.display = 'none';
+                    const img = previewWrap.querySelector('img');
+                    if (img) img.src = '#';
+                }
+
+                grid.appendChild(clone);
+                bindGuiaItemEvents(clone);
+                updateGuiaTitles();
+            });
+
+            // bind inicial
+            grid.querySelectorAll('.guia-item').forEach(bindGuiaItemEvents);
+            updateGuiaTitles();
+        });
     </script>
 
     </body>

@@ -86,15 +86,14 @@
                     'mal_estado'  => 'Mal estado',
                 ];
 
-                $conductoresFijos = [
-                    'Elvis Corona',
-                    'Bernardo Melendez',
-                    'Luis Guerrero',
-                    'Rodrigo Valenzuela',
-                    'Juan Carlos Cuello',
-                    'Juan Carlos Gonzalez',
-                    'Francisco León',
-                ];
+                // Collection: ['Nombre' => 'Nombre']
+                $conductoresFijos = \App\Models\Conductor::query()
+                    ->where('activo', true)
+                    ->orderBy('nombre')
+                    ->pluck('nombre', 'nombre');
+
+                // Array simple: ['Nombre', 'Nombre', ...] para in_array()
+                $conductoresFijosArr = $conductoresFijos->keys()->all();
             @endphp
 
             <form method="POST" action="{{ route('checklist-camions.store') }}">
@@ -110,47 +109,53 @@
                     <div class="col-md-4 mb-3">
                         <label>Fecha y hora checklist</label>
                         <input type="text"
-                            class="form-control"
-                            style="background:#2a2f38;border:1px solid var(--line);color:var(--ink);border-radius:10px;"
-                            value="{{ now()->format('d/m/Y H:i') }}"
-                            readonly>
+                               class="form-control"
+                               style="background:#2a2f38;border:1px solid var(--line);color:var(--ink);border-radius:10px;"
+                               value="{{ now()->format('d/m/Y H:i') }}"
+                               readonly>
 
                         <small class="helper-text">
                             Se registra automáticamente al guardar el checklist.
                         </small>
 
-                        {{-- Hidden igual estilizado (aunque no se ve, por consistencia) --}}
                         <input type="hidden"
-                            name="fecha_checklist"
-                            value="{{ now()->format('Y-m-d H:i:s') }}">
+                               name="fecha_checklist"
+                               value="{{ now()->format('Y-m-d H:i:s') }}">
                     </div>
-
 
                     {{-- Nombre conductor (select + otro) --}}
                     <div class="col-md-6 mb-3">
                         <label>Nombre del conductor <span class="req">*</span></label>
+
                         <select id="nombre_conductor_select" class="form-control">
                             <option value="">Selecciona conductor...</option>
+
                             @foreach($conductoresFijos as $nombre)
                                 <option value="{{ $nombre }}"
                                     {{ old('nombre_conductor') === $nombre ? 'selected' : '' }}>
                                     {{ $nombre }}
                                 </option>
                             @endforeach
+
                             <option value="__otro__"
-                                {{ old('nombre_conductor') && !in_array(old('nombre_conductor'), $conductoresFijos) ? 'selected' : '' }}>
+                                {{ old('nombre_conductor') && !in_array(old('nombre_conductor'), $conductoresFijosArr) ? 'selected' : '' }}>
                                 Otro
                             </option>
                         </select>
+
                         <input type="text"
                                id="nombre_conductor_otro"
                                class="form-control mt-2"
                                placeholder="Especificar otro conductor"
-                               value="{{ (!in_array(old('nombre_conductor'), $conductoresFijos) ? old('nombre_conductor') : '') }}"
-                               style="{{ (!in_array(old('nombre_conductor'), $conductoresFijos) && old('nombre_conductor')) ? '' : 'display:none;' }}">
+                               value="{{ (!in_array(old('nombre_conductor'), $conductoresFijosArr) ? old('nombre_conductor') : '') }}"
+                               style="{{ (!in_array(old('nombre_conductor'), $conductoresFijosArr) && old('nombre_conductor')) ? '' : 'display:none;' }}">
+
                         {{-- campo real que se envía --}}
-                        <input type="hidden" name="nombre_conductor" id="nombre_conductor_hidden"
+                        <input type="hidden"
+                               name="nombre_conductor"
+                               id="nombre_conductor_hidden"
                                value="{{ old('nombre_conductor') }}">
+
                         <div class="helper-text">Selecciona un conductor o escribe otro nombre.</div>
                     </div>
 
@@ -445,7 +450,6 @@
     </div>
 
     <script>
-        // Lógica para manejar conductor fijo / otro
         document.addEventListener('DOMContentLoaded', function () {
             const selectConductor = document.getElementById('nombre_conductor_select');
             const inputOtro = document.getElementById('nombre_conductor_otro');
@@ -453,6 +457,7 @@
 
             function syncConductor() {
                 const val = selectConductor.value;
+
                 if (val === '__otro__') {
                     inputOtro.style.display = '';
                     hiddenNombre.value = inputOtro.value;
@@ -463,13 +468,13 @@
             }
 
             selectConductor.addEventListener('change', syncConductor);
+
             inputOtro.addEventListener('input', function () {
                 if (selectConductor.value === '__otro__') {
                     hiddenNombre.value = inputOtro.value;
                 }
             });
 
-            // estado inicial
             syncConductor();
         });
     </script>

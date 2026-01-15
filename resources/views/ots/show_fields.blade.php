@@ -64,7 +64,6 @@
         <h6 class="text-uppercase text-muted small mb-2">Vehículos / choferes asignados</h6>
 
         @php
-            // Preferir relación. Si no viene cargada, igual funciona si existe accessor legacy.
             $vehiculos = $ot->vehiculos ?? collect();
         @endphp
 
@@ -82,9 +81,7 @@
                     <tbody>
                         @foreach($vehiculos as $i => $v)
                             <tr>
-                                <td>
-                                    <span class="badge badge-secondary">{{ $i + 1 }}</span>
-                                </td>
+                                <td><span class="badge badge-secondary">{{ $i + 1 }}</span></td>
                                 <td>{{ $v->conductor ?: 'No asignado' }}</td>
                                 <td>{{ $v->patente_camion ?: 'No registrada' }}</td>
                                 <td>{{ $v->patente_remolque ?: 'No registrada' }}</td>
@@ -94,7 +91,7 @@
                 </table>
             </div>
         @else
-            {{-- Fallback legacy (por si aún no hiciste backfill / OT antigua) --}}
+            {{-- Fallback legacy --}}
             <div class="row mb-4">
                 <div class="col-md-6">
                     <div class="mb-3">
@@ -132,7 +129,7 @@
         </div>
     </div>
 
-    {{-- Montos desde cotización (si quieres mostrar) --}}
+    {{-- Montos --}}
     <div class="col-md-6">
         <div class="mb-4">
             <h6 class="text-uppercase text-muted small mb-1">Valor servicio</h6>
@@ -150,18 +147,14 @@
     <div class="col-md-6">
         <div class="mb-3">
             <h6 class="text-uppercase text-muted small mb-1">Creada</h6>
-            <p class="mb-0">
-                {{ optional($ot->created_at)->format('d/m/Y H:i') }}
-            </p>
+            <p class="mb-0">{{ optional($ot->created_at)->format('d/m/Y H:i') }}</p>
         </div>
     </div>
 
     <div class="col-md-6">
         <div class="mb-3">
             <h6 class="text-uppercase text-muted small mb-1">Última actualización</h6>
-            <p class="mb-0">
-                {{ optional($ot->updated_at)->format('d/m/Y H:i') }}
-            </p>
+            <p class="mb-0">{{ optional($ot->updated_at)->format('d/m/Y H:i') }}</p>
         </div>
     </div>
 </div>
@@ -171,12 +164,10 @@
 {{-- ========================= --}}
 <div class="row mt-4">
 
-    {{-- Imágenes de INICIO DE CARGA --}}
+    {{-- INICIO DE CARGA --}}
     @if($ot->inicioCargas && $ot->inicioCargas->count())
         <div class="col-12 mb-3">
-            <h5 class="text-uppercase text-muted small mb-2">
-                Imágenes de inicio de carga
-            </h5>
+            <h5 class="text-uppercase text-muted small mb-2">Imágenes de inicio de carga</h5>
         </div>
 
         @foreach($ot->inicioCargas as $inicioCarga)
@@ -188,17 +179,11 @@
                 <div class="col-12 mb-2">
                     <small class="text-muted">
                         Inicio de carga #{{ $inicioCarga->id }}
-
-                        @if($inicioCarga->created_at)
-                            · {{ $inicioCarga->created_at->format('d/m/Y H:i') }}
-                        @endif
+                        @if($inicioCarga->created_at) · {{ $inicioCarga->created_at->format('d/m/Y H:i') }} @endif
 
                         @php
-                            // Preferir el vínculo a ot_vehiculo; si no existe, fallback al campo legacy conductor
                             $vehiculoLabel = $inicioCarga->vehiculo_label;
-                            if (!$vehiculoLabel && !empty($inicioCarga->conductor)) {
-                                $vehiculoLabel = $inicioCarga->conductor;
-                            }
+                            if (!$vehiculoLabel && !empty($inicioCarga->conductor)) $vehiculoLabel = $inicioCarga->conductor;
                         @endphp
 
                         @if($vehiculoLabel)
@@ -228,45 +213,36 @@
         @endforeach
     @endif
 
-    {{-- Separador si hay ambos tipos --}}
+    {{-- Separador --}}
     @if(($ot->inicioCargas && $ot->inicioCargas->count()) && ($ot->entregas && $ot->entregas->count()))
-        <div class="col-12 my-3">
-            <hr>
-        </div>
+        <div class="col-12 my-3"><hr></div>
     @endif
 
-    {{-- Imágenes de ENTREGA --}}
+    {{-- ENTREGAS --}}
     @if($ot->entregas && $ot->entregas->count())
         <div class="col-12 mb-3">
-            <h5 class="text-uppercase text-muted small mb-2">
-                Imágenes de entrega de carga
-            </h5>
+            <h5 class="text-uppercase text-muted small mb-2">Imágenes de entrega de carga</h5>
         </div>
 
         @foreach($ot->entregas as $entrega)
             @php
                 $tieneFotosEntrega = $entrega->foto_1 || $entrega->foto_2 || $entrega->foto_3;
-                $tieneGuiaEntrega  = !empty($entrega->foto_guia_despacho);
+
+                $guias = $entrega->guias ?? collect();          // NUEVO
+                $tieneGuiaLegacy = !empty($entrega->foto_guia_despacho); // COMPAT
+                $tieneGuiasEntrega = $guias->count() > 0 || $tieneGuiaLegacy;
             @endphp
 
-            @if($tieneFotosEntrega || $tieneGuiaEntrega)
+            @if($tieneFotosEntrega || $tieneGuiasEntrega)
                 <div class="col-12 mb-2">
                     <small class="text-muted">
                         Entrega #{{ $entrega->id }}
-
-                        @if($entrega->fecha_entrega)
-                            · {{ \Carbon\Carbon::parse($entrega->fecha_entrega)->format('d/m/Y') }}
-                        @endif
-
-                        @if($entrega->nombre_receptor)
-                            · Receptor: {{ $entrega->nombre_receptor }}
-                        @endif
+                        @if($entrega->fecha_entrega) · {{ \Carbon\Carbon::parse($entrega->fecha_entrega)->format('d/m/Y') }} @endif
+                        @if($entrega->nombre_receptor) · Receptor: {{ $entrega->nombre_receptor }} @endif
 
                         @php
                             $vehiculoLabel = $entrega->vehiculo_label;
-                            if (!$vehiculoLabel && !empty($entrega->conductor)) {
-                                $vehiculoLabel = $entrega->conductor;
-                            }
+                            if (!$vehiculoLabel && !empty($entrega->conductor)) $vehiculoLabel = $entrega->conductor;
                         @endphp
 
                         @if($vehiculoLabel)
@@ -284,41 +260,63 @@
                             <div class="card bg-dark border-0 shadow-sm h-100">
                                 <div class="card-body p-2 d-flex align-items-center justify-content-center">
                                     <img src="{{ asset('storage/'.$entrega->$foto) }}"
-                                        alt="Foto entrega"
-                                        class="img-fluid rounded"
-                                        style="max-height: 180px; object-fit: cover; cursor:pointer;"
-                                        onclick="openImageOverlay('{{ asset('storage/'.$entrega->$foto) }}')">
+                                         alt="Foto entrega"
+                                         class="img-fluid rounded"
+                                         style="max-height: 180px; object-fit: cover; cursor:pointer;"
+                                         onclick="openImageOverlay('{{ asset('storage/'.$entrega->$foto) }}')">
                                 </div>
                             </div>
                         </div>
                     @endif
                 @endforeach
 
-                {{-- Guía de despacho (desde entrega) --}}
-                @if($tieneGuiaEntrega)
+                {{-- Guías de despacho (N) --}}
+                @if($tieneGuiasEntrega)
                     <div class="col-12 mb-2">
-                        <small class="text-muted">
-                            Guía de despacho (Entrega #{{ $entrega->id }})
-                        </small>
+                        <small class="text-muted">Guías de despacho (Entrega #{{ $entrega->id }})</small>
                     </div>
 
-                    <div class="col-sm-6 col-md-3 mb-3">
-                        <div class="card bg-dark border-0 shadow-sm h-100">
-                            <div class="card-body p-2 d-flex align-items-center justify-content-center">
-                                <img src="{{ asset('storage/'.$entrega->foto_guia_despacho) }}"
-                                    alt="Guía de despacho"
-                                    class="img-fluid rounded"
-                                    style="max-height: 180px; object-fit: cover; cursor:pointer;"
-                                    onclick="openImageOverlay('{{ asset('storage/'.$entrega->foto_guia_despacho) }}')">
+                    {{-- NUEVO: múltiples --}}
+                    @if($guias->count() > 0)
+                        @foreach($guias as $guia)
+                            <div class="col-sm-6 col-md-3 mb-3">
+                                <div class="card bg-dark border-0 shadow-sm h-100">
+                                    <div class="card-body p-2 d-flex align-items-center justify-content-center">
+                                        <img src="{{ asset('storage/'.$guia->archivo) }}"
+                                             alt="Guía #{{ $guia->orden }}"
+                                             class="img-fluid rounded"
+                                             style="max-height: 180px; object-fit: cover; cursor:pointer;"
+                                             onclick="openImageOverlay('{{ asset('storage/'.$guia->archivo) }}')">
+                                    </div>
+                                </div>
+                                <small class="text-muted d-block mt-1" style="font-size:.82rem;">
+                                    Guía #{{ $guia->orden }}
+                                </small>
                             </div>
+                        @endforeach
+                    @else
+                        {{-- COMPAT: entrega antigua --}}
+                        <div class="col-sm-6 col-md-3 mb-3">
+                            <div class="card bg-dark border-0 shadow-sm h-100">
+                                <div class="card-body p-2 d-flex align-items-center justify-content-center">
+                                    <img src="{{ asset('storage/'.$entrega->foto_guia_despacho) }}"
+                                         alt="Guía de despacho"
+                                         class="img-fluid rounded"
+                                         style="max-height: 180px; object-fit: cover; cursor:pointer;"
+                                         onclick="openImageOverlay('{{ asset('storage/'.$entrega->foto_guia_despacho) }}')">
+                                </div>
+                            </div>
+                            <small class="text-muted d-block mt-1" style="font-size:.82rem;">
+                                Guía #1
+                            </small>
                         </div>
-                    </div>
+                    @endif
                 @endif
             @endif
         @endforeach
     @endif
 
-
+    {{-- Sin imágenes --}}
     @if(
         (!$ot->inicioCargas || !$ot->inicioCargas->count())
         && (!$ot->entregas || !$ot->entregas->count())

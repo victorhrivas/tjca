@@ -29,6 +29,4 @@ class Conductor extends Model
     public static array $rules = [
         'nombre' => 'required'
     ];
-
-    
 }

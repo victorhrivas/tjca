@@ -1,80 +1,124 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Cotización #{{ $cotizacion->id }}</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <title>Cotización #{{ $cotizacion->id }}</title>
 </head>
-<body style="margin:0; padding:0; background-color:#f4f6f8; font-family: Arial, Helvetica, sans-serif;">
 
+<body style="margin:0; padding:0; background-color:#f4f6f8;">
 @php
-    $clienteNombre = optional($cotizacion->cliente_obj)->razon_social ?? 'Cliente';
+  $clienteNombre = optional($cotizacion->cliente_obj)->razon_social ?? 'Cliente';
 @endphp
 
-<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6f8; padding:30px 0;">
+  <!-- Preheader (oculto) -->
+  <div style="display:none; font-size:1px; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden; mso-hide:all;">
+    Cotización N° {{ $cotizacion->id }} adjunta.
+  </div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+         bgcolor="#f4f6f8"
+         style="background-color:#f4f6f8; mso-table-lspace:0pt; mso-table-rspace:0pt; border-collapse:collapse;">
     <tr>
-        <td align="center">
+      <td align="center" style="padding:30px 12px;">
 
-            <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:6px; overflow:hidden;">
+        <!--[if (mso)|(IE)]>
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+          <tr>
+            <td>
+        <![endif]-->
 
-                {{-- HEADER --}}
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0"
+               width="600"
+               style="width:600px; max-width:600px; border-collapse:separate; background-color:#ffffff;
+                      mso-table-lspace:0pt; mso-table-rspace:0pt;
+                      border:1px solid #e5e7eb;
+                      border-radius:8px;">
+          <!-- HEADER -->
+          <tr>
+            <td align="center" bgcolor="#1f2933"
+                style="background-color:#1f2933; padding:22px; border-top-left-radius:8px; border-top-right-radius:8px;">
+              <img
+                src="{{ $message->embed(public_path('images/logo.png')) }}"
+                alt="Logo {{ config('app.name') }}"
+                width="140"
+                border="0"
+                style="display:block; width:140px; height:auto; border:0; outline:none; text-decoration:none; -ms-interpolation-mode:bicubic;">
+            </td>
+          </tr>
+
+          <!-- BODY -->
+          <tr>
+            <td style="padding:30px; font-family:Arial, Helvetica, sans-serif; color:#333333;
+                       font-size:14px; line-height:22px; mso-line-height-rule:exactly;">
+              <p style="margin:0 0 14px 0;">
+                Estimado/a <strong>{{ $clienteNombre }}</strong>,
+              </p>
+
+              <p style="margin:0 0 14px 0;">
+                Junto con saludar, le hacemos llegar adjunta la
+                <strong>cotización N° {{ $cotizacion->id }}</strong>,
+                correspondiente a su solicitud.
+              </p>
+
+              <p style="margin:0 0 14px 0;">
+                En el documento adjunto encontrará el detalle completo de la cotización,
+                incluyendo valores, condiciones y especificaciones del servicio ofrecido.
+              </p>
+
+              <p style="margin:0;">
+                Para cualquier consulta, aclaración o modificación,
+                le solicitamos contactar directamente a su ejecutivo comercial.
+              </p>
+            </td>
+          </tr>
+
+          <!-- DIVIDER -->
+          <tr>
+            <td style="padding:0 30px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
                 <tr>
-                    <td style="background:#1f2933; padding:20px; text-align:center;">
-                        <img
-                            src="{{ $message->embed(public_path('images/logo.png')) }}"
-                            alt="Logo {{ config('app.name') }}"
-                            style="max-height:90px; display:block; margin:0 auto;"
-                        >
-                    </td>
+                  <td style="height:1px; line-height:1px; font-size:0; background-color:#eef2f7;">&nbsp;</td>
                 </tr>
+              </table>
+            </td>
+          </tr>
 
-                {{-- BODY --}}
-                <tr>
-                    <td style="padding:30px; color:#333333; font-size:14px; line-height:1.6;">
-                        <p style="margin-top:0;">
-                            Estimado/a <strong>{{ $clienteNombre }}</strong>,
-                        </p>
+          <!-- NO-REPLY -->
+          <tr>
+            <td bgcolor="#f9fafb"
+                style="background-color:#f9fafb; padding:18px 30px;
+                       font-family:Arial, Helvetica, sans-serif; color:#6b7280;
+                       font-size:12px; line-height:18px; mso-line-height-rule:exactly;">
+              <strong>Importante:</strong><br>
+              Este correo ha sido generado automáticamente.
+              Por favor <strong>no responda a este mensaje</strong>,
+              ya que esta casilla no se encuentra habilitada para recibir respuestas.
+            </td>
+          </tr>
 
-                        <p>
-                            Junto con saludar, le hacemos llegar adjunta la
-                            <strong>cotización N° {{ $cotizacion->id }}</strong>,
-                            correspondiente a su solicitud.
-                        </p>
+          <!-- FOOTER -->
+          <tr>
+            <td align="center"
+                style="padding:18px 20px; font-family:Arial, Helvetica, sans-serif; color:#9ca3af;
+                       font-size:12px; line-height:18px; mso-line-height-rule:exactly;
+                       border-bottom-left-radius:8px; border-bottom-right-radius:8px;">
+              © {{ date('Y') }} {{ config('app.name') }}<br>
+              Todos los derechos reservados.
+            </td>
+          </tr>
+        </table>
 
-                        <p>
-                            En el documento adjunto encontrará el detalle completo de la cotización,
-                            incluyendo valores, condiciones y especificaciones del servicio ofrecido.
-                        </p>
+        <!--[if (mso)|(IE)]>
+            </td>
+          </tr>
+        </table>
+        <![endif]-->
 
-                        <p style="margin-bottom:0;">
-                            Para cualquier consulta, aclaración o modificación,
-                            le solicitamos contactar directamente a su ejecutivo comercial.
-                        </p>
-                    </td>
-                </tr>
-
-                {{-- AVISO NO-REPLY --}}
-                <tr>
-                    <td style="padding:20px 30px; background:#f9fafb; color:#6b7280; font-size:12px;">
-                        <strong>Importante:</strong><br>
-                        Este correo ha sido generado automáticamente.
-                        Por favor <strong>no responda a este mensaje</strong>,
-                        ya que esta casilla no se encuentra habilitada para recibir respuestas.
-                    </td>
-                </tr>
-
-                {{-- FOOTER --}}
-                <tr>
-                    <td style="padding:20px; text-align:center; font-size:12px; color:#9ca3af;">
-                        © {{ date('Y') }} {{ config('app.name') }}<br>
-                        Todos los derechos reservados.
-                    </td>
-                </tr>
-
-            </table>
-
-        </td>
+      </td>
     </tr>
-</table>
+  </table>
 
 </body>
 </html>

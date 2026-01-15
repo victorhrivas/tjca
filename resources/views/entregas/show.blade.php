@@ -152,40 +152,69 @@
                     </div>
                 @endif
 
-                {{-- Foto guía de despacho --}}
-                @if(!empty($entrega->foto_guia_despacho))
+                {{-- Guías de despacho (múltiples) --}}
+                @if(($entrega->guias && $entrega->guias->count() > 0) || !empty($entrega->foto_guia_despacho))
                     <hr class="mt-4 mb-3">
 
                     <div class="card card-outline" style="border-color: rgba(255,255,255,0.06);">
                         <div class="card-header" style="border-bottom-color: rgba(255,255,255,0.06);">
                             <h3 class="card-title mb-0">
                                 <i class="fas fa-file-alt mr-1"></i>
-                                Guía de despacho
+                                Guías de despacho
                             </h3>
                         </div>
 
                         <div class="card-body">
                             <div class="row">
-                                <div class="col-md-4 mb-3">
-                                    <div class="card bg-dark border-0 shadow-sm h-100">
-                                        <div class="card-body p-2 d-flex align-items-center justify-content-center">
-                                            <img src="{{ asset('storage/'.$entrega->foto_guia_despacho) }}"
-                                                alt="Foto guía de despacho"
-                                                class="img-fluid rounded"
-                                                style="max-height: 220px; object-fit: cover; cursor:pointer;"
-                                                onclick="openImageOverlay('{{ asset('storage/'.$entrega->foto_guia_despacho) }}')">
+
+                                {{-- NUEVO: desde tabla entrega_guias --}}
+                                @if($entrega->guias && $entrega->guias->count() > 0)
+                                    @foreach($entrega->guias as $guia)
+                                        <div class="col-md-4 mb-3">
+                                            <div class="card bg-dark border-0 shadow-sm h-100">
+                                                <div class="card-body p-2 d-flex align-items-center justify-content-center">
+                                                    <img src="{{ asset('storage/'.$guia->archivo) }}"
+                                                        alt="Guía de despacho #{{ $guia->orden }}"
+                                                        class="img-fluid rounded"
+                                                        style="max-height: 220px; object-fit: cover; cursor:pointer;"
+                                                        onclick="openImageOverlay('{{ asset('storage/'.$guia->archivo) }}')">
+                                                </div>
+                                                <div class="px-2 pb-2 text-muted" style="font-size:.85rem;">
+                                                    Guía #{{ $guia->orden }}
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
+                                    @endforeach
+                                @endif
+
+                                {{-- COMPAT: si todavía tienes entregas antiguas con foto_guia_despacho --}}
+                                @if(empty($entrega->guias) || $entrega->guias->count() === 0)
+                                    @if(!empty($entrega->foto_guia_despacho))
+                                        <div class="col-md-4 mb-3">
+                                            <div class="card bg-dark border-0 shadow-sm h-100">
+                                                <div class="card-body p-2 d-flex align-items-center justify-content-center">
+                                                    <img src="{{ asset('storage/'.$entrega->foto_guia_despacho) }}"
+                                                        alt="Guía de despacho"
+                                                        class="img-fluid rounded"
+                                                        style="max-height: 220px; object-fit: cover; cursor:pointer;"
+                                                        onclick="openImageOverlay('{{ asset('storage/'.$entrega->foto_guia_despacho) }}')">
+                                                </div>
+                                                <div class="px-2 pb-2 text-muted" style="font-size:.85rem;">
+                                                    Guía #1
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
+                                @endif
+
                             </div>
 
                             <small class="text-muted">
-                                Haz clic sobre la imagen para verla en grande.
+                                Haz clic sobre una imagen para verla en grande.
                             </small>
                         </div>
                     </div>
                 @endif
-
             </div>
 
             <div class="card-footer">
