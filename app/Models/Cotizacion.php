@@ -11,7 +11,8 @@ class Cotizacion extends Model
 
     public $fillable = [
         'solicitud_id',
-        'user_id',          // <--- NUEVO
+        'user_id',
+        'cliente_ejecutivo_id', // <--- NUEVO
         'solicitante',
         'estado',
         'monto',
@@ -25,7 +26,8 @@ class Cotizacion extends Model
 
     protected $casts = [
         'solicitud_id' => 'integer',
-        'user_id'      => 'integer',   // <--- NUEVO
+        'user_id'      => 'integer',
+        'cliente_ejecutivo_id' => 'integer', // <--- NUEVO
         'solicitante'  => 'string',
         'estado'       => 'string',
         'monto'        => 'integer',
@@ -95,15 +97,10 @@ class Cotizacion extends Model
      */
     public function getClienteObjAttribute()
     {
-        // 1. Obtener el valor del campo 'cliente' (que contiene el RUT)
-        $cliente = $this->cliente; 
+        // En tu cotización guardas la razón social en campo 'cliente'
+        $razonSocial = $this->cliente;
 
-        // 2. Consulta: Buscar el Cliente donde la columna 'rut' coincida con el valor.
-        $cliente = Cliente::where('razon_social', $cliente)->first();
-
-        // 3. Devolver el resultado.
-        // Si la consulta no encuentra nada, $cliente será null.
-        return $cliente;
+        return Cliente::where('razon_social', $razonSocial)->first();
     }
 
     public function cargas()
@@ -117,5 +114,9 @@ class Cotizacion extends Model
         $this->update(['monto' => (int) $total]);
     }
 
+    public function clienteEjecutivo()
+    {
+        return $this->belongsTo(\App\Models\ClienteEjecutivo::class, 'cliente_ejecutivo_id');
+    }
 
 }

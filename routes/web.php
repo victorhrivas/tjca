@@ -67,6 +67,9 @@ Route::middleware(['auth.redirect'])->group(function () {
         Route::put('/mi-perfil', [UserController::class, 'update'])->name('users.update');
     });
 
+    Route::get('clientes/{cliente}/ejecutivos', [\App\Http\Controllers\ClienteEjecutivoController::class, 'byCliente'])
+        ->name('clientes.ejecutivos');
+
     Route::prefix('operacion')->name('operacion.')->group(function () {
         Route::resource('inicio-carga', InicioCargaController::class)->only(['index','show','store','edit','update','destroy']);
         Route::resource('entrega', EntregaController::class)->only(['index','show','store','edit','update','destroy']);

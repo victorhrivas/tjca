@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\CreateClienteRequest;
 use App\Http\Requests\UpdateClienteRequest;
+use App\Models\Cliente;
 use App\Http\Controllers\AppBaseController;
+use App\Models\ClienteEjecutivo;
+use Illuminate\Support\Facades\DB;
 use App\Repositories\ClienteRepository;
 use Illuminate\Http\Request;
 use Flash;
@@ -41,16 +44,37 @@ class ClienteController extends AppBaseController
     /**
      * Store a newly created Cliente in storage.
      */
+
     public function store(CreateClienteRequest $request)
     {
-        $input = $request->all();
+        DB::transaction(function() use ($request, &$cliente) {
 
-        $cliente = $this->clienteRepository->create($input);
+            $input = $request->except(['ejecutivos', 'ejecutivo_principal']);
+            $cliente = $this->clienteRepository->create($input);
 
-        Flash::success('Clientese guardó correctamente.');
+            $ejecutivos = $request->input('ejecutivos', []);
+            $principalIndex = $request->input('ejecutivo_principal'); // índice (0,1,2...)
 
+            foreach ($ejecutivos as $i => $ej) {
+                // normaliza checkbox activo
+                $activo = isset($ej['activo']) ? 1 : 0;
+
+                ClienteEjecutivo::create([
+                    'cliente_id' => $cliente->id,
+                    'nombre' => $ej['nombre'] ?? '',
+                    'correo' => $ej['correo'] ?? null,
+                    'telefono' => $ej['telefono'] ?? null,
+                    'cargo' => $ej['cargo'] ?? null,
+                    'activo' => $activo,
+                    'es_principal' => ((string)$principalIndex === (string)$i),
+                ]);
+            }
+        });
+
+        Flash::success('Cliente se guardó correctamente.');
         return redirect(route('clientes.index'));
     }
+
 
     /**
      * Display the specified Cliente.
@@ -73,14 +97,14 @@ class ClienteController extends AppBaseController
      */
     public function edit($id)
     {
-        $cliente = $this->clienteRepository->find($id);
+        $cliente = Cliente::with('ejecutivos')->findOrFail($id);
 
         if (empty($cliente)) {
             Flash::error('Cliente not found');
 
             return redirect(route('clientes.index'));
         }
-
+        
         return view('clientes.edit')->with('cliente', $cliente);
     }
 
@@ -89,20 +113,51 @@ class ClienteController extends AppBaseController
      */
     public function update($id, UpdateClienteRequest $request)
     {
-        $cliente = $this->clienteRepository->find($id);
+        DB::transaction(function() use ($id, $request, &$cliente) {
 
-        if (empty($cliente)) {
-            Flash::error('Cliente not found');
+            $cliente = $this->clienteRepository->find($id);
+            $this->clienteRepository->update($request->except(['ejecutivos','ejecutivo_principal']), $id);
 
-            return redirect(route('clientes.index'));
-        }
+            $ejecutivos = $request->input('ejecutivos', []);
+            $principalIndex = $request->input('ejecutivo_principal');
 
-        $cliente = $this->clienteRepository->update($request->all(), $id);
+            $idsEnviados = collect($ejecutivos)->pluck('id')->filter()->map(fn($v)=>(int)$v)->values()->all();
 
-        Flash::success('Cliente Actualizado Correctamente.');
+            // elimina ejecutivos que fueron quitados en el form
+            \App\Models\ClienteEjecutivo::where('cliente_id', $cliente->id)
+                ->when(count($idsEnviados) > 0, fn($q) => $q->whereNotIn('id', $idsEnviados))
+                ->when(count($idsEnviados) === 0, fn($q) => $q) // si no envías ninguno, borra todos
+                ->delete();
 
+            foreach ($ejecutivos as $i => $ej) {
+                $activo = isset($ej['activo']) ? 1 : 0;
+
+                $data = [
+                    'cliente_id' => $cliente->id,
+                    'nombre' => $ej['nombre'] ?? '',
+                    'correo' => $ej['correo'] ?? null,
+                    'telefono' => $ej['telefono'] ?? null,
+                    'cargo' => $ej['cargo'] ?? null,
+                    'activo' => $activo,
+                    'es_principal' => ((string)$principalIndex === (string)$i),
+                ];
+
+                if (!empty($ej['id'])) {
+                    // update
+                    \App\Models\ClienteEjecutivo::where('cliente_id', $cliente->id)
+                        ->where('id', $ej['id'])
+                        ->update($data);
+                } else {
+                    // create
+                    \App\Models\ClienteEjecutivo::create($data);
+                }
+            }
+        });
+
+        Flash::success('Cliente actualizado correctamente.');
         return redirect(route('clientes.index'));
     }
+
 
     /**
      * Remove the specified Cliente from storage.

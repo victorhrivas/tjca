@@ -1,0 +1,28 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration {
+    public function up(): void
+    {
+        Schema::table('cotizacions', function (Blueprint $table) {
+            $table->foreignId('cliente_ejecutivo_id')
+                ->nullable()
+                ->constrained('cliente_ejecutivos')
+                ->nullOnDelete();
+
+            $table->index(['cliente_ejecutivo_id']);
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('cotizacions', function (Blueprint $table) {
+            $table->dropForeign(['cliente_ejecutivo_id']);
+            $table->dropIndex(['cliente_ejecutivo_id']);
+            $table->dropColumn('cliente_ejecutivo_id');
+        });
+    }
+};

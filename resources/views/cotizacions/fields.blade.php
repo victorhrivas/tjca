@@ -33,6 +33,7 @@
                     data-origen="{{ $solicitud->origen }}"
                     data-destino="{{ $solicitud->destino }}"
                     data-cliente="{{ optional($solicitud->cliente)->razon_social }}"
+                    data-cliente-id="{{ optional($solicitud->cliente)->id }}"
                     data-solicitante="{{ $solicitud->solicitante }}"
                 >
                     #{{ $solicitud->id }}
@@ -104,6 +105,35 @@
         'placeholder' => 'Nombre del vendedor o solicitante',
         'required'
     ]) !!}
+</div>
+
+@php
+    $clienteObj = isset($cotizacion) ? $cotizacion->cliente_obj : null;
+
+    // Si estás creando, normalmente $cotizacion no existe aún.
+    // En creación, el cliente se “rellena” por JS cuando eliges solicitud.
+    // Por eso, para CREAR vamos a cargar ejecutivos por AJAX (abajo).
+@endphp
+
+<div class="form-group col-sm-6">
+    {!! Form::label('cliente_ejecutivo_id', 'Contacto del cliente (correo destino)') !!}
+
+    <select id="cliente_ejecutivo_id" name="cliente_ejecutivo_id" class="form-control">
+        <option value="">(Usar correo general del cliente)</option>
+
+        @if(isset($cotizacion) && $cotizacion->exists && $clienteObj)
+            @foreach($clienteObj->ejecutivosActivos as $ej)
+                <option value="{{ $ej->id }}"
+                    {{ (int)($cotizacion->cliente_ejecutivo_id) === (int)($ej->id) ? 'selected' : '' }}>
+                    {{ $ej->nombre }}{{ $ej->correo ? ' · '.$ej->correo : '' }}
+                </option>
+            @endforeach
+        @endif
+    </select>
+
+    <small class="text-muted">
+        Si no eliges uno, se usa el correo general guardado en el cliente.
+    </small>
 </div>
 
 <!-- Origen -->
@@ -222,22 +252,45 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const selectSolicitud = document.getElementById('solicitud_id');
-    if (!selectSolicitud) return;
+    const selectEj = document.getElementById('cliente_ejecutivo_id');
 
-    const inputOrigen      = document.querySelector('input[name="origen"]');
-    const inputDestino     = document.querySelector('input[name="destino"]');
-    const inputCliente     = document.querySelector('input[name="cliente"]');
-    const inputSolicitante = document.querySelector('input[name="solicitante"]');
+    if (!selectSolicitud || !selectEj) return;
+
+    function resetEjecutivos(){
+        selectEj.innerHTML = `<option value="">(Usar correo general del cliente)</option>`;
+    }
+
+    async function cargarEjecutivos(clienteId){
+        resetEjecutivos();
+        if (!clienteId) return;
+
+        const url = `{{ url('clientes') }}/${clienteId}/ejecutivos`;
+        const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        if (!res.ok) return;
+
+        const data = await res.json();
+        data.forEach(item => {
+            const opt = document.createElement('option');
+            opt.value = item.id;
+            opt.textContent = item.text;
+            selectEj.appendChild(opt);
+        });
+    }
 
     selectSolicitud.addEventListener('change', function () {
         const option = this.options[this.selectedIndex];
         if (!option) return;
 
-        inputOrigen.value      = option.getAttribute('data-origen')      || '';
-        inputDestino.value     = option.getAttribute('data-destino')     || '';
-        inputCliente.value     = option.getAttribute('data-cliente')     || '';
-        inputSolicitante.value = option.getAttribute('data-solicitante') || '';
+        const clienteId = option.getAttribute('data-cliente-id');
+        cargarEjecutivos(clienteId);
     });
+
+    // Si ya viene una solicitud preseleccionada por old(), puedes cargar al iniciar:
+    const initialOpt = selectSolicitud.options[selectSolicitud.selectedIndex];
+    if (initialOpt) {
+        const clienteId = initialOpt.getAttribute('data-cliente-id');
+        if (clienteId) cargarEjecutivos(clienteId);
+    }
 });
 </script>
 @endpush
