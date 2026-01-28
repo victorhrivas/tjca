@@ -292,11 +292,6 @@
                     </div>
 
                     <div class="col-md-6 mb-3 auto-from-ot">
-                        <label>Correo de contacto</label>
-                        <input type="email" name="correo_contacto" id="correo_contacto" class="form-control" readonly>
-                    </div>
-
-                    <div class="col-md-6 mb-3 auto-from-ot">
                         <label>Origen</label>
                         <input type="text" name="origen" id="origen" class="form-control" value="{{ old('origen') }}" required>
                     </div>
@@ -370,24 +365,6 @@
                         <label>Observaciones</label>
                         <textarea name="observaciones" rows="3" class="form-control">{{ old('observaciones') }}</textarea>
                     </div>
-
-                    {{-- Correo de envío (editable) --}}
-                    @php
-                        $correoClienteSelected = optional(optional(optional(optional($ot)->cotizacion)->solicitud)->cliente)->correo;
-                        $emailDefault = old('email_envio', $correoClienteSelected ?? '');
-                    @endphp
-
-                    <div class="col-md-12 mb-3">
-                        <input type="hidden" name="email_envio" id="email_envio" value="{{ $emailDefault }}">
-
-                        <label>Correo de envío</label>
-                        <div style="display:flex; gap:8px; align-items:center;">
-                            <input type="text" class="form-control" id="email_envio_preview" value="{{ $emailDefault }}" readonly>
-                            <button type="button" class="btn btn-default" data-toggle="modal" data-target="#modalEmailEnvio">
-                                Cambiar
-                            </button>
-                        </div>
-                    </div>
                 </div>
 
                 {{-- Botonera --}}
@@ -399,36 +376,6 @@
                         Enviar solicitud
                     </button>
                 </div>
-
-                {{-- Modal correo (DENTRO del form, OK) --}}
-                <div class="modal fade" id="modalEmailEnvio" tabindex="-1" role="dialog" aria-hidden="true">
-                    <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-
-                            <div class="modal-header">
-                                <h5 class="modal-title">Cambiar correo de envío</h5>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-
-                            <div class="modal-body">
-                                <div class="form-group">
-                                    <label for="email_envio_input">Correo</label>
-                                    <input type="email" class="form-control" id="email_envio_input" value="{{ $emailDefault }}" required>
-                                    <small class="text-muted">Este correo se usará solo para este envío.</small>
-                                </div>
-                            </div>
-
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                                <button type="button" class="btn btn-primary" id="btnGuardarEmailEnvio">Guardar</button>
-                            </div>
-
-                        </div>
-                    </div>
-                </div>
-
             </form>
         </div>
     </div>
@@ -453,7 +400,6 @@
             const $cliente    = $('#cliente');
             const $contacto   = $('#contacto');
             const $tel        = $('#telefono_contacto');
-            const $correo     = $('#correo_contacto');
 
             const $origen     = $('#origen');
             const $destino    = $('#destino');
@@ -462,11 +408,6 @@
 
             const $vehiculoBlock  = $('#vehiculo_block');
             const $vehiculoSelect = $('#ot_vehiculo_id');
-
-            // Email envío
-            const $emailHidden  = $('#email_envio');
-            const $emailPreview = $('#email_envio_preview');
-            const $emailInput   = $('#email_envio_input');
 
             const resetVehiculos = () => {
                 $vehiculoSelect.empty().append('<option value="">Selecciona un vehículo...</option>');
@@ -489,10 +430,6 @@
                 $destino.val('').prop('readonly', false);
 
                 $conductor.val('');
-
-                $emailHidden.val('');
-                $emailPreview.val('');
-                $emailInput.val('');
 
                 resetVehiculos();
             };
@@ -536,7 +473,6 @@
                 const cliente   = $opt.data('cliente')   || '';
                 const contacto  = $opt.data('contacto')  || '';
                 const telefono  = $opt.data('telefono')  || '';
-                const correo    = $opt.data('correo')    || '';
                 const origen    = $opt.data('origen')    || '';
                 const destino   = $opt.data('destino')   || '';
                 const conductor = $opt.data('conductor') || '';
@@ -550,12 +486,6 @@
                 $cliente.val(cliente);
                 $contacto.val(contacto);
                 $tel.val(telefono);
-                $correo.val(correo);
-
-                // Email por defecto
-                $emailHidden.val(correo);
-                $emailPreview.val(correo);
-                $emailInput.val(correo);
 
                 if (origen) $origen.val(origen).prop('readonly', true);
                 else $origen.val('').prop('readonly', false);
@@ -595,52 +525,6 @@
             // Inicial
             resetForm();
             if ($otSelect.val()) $otSelect.trigger('change');
-
-            $('#modalEmailEnvio').on('hidden.bs.modal', function () {
-                $('body').removeClass('modal-open');
-                $('.modal-backdrop').remove();
-                $('body').css('padding-right', '');
-            });
-
-
-            // Modal guardar correo
-            $('#btnGuardarEmailEnvio').on('click', function () {
-                const email = ($emailInput.val() || '').trim();
-                if (!email || !email.includes('@')) {
-                    alert('Ingresa un correo válido.');
-                    return;
-                }
-
-                $emailHidden.val(email);
-                $emailPreview.val(email);
-
-                // Cerrar modal
-                const $modal = $('#modalEmailEnvio');
-                $modal.modal('hide');
-
-                // ✅ Fix: si queda el backdrop pegado, lo limpiamos
-                setTimeout(function () {
-                    $('body').removeClass('modal-open');
-                    $('.modal-backdrop').remove();
-                    // Por si Bootstrap dejó estilos inline
-                    $('body').css('padding-right', '');
-                }, 150);
-            });
-
-
-            // ✅ Antes de enviar, asegurar email_envio, y evitar doble submit
-            $form.on('submit', function () {
-                // si por alguna razón quedó vacío, usa correo_contacto
-                if (!$emailHidden.val()) {
-                    const fallback = ($correo.val() || '').trim();
-                    if (fallback) {
-                        $emailHidden.val(fallback);
-                        $emailPreview.val(fallback);
-                    }
-                }
-
-                $btnSubmit.prop('disabled', true).text('Enviando...');
-            });
         });
     </script>
 

@@ -50,52 +50,41 @@
     {!! Form::label('user_id', 'Ejecutivo') !!}
 
     @php
-        // Orden deseado
         $nombresPermitidos = ['Jorge Contador Cerenic', 'Felipe Henott'];
 
-        // Buscar ejecutivos existentes en BD
         $ejecutivosRaw = \App\Models\User::whereIn('name', $nombresPermitidos)
-                        ->pluck('name', 'id'); // [id => nombre]
+            ->get(['id','name'])
+            ->keyBy('name'); // ['Jorge...' => user, 'Felipe...' => user]
 
-        // Reordenar según $nombresPermitidos: primero Jorge, luego Felipe
         $ejecutivos = [];
         foreach ($nombresPermitidos as $nombre) {
-            $id = $ejecutivosRaw->search($nombre);
-            if ($id !== false) {
-                $ejecutivos[$id] = $nombre;
-            }
-        }
-
-        // Determinar el ejecutivo seleccionado
-        if (isset($cotizacion)) {
-            // Editando → usar el user_id guardado
-            $ejecutivoSeleccionado = $cotizacion->user_id;
-
-        } else {
-            // Creando → comportamiento dinámico
-
-            if (empty($ejecutivos)) {
-                // NO existen Jorge ni Felipe → usar SIEMPRE el usuario logeado
-                $ejecutivoSeleccionado = auth()->id();
-
-            } elseif (in_array(auth()->user()->name, $nombresPermitidos)) {
-                // El logeado SÍ es Jorge o Felipe
-                $ejecutivoSeleccionado = auth()->id();
-
-            } else {
-                // No es Jorge ni Felipe → usar el primero que exista (Jorge si está, si no Felipe)
-                $ejecutivoSeleccionado = array_key_first($ejecutivos);
+            if (isset($ejecutivosRaw[$nombre])) {
+                $ejecutivos[$ejecutivosRaw[$nombre]->id] = $nombre;
             }
         }
     @endphp
 
-    {!! Form::select('user_id', $ejecutivos, $ejecutivoSeleccionado, [
-        'class' => 'form-control',
-        'placeholder' => empty($ejecutivos)
-            ? 'No existen ejecutivos configurados (se guardará el usuario actual)'
-            : 'Seleccione un ejecutivo...',
-        'required'
-    ]) !!}
+    @if(isset($cotizacion) && $cotizacion->exists)
+        {{-- Editar: muestra el dueño actual --}}
+        <p class="form-control-plaintext font-weight-bold" style="padding-left:0;">
+            {{ optional($cotizacion->user)->name ?? '—' }}
+        </p>
+        <input type="hidden" name="user_id" value="{{ $cotizacion->user_id }}">
+    @else
+        @if(auth()->user()->hasAnyRole('superAdmin|informatica'))
+            {{-- Solo admins pueden elegir --}}
+            {!! Form::select('user_id', $ejecutivos, auth()->id(), [
+                'class' => 'form-control',
+                'required'
+            ]) !!}
+        @else
+            {{-- Usuarios normales: SIEMPRE el usuario actual --}}
+            <p class="form-control-plaintext font-weight-bold" style="padding-left:0;">
+                {{ auth()->user()->name }}
+            </p>
+            <input type="hidden" name="user_id" value="{{ auth()->id() }}">
+        @endif
+    @endif
 </div>
 
 <div class="form-group col-sm-6">

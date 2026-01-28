@@ -125,8 +125,8 @@ class CotizacionController extends AppBaseController
     {
         DB::transaction(function () use ($request) {
 
-            $input = $request->except(['cargas', 'monto']);
-            $input['user_id'] = $request->input('user_id', auth()->id());
+            $input = $request->except(['cargas', 'monto', 'user_id']);
+            $input['user_id'] = auth()->id();
 
             $solicitud = Solicitud::with('cliente')->findOrFail($request->solicitud_id);
 
@@ -216,8 +216,8 @@ class CotizacionController extends AppBaseController
         }
 
         // actualiza cabecera (no monto)
-        $data = $request->except(['monto', 'cargas']);
-
+        $data = $request->except(['monto', 'cargas', 'user_id']);
+        $data['user_id'] = $cotizacion->user_id; // no permitir cambiar dueño
         $this->cotizacionRepository->update($data, $id);
 
         // sincronizar cargas

@@ -122,16 +122,19 @@ class InicioCargaController extends AppBaseController
             'ot_id'             => ['required', 'integer', 'exists:ots,id'],
             'ot_vehiculo_id'    => ['nullable', 'integer', 'exists:ot_vehiculos,id'],
 
+            // estos vienen “congelados” desde la OT en el form (puedes dejarlos)
             'cliente'           => ['required', 'string', 'max:255'],
             'contacto'          => ['nullable', 'string', 'max:255'],
             'telefono_contacto' => ['nullable', 'string', 'max:50'],
-            'correo_contacto'   => ['nullable', 'string', 'max:255'], // lo mantienes si lo usas
-            'email_envio'       => ['required', 'email'],             // ✅ NUEVO (editable)
+            'correo_contacto' => ['nullable', 'string', 'max:255'],
 
             'origen'            => ['required', 'string', 'max:255'],
             'destino'           => ['required', 'string', 'max:255'],
             'tipo_carga'        => ['nullable', 'string', 'max:255'],
-            'peso_aproximado'   => ['nullable', 'string', 'max:255'],
+
+            // OJO: tu modelo NO lo tiene en $fillable (comentado), así que no lo valides si no lo usas.
+            // 'peso_aproximado' => ['nullable', 'string', 'max:255'],
+
             'fecha_carga'       => ['nullable', 'date'],
             'hora_presentacion' => ['nullable', 'string', 'max:50'],
             'conductor'         => ['nullable', 'string', 'max:255'],
@@ -143,12 +146,16 @@ class InicioCargaController extends AppBaseController
             'foto_guia_despacho'=> ['nullable', 'image', 'max:4096'],
         ]);
 
-        $emailCliente = $data['email_envio'];
-        unset($data['email_envio']); // no lo guardes en la tabla (a menos que quieras)
+        // Cargar OT con relaciones para:
+        // - validar vehículos
+        // - obtener correo destino desde la cotización (contacto elegido o correo general)
+        $ot = Ot::with([
+            'vehiculos',
+            'cotizacion.clienteEjecutivo',       // Cotizacion::belongsTo(ClienteEjecutivo::class,'cliente_ejecutivo_id')
+            'cotizacion.solicitud.cliente',      // correo general del cliente
+        ])->findOrFail($data['ot_id']);
 
         // Validación de negocio: si OT tiene vehículos, exigir vehículo
-        $ot = Ot::with('vehiculos')->findOrFail($data['ot_id']);
-
         if ($ot->vehiculos->count() > 0 && empty($data['ot_vehiculo_id'])) {
             return back()->withInput()->withErrors([
                 'ot_vehiculo_id' => 'Debes seleccionar un vehículo para esta OT.',
@@ -165,6 +172,17 @@ class InicioCargaController extends AppBaseController
             }
         }
 
+        // Evitar duplicado (misma OT + mismo vehículo)
+        $exists = \App\Models\InicioCarga::where('ot_id', $data['ot_id'])
+            ->where('ot_vehiculo_id', $data['ot_vehiculo_id'])
+            ->exists();
+
+        if ($exists) {
+            return back()->withInput()->withErrors([
+                'ot_vehiculo_id' => 'Este vehículo ya registró inicio de carga para esta OT.',
+            ]);
+        }
+
         // Manejo de archivos (disco 'public')
         if ($request->hasFile('foto_1')) {
             $data['foto_1'] = $request->file('foto_1')->store('inicio_cargas', 'public');
@@ -179,25 +197,27 @@ class InicioCargaController extends AppBaseController
             $data['foto_guia_despacho'] = $request->file('foto_guia_despacho')->store('inicio_cargas', 'public');
         }
 
-        $exists = \App\Models\InicioCarga::where('ot_id', $data['ot_id'])
-            ->where('ot_vehiculo_id', $data['ot_vehiculo_id'])
-            ->exists();
+        // Resolver correo destino desde la cotización asociada a la OT
+        $emailCliente =
+            optional(optional($ot->cotizacion)->clienteEjecutivo)->correo
+            ?: optional(optional(optional($ot->cotizacion)->solicitud)->cliente)->correo;
 
-        if ($exists) {
+        if (!$emailCliente || !filter_var($emailCliente, FILTER_VALIDATE_EMAIL)) {
             return back()->withInput()->withErrors([
-                'ot_vehiculo_id' => 'Este vehículo ya registró inicio de carga para esta OT.',
+                'ot_id' => 'No hay correo válido configurado en la cotización/cliente para esta OT.',
             ]);
         }
+        $data['correo_contacto'] = $emailCliente; // para cumplir NOT NULL
 
         // Crear inicio de carga
         $inicioCarga = InicioCarga::create($data);
 
-        $ot = Ot::with('vehiculos')->findOrFail($data['ot_id']);
+        // Actualizar estado OT
         $ot->estado = 'en_transito';
         $ot->save();
 
-        // ✅ Enviar correo
-        $inicioCarga->load('ot');
+        // Enviar correo
+        $inicioCarga->load('ot', 'otVehiculo');
 
         Mail::to($emailCliente)
             ->cc(['jgcontador@tjca.cl','fhenott@tjca.cl'])
