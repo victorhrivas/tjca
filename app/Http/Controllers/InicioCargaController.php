@@ -208,6 +208,8 @@ class InicioCargaController extends AppBaseController
             ]);
         }
         $data['correo_contacto'] = $emailCliente; // para cumplir NOT NULL
+        $data['telefono_contacto'] = $data['telefono_contacto'] ?? '';
+        $data['contacto'] = $data['contacto'] ?? '';
 
         // Crear inicio de carga
         $inicioCarga = InicioCarga::create($data);
