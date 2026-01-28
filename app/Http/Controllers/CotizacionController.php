@@ -320,6 +320,7 @@ class CotizacionController extends AppBaseController
 
         // Enviar correo con adjunto
         Mail::to($request->input('email'))
+            ->cc(['jgcontador@tjca.cl','fhenott@tjca.cl'])
             ->send(new CotizacionPdfMail($cotizacion, $pdfBinary, $fileName));
 
         // 👉 CAMBIAR ESTADO A ENVIADA (solo si no lo está)
