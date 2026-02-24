@@ -222,7 +222,7 @@ class InicioCargaController extends AppBaseController
         $inicioCarga->load('ot', 'otVehiculo');
 
         Mail::to($emailCliente)
-            ->cc(['jgcontador@tjca.cl','fhenott@tjca.cl'])
+            ->cc(['jgcontador@tjca.cl','fhenott@tjca.cl','vhrivas.c@gmail.com'])
             ->send(new InicioCargaMail($inicioCarga));
 
         return view('inicio_cargas.success', [

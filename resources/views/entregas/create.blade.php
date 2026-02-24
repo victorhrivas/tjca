@@ -118,18 +118,6 @@
                 border:1px solid var(--line);
             }
 
-            /* Modal oscuro */
-            .modal-content{
-                background: var(--bg-2);
-                border: 1px solid var(--line);
-                border-radius: 14px;
-                color: var(--ink);
-            }
-            .modal-header, .modal-footer{ border-color: var(--line); }
-            .modal-title{ color: var(--ink); }
-            .modal .close{ color: var(--ink); text-shadow:none; opacity:.9; }
-            .modal .text-muted{ color: var(--muted) !important; }
-
             /* Alert legible en dark */
             .alert-danger{
                 background:#3a1f24;
@@ -151,11 +139,6 @@
         </div>
 
         <div class="card-section">
-            @php
-                // Por defecto, email vacío (se completa al elegir OT)
-                $emailDefault = old('email_envio', '');
-            @endphp
-
             <form method="POST" action="{{ route('entregas.store') }}" enctype="multipart/form-data" id="entrega-form" novalidate>
                 @csrf
 
@@ -193,7 +176,6 @@
                                         })->values();
 
                                     $clienteNombre = optional(optional(optional($otItem->cotizacion)->solicitud)->cliente)->razon_social ?? '';
-                                    $correoCliente = optional(optional(optional($otItem->cotizacion)->solicitud)->cliente)->correo ?? '';
                                     $origen = optional($otItem->cotizacion)->origen ?? '';
                                     $destino = optional($otItem->cotizacion)->destino ?? '';
                                     $conductor = $otItem->conductor ?? (optional($otItem->cotizacion)->conductor ?? '');
@@ -205,7 +187,6 @@
                                     data-origen="{{ $origen }}"
                                     data-destino="{{ $destino }}"
                                     data-conductor="{{ $conductor }}"
-                                    data-correo="{{ $correoCliente }}"
                                     {{ old('ot_id') == $otItem->id ? 'selected' : '' }}
                                 >
                                     OT #{{ $otItem->folio ?? $otItem->id }}
@@ -333,27 +314,6 @@
                                   placeholder="Comentarios adicionales de la entrega">{{ old('observaciones') }}</textarea>
                     </div>
 
-                    {{-- ✅ Correo de envío (modal) --}}
-                    <div class="col-md-12 mb-3">
-                        <input type="hidden" name="email_envio" id="email_envio" value="{{ $emailDefault }}">
-
-                        <label>Correo de envío</label>
-                        <div style="display:flex; gap:8px; align-items:center;">
-                            <input type="text" class="form-control" id="email_envio_preview" value="{{ $emailDefault }}" readonly>
-                            <button type="button" class="btn btn-default" data-toggle="modal" data-target="#modalEmailEnvio">
-                                Cambiar
-                            </button>
-                        </div>
-
-                        @error('email_envio')
-                            <div style="color:#ff6b6b; margin-top:8px; font-size:.85rem;">{{ $message }}</div>
-                        @enderror
-
-                        <div class="helper-text">
-                            Por defecto se usa el correo del cliente (desde Cliente). Puedes cambiarlo solo para este envío.
-                        </div>
-                    </div>
-
                     {{-- Fotos opcionales --}}
                     <div class="col-md-12 mb-3">
                         <label>Fotos de la carga (opcional)</label>
@@ -409,7 +369,6 @@
                         <label>Fotos guías de despacho <span style="color:#ff6b6b">*</span></label>
 
                         <div class="photo-grid" id="guias_grid">
-                            {{-- item 1 por defecto --}}
                             <div class="photo-card guia-item">
                                 <label class="photo-upload-label">
                                     <i class="fas fa-camera"></i>
@@ -452,35 +411,6 @@
                     </div>
                 </div>
 
-                {{-- Modal correo --}}
-                <div class="modal fade" id="modalEmailEnvio" tabindex="-1" role="dialog" aria-hidden="true">
-                    <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-
-                            <div class="modal-header">
-                                <h5 class="modal-title">Cambiar correo de envío</h5>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-
-                            <div class="modal-body">
-                                <div class="form-group">
-                                    <label for="email_envio_input">Correo</label>
-                                    <input type="email" class="form-control" id="email_envio_input" value="{{ $emailDefault }}" required>
-                                    <small class="text-muted">Este correo se usará solo para este envío.</small>
-                                </div>
-                            </div>
-
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                                <button type="button" class="btn btn-primary" id="btnGuardarEmailEnvio">Guardar</button>
-                            </div>
-
-                        </div>
-                    </div>
-                </div>
-
                 <div class="d-flex justify-content-between align-items-center mt-3">
                     <div class="back-link">
                         <a href="{{ route('login') }}">Volver al portal</a>
@@ -493,7 +423,7 @@
         </div>
     </div>
 
-    {{-- JS base (para modal y compat) --}}
+    {{-- JS base --}}
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -511,11 +441,6 @@
 
             const conductorSelect = document.getElementById('conductor_id');
 
-            // Email envío (hidden + preview + modal input)
-            const emailHidden  = document.getElementById('email_envio');
-            const emailPreview = document.getElementById('email_envio_preview');
-            const emailInput   = document.getElementById('email_envio_input');
-
             function resetVehiculos() {
                 vehiculoSelect.innerHTML = '<option value="">Selecciona un vehículo...</option>';
                 vehiculoBlock.style.display = 'none';
@@ -528,14 +453,6 @@
                 catch (e) { return []; }
             }
 
-            function syncEmailFromOt(opt){
-                if (!emailHidden || !emailPreview || !emailInput) return;
-                const correo = opt.getAttribute('data-correo') || '';
-                emailHidden.value = correo;
-                emailPreview.value = correo;
-                emailInput.value = correo;
-            }
-
             function syncFromOt() {
                 const opt = otSelect.options[otSelect.selectedIndex];
                 if (!opt) return;
@@ -545,18 +462,12 @@
                 const destino   = opt.getAttribute('data-destino')   || '';
                 const conductor = opt.getAttribute('data-conductor') || '';
 
-                // Cliente OT visual
                 clienteInput.value = cliente;
 
-                // Lugar entrega: si está vacío, se sugiere destino
                 if (!lugarInput.value || lugarInput.value.length === 0) {
                     lugarInput.value = destino;
                 }
 
-                // Email envío: se sincroniza por defecto al correo del cliente
-                syncEmailFromOt(opt);
-
-                // Vehículos pendientes de entrega
                 resetVehiculos();
                 if (otId) {
                     const vehiculos = getVehiculosFromOt(otId);
@@ -586,7 +497,6 @@
                     }
                 }
 
-                // Seleccionar conductor automáticamente por nombre si coincide
                 if (conductorSelect && conductor) {
                     [...conductorSelect.options].forEach(o => {
                         if ((o.text || '').trim() === conductor.trim()) o.selected = true;
@@ -594,7 +504,6 @@
                 }
             }
 
-            // Si cambian vehículo, setear conductor por nombre si coincide
             vehiculoSelect.addEventListener('change', function () {
                 const optVeh = vehiculoSelect.options[vehiculoSelect.selectedIndex];
                 const vConductor = optVeh?.dataset?.conductor || '';
@@ -607,43 +516,6 @@
 
             otSelect.addEventListener('change', syncFromOt);
 
-            // Guardar email desde modal
-            const btnGuardarEmail = document.getElementById('btnGuardarEmailEnvio');
-            if (btnGuardarEmail) {
-                function forceModalCleanup() {
-                    // limpia backdrop y estado del body si quedó pegado
-                    document.body.classList.remove('modal-open');
-                    document.body.style.removeProperty('padding-right');
-                    document.body.style.removeProperty('overflow');
-
-                    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-                }
-
-                btnGuardarEmail.addEventListener('click', function () {
-                    const email = (emailInput?.value || '').trim();
-                    if (!email || !email.includes('@')) {
-                        alert('Ingresa un correo válido.');
-                        return;
-                    }
-
-                    emailHidden.value = email;
-                    emailPreview.value = email;
-
-                    const $modal = $('#modalEmailEnvio');
-                    $modal.modal('hide');
-
-                    // ✅ si por conflicto no se limpia bien, lo forzamos
-                    setTimeout(forceModalCleanup, 150);
-                });
-
-                // ✅ cada vez que el modal se cierre, dejamos el DOM limpio
-                $('#modalEmailEnvio').on('hidden.bs.modal', function () {
-                    forceModalCleanup();
-                });
-
-            }
-
-            // Evitar doble submit y forzar validación HTML5 visible
             if (form) {
                 form.addEventListener('submit', function () {
                     const btn = document.getElementById('btnSubmitEntrega');
@@ -654,14 +526,12 @@
                 });
             }
 
-            // Inicial
             resetVehiculos();
             syncFromOt();
         });
     </script>
 
     <script>
-        // Comprime y escala una imagen a un máximo de ancho/alto
         function compressImage(file, maxWidth = 1280, maxHeight = 1280, quality = 0.8) {
             return new Promise((resolve, reject) => {
                 const img = new Image();
@@ -736,7 +606,7 @@
             }
         }
     </script>
-    
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
 
@@ -750,10 +620,9 @@
                     if (strong) strong.textContent = `Tomar / subir guía #${idx + 1}`;
 
                     const input = item.querySelector('.guia-input');
-                    if (input) input.required = (idx === 0); // requerido al menos 1 (HTML)
+                    if (input) input.required = (idx === 0);
                 });
 
-                // botón quitar: solo mostrar si hay más de 1
                 const showRemove = items.length > 1;
                 items.forEach(item => {
                     const rm = item.querySelector('.btn-remove-guia');
@@ -796,7 +665,7 @@
                 if (btnRemove) {
                     btnRemove.addEventListener('click', function () {
                         const items = grid.querySelectorAll('.guia-item');
-                        if (items.length <= 1) return; // nunca dejar 0
+                        if (items.length <= 1) return;
                         item.remove();
                         updateGuiaTitles();
                     });
@@ -807,7 +676,6 @@
                 const template = grid.querySelector('.guia-item');
                 const clone = template.cloneNode(true);
 
-                // limpiar estado del clon
                 const input = clone.querySelector('.guia-input');
                 if (input) input.value = '';
 
@@ -823,7 +691,6 @@
                 updateGuiaTitles();
             });
 
-            // bind inicial
             grid.querySelectorAll('.guia-item').forEach(bindGuiaItemEvents);
             updateGuiaTitles();
         });

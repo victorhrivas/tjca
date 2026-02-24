@@ -84,70 +84,57 @@ class EntregaController extends AppBaseController
     /**
      * Guardar entrega (se usa tanto en público como en panel).
      */
+    // EntregaController@store (reemplaza la parte de "email_envio" y el envío)
+
     public function store(Request $request)
     {
         $data = $request->validate([
-            'ot_id'             => ['required', 'integer'],
-            'ot_vehiculo_id'    => ['required', 'integer', 'exists:ot_vehiculos,id'],
+            'ot_id'          => ['required', 'integer', 'exists:ots,id'],
+            'ot_vehiculo_id' => ['required', 'integer', 'exists:ot_vehiculos,id'],
 
-            'conductor_id'      => ['required', 'integer', 'exists:conductors,id'], // si lo estás usando como required en la vista
+            'conductor_id'   => ['required', 'integer', 'exists:conductors,id'],
 
             'nombre_receptor'   => ['required', 'string', 'max:255'],
             'rut_receptor'      => ['nullable', 'string', 'max:50'],
             'telefono_receptor' => ['nullable', 'string', 'max:50'],
             'correo_receptor'   => ['nullable', 'string', 'max:255'],
-            'lugar_entrega'     => ['nullable', 'string', 'max:255'],
-            'fecha_entrega'     => ['nullable', 'date'],
-            'hora_entrega'      => ['nullable', 'string', 'max:20'],
-            'numero_guia'       => ['nullable', 'string', 'max:50'],
-            'numero_interno'    => ['nullable', 'string', 'max:50'],
-            'conforme'          => ['nullable', 'boolean'],
-            'observaciones'     => ['nullable', 'string'],
+
+            // en tu form está required, así que aquí también
+            'lugar_entrega'  => ['required', 'string', 'max:255'],
+            'fecha_entrega'  => ['required', 'date'],
+            'hora_entrega'   => ['nullable', 'string', 'max:20'],
+
+            'numero_guia'    => ['nullable', 'string', 'max:50'],
+            'numero_interno' => ['nullable', 'string', 'max:50'],
+            'conforme'       => ['nullable', 'boolean'],
+            'observaciones'  => ['nullable', 'string'],
 
             'foto_1' => ['nullable', 'image', 'max:10240'],
             'foto_2' => ['nullable', 'image', 'max:10240'],
             'foto_3' => ['nullable', 'image', 'max:10240'],
 
-            'email_envio' => ['required', 'email', 'max:255'],
-
-            // NUEVO: múltiples guías
             'guias_despacho'   => ['required', 'array', 'min:1'],
-            'guias_despacho.*' => ['file', 'image', 'max:5120'], // 5MB
+            'guias_despacho.*' => ['file', 'image', 'max:5120'],
         ]);
 
-        $data['conforme'] = $request->has('conforme') ? (bool) $request->conforme : null;
+        // Radio conformidad: si viene, lo dejamos en bool; si no viene, null
+        $data['conforme'] = $request->has('conforme') ? (bool) $request->input('conforme') : null;
 
-        // OT + cliente
-        $ot = Ot::with('cotizacion.solicitud.cliente', 'vehiculos.entregas')
-            ->findOrFail($data['ot_id']);
+        // OT con relaciones necesarias (correo + vehículos + entregas)
+        $ot = Ot::with([
+            'vehiculos.entregas',
+            'cotizacion.clienteEjecutivo',
+            'cotizacion.solicitud.cliente',
+        ])->findOrFail($data['ot_id']);
 
-        $data['cliente'] = optional($ot->cotizacion)->cliente ?? 'SIN CLIENTE';
-
-        // Conductor (tu columna entregas.conductor guarda nombre)
-        if (!empty($data['conductor_id'])) {
-            $data['conductor'] = Conductor::find($data['conductor_id'])?->nombre;
-        }
-
-        // Fotos carga
-        foreach (['foto_1', 'foto_2', 'foto_3'] as $campo) {
-            if ($request->hasFile($campo) && $request->file($campo)->isValid()) {
-                $data[$campo] = $request->file($campo)->store('entregas', 'public');
-            }
-        }
-
-        // ⚠️ IMPORTANTE:
-        // Ya NO guardamos $data['foto_guia_despacho'] (columna antigua),
-        // porque ahora va a tabla hija entrega_guias.
-        // Si quieres compatibilidad por mientras, podrías guardar la primera guía también en esa columna (ver bloque comentado abajo).
-
-        // pertenencia OT->vehículos
+        // Validación de negocio: que el vehículo pertenezca a la OT
         if (!$ot->vehiculos->contains('id', (int) $data['ot_vehiculo_id'])) {
             return back()->withInput()->withErrors([
                 'ot_vehiculo_id' => 'El vehículo seleccionado no pertenece a la OT.',
             ]);
         }
 
-        // evitar duplicado (además tienes unique en DB)
+        // Evitar duplicado (además del unique en DB)
         $yaExiste = Entrega::where('ot_id', $data['ot_id'])
             ->where('ot_vehiculo_id', $data['ot_vehiculo_id'])
             ->exists();
@@ -158,7 +145,31 @@ class EntregaController extends AppBaseController
             ]);
         }
 
-        // Crear entrega
+        // Datos derivados
+        $data['cliente'] = optional($ot->cotizacion)->cliente ?? 'SIN CLIENTE';
+
+        // Guardar nombre de conductor (columna entregas.conductor)
+        $data['conductor'] = Conductor::find($data['conductor_id'])?->nombre ?? '';
+
+        // Fotos opcionales (entrega)
+        foreach (['foto_1', 'foto_2', 'foto_3'] as $campo) {
+            if ($request->hasFile($campo) && $request->file($campo)->isValid()) {
+                $data[$campo] = $request->file($campo)->store('entregas', 'public');
+            }
+        }
+
+        // ✅ Resolver correo destino desde la cotización (MISMA lógica que InicioCarga)
+        $emailCliente =
+            optional(optional($ot->cotizacion)->clienteEjecutivo)->correo
+            ?: optional(optional(optional($ot->cotizacion)->solicitud)->cliente)->correo;
+
+        if (!$emailCliente || !filter_var($emailCliente, FILTER_VALIDATE_EMAIL)) {
+            return back()->withInput()->withErrors([
+                'ot_id' => 'No hay correo válido configurado en la cotización/cliente para esta OT.',
+            ]);
+        }
+
+        // Crear entrega (sin guías todavía)
         $entrega = $this->entregaRepository->create($data);
 
         // Guardar N guías
@@ -168,7 +179,7 @@ class EntregaController extends AppBaseController
         foreach ($files as $file) {
             if (!$file || !$file->isValid()) continue;
 
-            $name = Str::uuid()->toString().'.'.$file->getClientOriginalExtension();
+            $name = (string) Str::uuid() . '.' . $file->getClientOriginalExtension();
             $path = $file->storeAs('entregas/guias', $name, 'public');
 
             EntregaGuia::create([
@@ -176,36 +187,27 @@ class EntregaController extends AppBaseController
                 'archivo'    => $path,
                 'orden'      => $orden++,
             ]);
-
-            // Compatibilidad opcional (si quieres seguir llenando foto_guia_despacho con la primera):
-            // if ($orden === 2) { // la primera guía
-            //     $entrega->foto_guia_despacho = $path;
-            //     $entrega->save();
-            // }
         }
 
-        // Estados OT
-        $ot->load('vehiculos.entregas');
+        // Recalcular estado OT según entregas por vehículo
+        $ot->refresh()->load('vehiculos.entregas');
         $faltan = $ot->vehiculos->filter(fn($v) => $v->entregas->isEmpty())->count();
 
         if ($faltan === 0) {
             $ot->estado = 'entregada';
-            $ot->save();
         } else {
             if ($ot->estado !== 'en_transito') {
                 $ot->estado = 'en_transito';
-                $ot->save();
             }
         }
+        $ot->save();
 
-        // ✅ ENVIAR CORREO
-        $to = $data['email_envio'];
-
-        Mail::to($to)
-            ->cc(['jgcontador@tjca.cl','fhenott@tjca.cl'])
+        // Enviar correo al mismo destinatario que InicioCarga
+        Mail::to($emailCliente)
+            ->cc(['jgcontador@tjca.cl', 'fhenott@tjca.cl', 'vhrivas.c@gmail.com'])
             ->send(new EntregaRegistradaMail($entrega->fresh(['guias']), $ot));
 
-        return view('entregas.success')->with([
+        return view('entregas.success', [
             'success' => 'Entrega registrada correctamente.',
             'entrega' => $entrega,
         ]);

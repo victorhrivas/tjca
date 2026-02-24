@@ -1,3 +1,4 @@
+{{-- resources/views/emails/entrega_registrada.blade.php --}}
 <!doctype html>
 <html lang="es">
 <head>
@@ -31,9 +32,10 @@
     'Conductor'         => $entrega->conductor ?? null,
     'Conforme'          => is_null($entrega->conforme) ? null : ($entrega->conforme ? 'Sí' : 'No'),
   ];
+
+  $inlinePhotos = $inlinePhotos ?? [];
 @endphp
 
-  <!-- Preheader (oculto) -->
   <div style="display:none; font-size:1px; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden; mso-hide:all;">
     Entrega registrada para OT {{ $folioOt }}.
   </div>
@@ -50,7 +52,6 @@
             <td>
         <![endif]-->
 
-        <!-- Card -->
         <table role="presentation" cellpadding="0" cellspacing="0" border="0"
                width="600"
                bgcolor="#ffffff"
@@ -58,7 +59,6 @@
                       border-collapse:separate; mso-table-lspace:0pt; mso-table-rspace:0pt;
                       border:1px solid #e5e7eb; border-radius:8px;">
 
-          <!-- HEADER -->
           <tr>
             <td align="center" bgcolor="#1f2933"
                 style="background-color:#1f2933; padding:22px; border-top-left-radius:8px; border-top-right-radius:8px;">
@@ -71,7 +71,6 @@
             </td>
           </tr>
 
-          <!-- BODY -->
           <tr>
             <td style="padding:30px; font-family:Arial, Helvetica, sans-serif; color:#333333;
                        font-size:14px; line-height:22px; mso-line-height-rule:exactly;">
@@ -85,7 +84,6 @@
                 <strong>entrega</strong> asociada a la <strong>OT #{{ $folioOt }}</strong>.
               </p>
 
-              <!-- Resumen de la entrega (sin border-radius/overflow para Outlook) -->
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
                      style="border-collapse:collapse; margin:18px 0; border:1px solid #e5e7eb;">
                 <tr>
@@ -117,6 +115,47 @@
                 </tr>
               </table>
 
+              {{-- IMÁGENES (embebidas) --}}
+              @if(!empty($inlinePhotos))
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                       style="border-collapse:collapse; margin:18px 0; border:1px solid #e5e7eb;">
+                  <tr>
+                    <td bgcolor="#f9fafb"
+                        style="background-color:#f9fafb; padding:12px 16px; font-family:Arial, Helvetica, sans-serif;
+                               font-weight:bold; color:#111827; font-size:13px; line-height:18px; mso-line-height-rule:exactly;">
+                      Imágenes adjuntas al registro
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:12px 12px 4px 12px;">
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+                        @foreach(array_chunk($inlinePhotos, 3) as $rowPhotos)
+                          <tr>
+                            @foreach($rowPhotos as $absPath)
+                              <td valign="top" style="padding:6px;" width="33.33%">
+                                <img
+                                  src="{{ $message->embed($absPath) }}"
+                                  alt="Imagen"
+                                  width="180"
+                                  style="display:block; width:180px; height:auto; border-radius:8px; border:1px solid #e5e7eb;">
+                              </td>
+                            @endforeach
+
+                            @for($i = count($rowPhotos); $i < 3; $i++)
+                              <td style="padding:6px;" width="33.33%">&nbsp;</td>
+                            @endfor
+                          </tr>
+                        @endforeach
+                      </table>
+
+                      <div style="font-family:Arial, Helvetica, sans-serif; color:#6b7280; font-size:12px; line-height:18px; padding:6px 4px 8px 4px;">
+                        Si no puede ver las imágenes, revise los archivos adjuntos del correo.
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+              @endif
+
               @if(!empty($entrega->observaciones))
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse; margin-top:16px;">
                   <tr>
@@ -141,7 +180,6 @@
             </td>
           </tr>
 
-          <!-- DIVIDER -->
           <tr>
             <td style="padding:0 30px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
@@ -152,7 +190,6 @@
             </td>
           </tr>
 
-          <!-- AVISO -->
           <tr>
             <td bgcolor="#f9fafb"
                 style="background-color:#f9fafb; padding:18px 30px;
@@ -165,7 +202,6 @@
             </td>
           </tr>
 
-          <!-- FOOTER -->
           <tr>
             <td align="center"
                 style="padding:18px 20px; font-family:Arial, Helvetica, sans-serif; color:#9ca3af;
@@ -177,7 +213,6 @@
           </tr>
 
         </table>
-        <!-- /Card -->
 
         <!--[if (mso)|(IE)]>
             </td>
