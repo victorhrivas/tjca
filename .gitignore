@@ -69,3 +69,4 @@ Thumbs.db
 *.bak
 *.old
 *.swp
+node_modules
