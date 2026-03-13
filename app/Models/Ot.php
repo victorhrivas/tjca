@@ -16,6 +16,8 @@ class Ot extends Model
         'destino',
         'cliente',
         'valor',
+        'traslado',
+        'costo_ext',
         'fecha',
         'solicitante',
         'conductor',
@@ -32,7 +34,7 @@ class Ot extends Model
         'direccion_destino',
         'link_mapa_destino',
 
-        // Campo legacy (si lo sigues usando en alguna parte)
+        // Campo legacy
         'link_mapa',
 
         'patente_camion',
@@ -47,10 +49,12 @@ class Ot extends Model
         'conductor'        => 'string',
         'contacto_origen'  => 'string',
         'contacto_destino' => 'string',
-        'link_mapa' => 'string',
+        'link_mapa'        => 'string',
         'patente_camion'   => 'string',
         'patente_remolque' => 'string',
         'estado'           => 'string',
+        'traslado'         => 'string',
+        'costo_ext'        => 'integer',
     ];
 
     public static array $rules = [

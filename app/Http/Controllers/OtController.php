@@ -298,6 +298,42 @@ class OtController extends AppBaseController
         return redirect(route('ots.index'));
     }
 
+    public function actualizarTraslado(Request $request, Ot $ot)
+    {
+        $request->validate([
+            'traslado' => 'nullable|in:interno,externo,interno_externo'
+        ]);
+
+        $data = [
+            'traslado' => $request->traslado,
+        ];
+
+        if ($request->traslado !== 'externo') {
+            $data['costo_ext'] = null;
+        }
+
+        $ot->update($data);
+
+        return back();
+    }
+
+    public function actualizarCostoExt(Request $request, Ot $ot)
+    {
+        $request->validate([
+            'costo_ext' => 'nullable|integer|min:0',
+        ]);
+
+        if ($ot->traslado !== 'externo') {
+            return back()->with('error', 'Solo puedes ingresar costo externo cuando el traslado es EXT.');
+        }
+
+        $ot->update([
+            'costo_ext' => $request->filled('costo_ext') ? $request->costo_ext : null,
+        ]);
+
+        return back();
+    }
+
     /**
      * Display the specified Ot.
      */

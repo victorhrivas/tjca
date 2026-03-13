@@ -98,3 +98,7 @@ Route::resource('checklist-camions', ChecklistCamionController::class)->only(['c
 // ✅ Solo una, no duplicada
 Route::post('/seguimiento-ot', [OtController::class, 'seguimiento'])
     ->name('seguimiento-ot.consultar'); // puedes dejar el name si ya lo usas en JS/blade
+
+Route::patch('/ots/{ot}/traslado', [OtController::class, 'actualizarTraslado']);
+
+Route::patch('/ots/{ot}/costo-ext', [OtController::class, 'actualizarCostoExt']);

@@ -6,11 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
-use App\Models\Solicitud;
-use App\Models\Cotizacion;
 use App\Models\Ot;
-use App\Models\InicioCarga;
-use App\Models\Entrega;
 
 class HomeController extends Controller
 {
@@ -19,121 +15,104 @@ class HomeController extends Controller
         $this->middleware('auth');
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $hoy       = Carbon::today();
-        $inicioMes = Carbon::now()->startOfMonth();
-        $finMes = Carbon::now()->EndOfMonth();
+        $hoy = Carbon::today();
 
-        // === KPIs generales (SOLO MES EN CURSO) ===
-        $totales = [
-            'solicitudes'   => Solicitud::whereBetween('created_at', [$inicioMes, $finMes])->count(),
-            'cotizaciones'  => Cotizacion::whereBetween('created_at', [$inicioMes, $finMes])->count(),
-            'ots'           => Ot::whereBetween('created_at', [$inicioMes, $finMes])->count(),
-            'inicios_carga' => InicioCarga::whereBetween('created_at', [$inicioMes, $finMes])->count(),
-            'entregas'      => Entrega::whereBetween('created_at', [$inicioMes, $finMes])->count(),
+        // =========================
+        // Filtros (GET)
+        // =========================
+        $q         = trim((string) $request->get('q', ''));
+        $estado    = $request->get('estado');     // ej: pendiente, inicio_carga, en_transito, entregada, con_incidencia
+        $status    = $request->get('status');     // (si es distinto a "estado" en tu modelo)
+        $traslado  = $request->get('traslado');   // INT / EXT (cuando exista)
+        $from      = $request->get('from');       // YYYY-MM-DD
+        $to        = $request->get('to');         // YYYY-MM-DD
+
+        // =========================
+        // Query base OT
+        // =========================
+        $otsQuery = Ot::query()
+            ->with(['cotizacion.solicitud.cliente']);
+
+        // Rango de fecha (usa created_at como "Fecha OT")
+        if ($from) {
+            $otsQuery->whereDate('created_at', '>=', $from);
+        }
+        if ($to) {
+            $otsQuery->whereDate('created_at', '<=', $to);
+        }
+
+        // Estado (columna existente en tu OT)
+        if (!empty($estado) && $estado !== 'all') {
+            $otsQuery->where('estado', $estado);
+        }
+
+        // Status (si existe como columna distinta a estado; si no existe, no lo filtres)
+        // Actívalo cuando tengas la columna `status` en ots:
+        if (!empty($status) && $status !== 'all') {
+            // Evita romper si aún no existe la columna: comenta hasta migrar
+            // $otsQuery->where('status', $status);
+        }
+
+        // Traslado (INT/EXT) - Actívalo cuando exista la columna
+        if (!empty($traslado) && $traslado !== 'all') {
+            // $otsQuery->where('traslado_tipo', $traslado); // ej: traslado_tipo = INT|EXT
+        }
+
+        // Búsqueda (por id OT, cliente, conductor, desde/hasta, equipo)
+        if ($q !== '') {
+            $otsQuery->where(function ($qq) use ($q) {
+                $qq->where('id', $q)
+                   ->orWhere('conductor', 'like', "%{$q}%")
+                   // Campos futuros: si hoy no existen, no los uses aquí
+                   //->orWhere('equipo', 'like', "%{$q}%")
+                   //->orWhere('desde', 'like', "%{$q}%")
+                   //->orWhere('hasta', 'like', "%{$q}%")
+                   ->orWhereHas('cotizacion.solicitud.cliente', function ($c) use ($q) {
+                       $c->where('razon_social', 'like', "%{$q}%");
+                   });
+            });
+        }
+
+        // =========================
+        // Datos para dashboard
+        // =========================
+        $ots = (clone $otsQuery)
+            ->orderBy('created_at', 'desc')
+            ->paginate(25)
+            ->withQueryString();
+
+        // Stats rápidos (con mismos filtros)
+        $stats = (clone $otsQuery)
+            ->select('estado', DB::raw('COUNT(*) as total'))
+            ->groupBy('estado')
+            ->pluck('total', 'estado');
+
+        // Para selects (puedes ajustar a tus valores reales)
+        $estadoOptions = [
+            'all'           => 'Todos',
+            'pendiente'     => 'Pendiente',
+            'inicio_carga'  => 'Inicio carga',
+            'en_transito'   => 'En tránsito',
+            'con_incidencia'=> 'Con incidencia',
+            'entregada'     => 'Entregada',
         ];
 
-        // Monto cotizado en el mes actual
-        $montoCotizadoMes = Cotizacion::whereBetween('created_at', [$inicioMes, $finMes])
-            ->sum('monto');
-
-        // Monto total de OT en tránsito (MES EN CURSO)
-        // Asume que el monto está en cotizaciones.monto y la OT tiene cotizacion_id
-        $montoOtsEnTransitoMes = Ot::where('ots.estado', 'en_transito')
-            ->whereBetween('ots.created_at', [$inicioMes, $finMes])
-            ->join('cotizacions', 'ots.cotizacion_id', '=', 'cotizacions.id')
-            ->sum('cotizacions.monto');
-
-
-
-        // Cotizaciones por estado (MES EN CURSO)
-        $cotizacionesPorEstado = Cotizacion::select(
-                'estado',
-                DB::raw('COUNT(*) as total'),
-                DB::raw('COALESCE(SUM(monto),0) as monto_total')
-            )
-            ->whereBetween('created_at', [$inicioMes, $finMes])
-            ->groupBy('estado')
-            ->get();
-
-        // OT por estado (MES EN CURSO)
-        $otsPorEstado = Ot::select(
-                'estado',
-                DB::raw('COUNT(*) as total')
-            )
-            ->whereBetween('created_at', [$inicioMes, $finMes])
-            ->groupBy('estado')
-            ->get();
-
-        // Cotizaciones del mes para gráfico (día a día)
-        $cotizacionesDias = Cotizacion::select(
-                DB::raw('DATE(created_at) as fecha'),
-                DB::raw('COUNT(*) as total'),
-                DB::raw('COALESCE(SUM(monto),0) as monto_total')
-            )
-            ->whereBetween('created_at', [$inicioMes, $finMes])
-            ->groupBy(DB::raw('DATE(created_at)'))
-            ->orderBy('fecha')
-            ->get();
-
-        $chartCotizaciones = [
-            'labels'  => $cotizacionesDias->pluck('fecha')->map(function ($fecha) {
-                return Carbon::parse($fecha)->format('d-m');
-            })->toArray(),
-            'totales' => $cotizacionesDias->pluck('total')->toArray(),
-            'montos'  => $cotizacionesDias->pluck('monto_total')->toArray(),
+        // StatusOptions (cuando exista status real)
+        $statusOptions = [
+            'all'        => 'Todos',
+            'pendiente'  => 'Pendiente',
+            'en_transito'=> 'En tránsito',
+            'entregado'  => 'Entregado',
         ];
-
-        // === OT en curso (cualquier fecha, NO entregadas, de más antigua a más reciente) ===
-        $otsEnCursoQuery = Ot::with(['cotizacion.solicitud.cliente'])
-            ->where('estado', '!=', 'entregada')
-            ->orderBy('created_at', 'asc');
-
-        $otsEnCursoTotal   = $otsEnCursoQuery->count();
-        $otsEnCursoListado = (clone $otsEnCursoQuery)->limit(15)->get(); // las 15 más antiguas en curso
-
-        // Actividad reciente SOLO del mes
-        $recentSolicitudes = Solicitud::with('cliente')
-            ->whereBetween('created_at', [$inicioMes, $finMes])
-            ->latest()
-            ->limit(5)
-            ->get();
-
-        $recentCotizaciones = Cotizacion::with(['solicitud.cliente'])
-            ->whereBetween('created_at', [$inicioMes, $finMes])
-            ->latest()
-            ->limit(5)
-            ->get();
-
-        $recentOts = Ot::with(['cotizacion.solicitud.cliente'])
-            ->whereBetween('created_at', [$inicioMes, $finMes])
-            ->latest()
-            ->limit(5)
-            ->get();
-
-        $recentEntregas = Entrega::with(['ot.cotizacion.solicitud.cliente'])
-            ->whereBetween('created_at', [$inicioMes, $finMes])
-            ->latest()
-            ->limit(5)
-            ->get();
 
         return view('home', compact(
-            'totales',
-            'montoCotizadoMes',
-            'cotizacionesPorEstado',
-            'otsPorEstado',
-            'chartCotizaciones',
-            'inicioMes',
-            'finMes',
-            'hoy',
-            'recentSolicitudes',
-            'recentCotizaciones',
-            'recentOts',
-            'recentEntregas',
-            'otsEnCursoTotal',
-            'otsEnCursoListado',
-            'montoOtsEnTransitoMes'
+            'ots',
+            'stats',
+            'estadoOptions',
+            'statusOptions',
+            'hoy'
         ));
     }
 }

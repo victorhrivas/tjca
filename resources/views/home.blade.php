@@ -1,523 +1,801 @@
 @extends('layouts.app')
 
+@push('styles')
+<style>
+    /* =========================================================
+       OT DASHBOARD
+       Compatible con modo claro / oscuro
+    ========================================================= */
+
+    .ot-page .ot-scope{
+        --ot-font-body: 10px;
+        --ot-font-head: 9px;
+        --ot-line: 1.05;
+        --ot-pad-y: 2px;
+        --ot-pad-x: 5px;
+
+        /* LIGHT */
+        --ot-bg-card: #ffffff;
+        --ot-bg-header: #ffffff;
+        --ot-bg-table: #ffffff;
+        --ot-bg-head: #f6f7f9;
+        --ot-bg-zebra: #fafafa;
+        --ot-bg-hover: #eef3ff;
+
+        --ot-border: #e3e6ea;
+        --ot-border-soft: #e9ecef;
+
+        --ot-text: #495057;
+        --ot-text-strong: #2d3748;
+        --ot-text-soft: #6c757d;
+        --ot-text-money: #1f2933;
+
+        --ot-pill-bg: #f1f3f5;
+        --ot-pill-text: #2f3943;
+
+        --ot-input-bg: #ffffff;
+        --ot-input-text: #212529;
+        --ot-input-border: #ced4da;
+        --ot-input-placeholder: #97a0aa;
+
+        --ot-disabled-bg: #f3f5f7;
+        --ot-disabled-text: #9aa5b1;
+        --ot-disabled-border: #e2e8ee;
+
+        --ot-traslado-empty-bg: #eef2f6;
+        --ot-traslado-empty-border: #d9e0e6;
+        --ot-traslado-empty-text: #5f6b76;
+    }
+
+    /* ===== DARK MODE =====
+       Ajusta estos selectores según tu layout si usa otra clase.
+       AdminLTE normalmente usa .dark-mode en body.
+    */
+    body.dark-mode .ot-page .ot-scope,
+    .dark-mode .ot-page .ot-scope,
+    body[class*="dark"] .ot-page .ot-scope{
+        --ot-bg-card: #232a31;
+        --ot-bg-header: #232a31;
+        --ot-bg-table: #1f252b;
+        --ot-bg-head: #2b333b;
+        --ot-bg-zebra: #242c33;
+        --ot-bg-hover: #2d3742;
+
+        --ot-border: #3a434d;
+        --ot-border-soft: #414b55;
+
+        --ot-text: #d7dee5;
+        --ot-text-strong: #f1f5f9;
+        --ot-text-soft: #aab4bf;
+        --ot-text-money: #f8fafc;
+
+        --ot-pill-bg: #303841;
+        --ot-pill-text: #e5edf5;
+
+        --ot-input-bg: #2b333b;
+        --ot-input-text: #f1f5f9;
+        --ot-input-border: #47515c;
+        --ot-input-placeholder: #9aa6b2;
+
+        --ot-disabled-bg: #313941;
+        --ot-disabled-text: #8d99a6;
+        --ot-disabled-border: #47515c;
+
+        --ot-traslado-empty-bg: #39424b;
+        --ot-traslado-empty-border: #55616d;
+        --ot-traslado-empty-text: #d5dde5;
+    }
+
+    .ot-page .ot-card{
+        background: var(--ot-bg-card);
+        border: 1px solid var(--ot-border);
+        border-radius: 12px;
+        overflow: hidden;
+        color: var(--ot-text);
+    }
+
+    .ot-page .ot-card-header{
+        background: var(--ot-bg-header);
+        border-bottom: 1px solid var(--ot-border);
+        padding: 10px 14px;
+        color: var(--ot-text);
+    }
+
+    .ot-page h3,
+    .ot-page strong{
+        color: var(--ot-text-strong);
+    }
+
+    .ot-page small,
+    .ot-page .text-muted{
+        color: var(--ot-text-soft) !important;
+    }
+
+    .ot-page .badge-kpi{
+        font-weight: 700;
+        border-radius: 6px;
+        padding: 4px 8px;
+        font-size: .65rem;
+    }
+
+    .ot-page .form-control-sm{
+        border-radius: 8px;
+        font-size: .78rem;
+        padding: 3px 6px;
+    }
+
+    .ot-page input.form-control,
+    .ot-page select.form-control{
+        background: var(--ot-input-bg) !important;
+        color: var(--ot-input-text) !important;
+        border-color: var(--ot-input-border) !important;
+    }
+
+    .ot-page select.form-control option,
+    .ot-page select.form-control optgroup{
+        background: #ffffff;
+        color: #212529;
+    }
+
+    body.dark-mode .ot-page select.form-control option,
+    body.dark-mode .ot-page select.form-control optgroup,
+    .dark-mode .ot-page select.form-control option,
+    .dark-mode .ot-page select.form-control optgroup,
+    body[class*="dark"] .ot-page select.form-control option,
+    body[class*="dark"] .ot-page select.form-control optgroup{
+        background: #2b333b !important;
+        color: #f1f5f9 !important;
+    }
+
+    body.dark-mode .ot-page select.form-control,
+    .dark-mode .ot-page select.form-control,
+    body[class*="dark"] .ot-page select.form-control{
+        background-color: #2b333b !important;
+        color: #f1f5f9 !important;
+        border-color: #47515c !important;
+    }
+
+    .ot-page input.form-control::placeholder{
+        color: var(--ot-input-placeholder) !important;
+        opacity: 1;
+    }
+
+    .ot-page input[type="date"]::-webkit-calendar-picker-indicator{
+        filter: none;
+    }
+
+    body.dark-mode .ot-page input[type="date"]::-webkit-calendar-picker-indicator,
+    .dark-mode .ot-page input[type="date"]::-webkit-calendar-picker-indicator,
+    body[class*="dark"] .ot-page input[type="date"]::-webkit-calendar-picker-indicator{
+        filter: invert(1);
+    }
+
+    .ot-page .btn{
+        border-radius: 8px;
+    }
+
+    .ot-page .input-icon{
+        position: relative;
+    }
+
+    .ot-page .input-icon__prefix{
+        position: absolute;
+        left: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--ot-input-placeholder);
+        font-size: 10px;
+        pointer-events: none;
+    }
+
+    .ot-page .pill-soft{
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 999px;
+        background: var(--ot-pill-bg);
+        color: var(--ot-pill-text);
+        font-weight: 700;
+        font-size: 10px;
+    }
+
+    .ot-page .ot-table-wrapper{
+        width: 100%;
+        overflow: auto;
+        max-height: 70vh;
+        background: var(--ot-bg-table);
+    }
+
+    .ot-page .ot-scope .ot-table,
+    .ot-page .ot-scope .ot-table *{
+        font-size: var(--ot-font-body) !important;
+        line-height: var(--ot-line) !important;
+    }
+
+    .ot-page .ot-scope .ot-table{
+        min-width: 1700px;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: var(--ot-bg-table);
+        color: var(--ot-text);
+    }
+
+    .ot-page .ot-scope table.ot-table > thead > tr > th{
+        font-size: var(--ot-font-head) !important;
+        padding: 3px 5px !important;
+        font-weight: 800 !important;
+        text-transform: uppercase !important;
+        letter-spacing: .02em !important;
+        white-space: nowrap !important;
+        background: var(--ot-bg-head) !important;
+        color: var(--ot-text-strong) !important;
+        border-color: var(--ot-border-soft) !important;
+        border-bottom: 2px solid var(--ot-border) !important;
+        position: sticky;
+        top: 0;
+        z-index: 5;
+    }
+
+    .ot-page .ot-scope table.ot-table > tbody > tr > td{
+        font-size: var(--ot-font-body) !important;
+        padding: var(--ot-pad-y) var(--ot-pad-x) !important;
+        white-space: nowrap !important;
+        vertical-align: middle !important;
+        border-color: var(--ot-border-soft) !important;
+        color: var(--ot-text) !important;
+        background: transparent !important;
+    }
+
+    .ot-page .ot-scope .table.table-sm > :not(caption) > * > *{
+        padding: var(--ot-pad-y) var(--ot-pad-x) !important;
+    }
+
+    .ot-page .ot-scope table.ot-table > tbody > tr:nth-child(even){
+        background: var(--ot-bg-zebra) !important;
+    }
+
+    .ot-page .ot-scope table.ot-table > tbody > tr:hover{
+        background: var(--ot-bg-hover) !important;
+    }
+
+    .ot-page .ot-scope .truncate{
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: normal !important;
+        display: block !important;
+    }
+
+    .ot-page .ot-scope .pill{
+        display: inline-block;
+        padding: 0 6px !important;
+        border-radius: 999px !important;
+        font-size: 9px !important;
+        font-weight: 700 !important;
+        background: var(--ot-pill-bg) !important;
+        border: 1px solid var(--ot-border) !important;
+        color: var(--ot-pill-text) !important;
+    }
+
+    .ot-page .ot-scope .badge,
+    .ot-page .ot-scope .badge-ot{
+        font-size: 9px !important;
+        padding: 1px 6px !important;
+        border-radius: 6px !important;
+        font-weight: 800 !important;
+        line-height: 1.05 !important;
+    }
+
+    .ot-page .ot-scope .badge-light{
+        background: var(--ot-pill-bg) !important;
+        color: var(--ot-pill-text) !important;
+        border: 1px solid var(--ot-border) !important;
+    }
+
+    .ot-page .ot-scope .col-date{ width:100px; min-width:100px; }
+    .ot-page .ot-scope .col-equipo{ width:220px; min-width:220px; }
+    .ot-page .ot-scope .col-carga{ width:240px; min-width:240px; }
+    .ot-page .ot-scope .col-traslado{ width:115px; min-width:115px; }
+    .ot-page .ot-scope .col-ubicacion{ width:140px; min-width:140px; }
+    .ot-page .ot-scope .col-cliente{ width:240px; min-width:240px; }
+    .ot-page .ot-scope .col-money{ width:110px; min-width:110px; font-weight:800; color:var(--ot-text-money) !important; }
+    .ot-page .ot-scope .col-id{
+        width: 110px;
+        min-width: 110px;
+        font-weight: 800;
+        color: var(--ot-text-strong) !important;
+    }
+    .ot-page .ot-scope .col-status{ width:110px; min-width:110px; }
+    .ot-page .ot-scope .col-solicitante{ width:170px; min-width:170px; }
+    .ot-page .ot-scope .col-conductor{ width:220px; min-width:220px; }
+    .ot-page .ot-scope .col-oc{ width:100px; min-width:100px; }
+    .ot-page .ot-scope .col-estado{ width:120px; min-width:120px; }
+    .ot-page .ot-scope .col-gdd{ width:100px; min-width:100px; }
+    .ot-page .ot-scope .col-afid{ width:240px; min-width:240px; }
+    .ot-page .ot-scope .col-fact{ width:130px; min-width:130px; }
+
+    .ot-page .ot-scope .col-cliente-text{
+        font-weight: 900;
+        color: var(--ot-text-strong) !important;
+    }
+
+    .ot-page .ot-scope .col-conductor-text{
+        color: var(--ot-text-soft) !important;
+    }
+
+    .ot-page .ot-scope .nowrap{
+        white-space: nowrap !important;
+    }
+
+    .ot-page .ot-scope .two-lines{
+        white-space: normal !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        display: -webkit-box !important;
+        -webkit-box-orient: vertical !important;
+        -webkit-line-clamp: 2 !important;
+        line-height: 1.1 !important;
+        max-height: calc(2 * 1.1em) !important;
+    }
+
+    .ot-page .ot-scope .traslado-form,
+    .ot-page .ot-scope .costo-ext-form{
+        margin: 0;
+    }
+
+    .ot-page .ot-scope .traslado-select{
+        width: 92px;
+        min-width: 92px;
+        max-width: 92px;
+        border-radius: 999px !important;
+        font-size: 9px !important;
+        font-weight: 800 !important;
+        text-align: center !important;
+        text-align-last: center !important;
+        padding: 1px 20px 1px 8px !important;
+        height: 24px !important;
+        outline: none !important;
+        box-shadow: none !important;
+        cursor: pointer;
+        appearance: auto;
+    }
+
+    .ot-page .ot-scope .traslado-select.traslado-int{
+        background: #d9efe0 !important;
+        border: 1px solid #b7d8c1 !important;
+        color: #245c37 !important;
+    }
+
+    .ot-page .ot-scope .traslado-select.traslado-ext{
+        background: #f4ebc8 !important;
+        border: 1px solid #e5d89b !important;
+        color: #7a5a00 !important;
+    }
+
+    .ot-page .ot-scope .traslado-select.traslado-mix{
+        background: #e4dcfa !important;
+        border: 1px solid #cbbcf6 !important;
+        color: #5b3aa8 !important;
+    }
+
+    .ot-page .ot-scope .traslado-select.traslado-empty{
+        background: var(--ot-traslado-empty-bg) !important;
+        border: 1px solid var(--ot-traslado-empty-border) !important;
+        color: var(--ot-traslado-empty-text) !important;
+    }
+
+    .ot-page .ot-scope .costo-ext-wrap{
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .ot-page .ot-scope .costo-ext-prefix{
+        font-size: 9px !important;
+        font-weight: 800 !important;
+        color: var(--ot-text-soft) !important;
+    }
+
+    .ot-page .ot-scope .costo-ext-input{
+        width: 100%;
+        min-width: 90px;
+        height: 22px !important;
+        padding: 1px 6px !important;
+        border-radius: 8px !important;
+        border: 1px solid var(--ot-input-border) !important;
+        background: var(--ot-input-bg) !important;
+        color: var(--ot-input-text) !important;
+        text-align: right !important;
+        font-size: 9px !important;
+        font-weight: 700 !important;
+        outline: none !important;
+        box-shadow: none !important;
+    }
+
+    .ot-page .ot-scope .costo-ext-input.is-disabled{
+        background: var(--ot-disabled-bg) !important;
+        color: var(--ot-disabled-text) !important;
+        border-color: var(--ot-disabled-border) !important;
+        cursor: not-allowed;
+    }
+
+    .ot-page .pagination{
+        margin-bottom: 0;
+    }
+
+    body.dark-mode .ot-page .page-link,
+    .dark-mode .ot-page .page-link,
+    body[class*="dark"] .ot-page .page-link{
+        background-color: #2b333b;
+        border-color: #47515c;
+        color: #e5edf5;
+    }
+
+    body.dark-mode .ot-page .page-item.active .page-link,
+    .dark-mode .ot-page .page-item.active .page-link,
+    body[class*="dark"] .ot-page .page-item.active .page-link{
+        background-color: #3b82f6;
+        border-color: #3b82f6;
+        color: #fff;
+    }
+
+    body.dark-mode .ot-page .page-item.disabled .page-link,
+    .dark-mode .ot-page .page-item.disabled .page-link,
+    body[class*="dark"] .ot-page .page-item.disabled .page-link{
+        background-color: #232a31;
+        border-color: #414b55;
+        color: #7f8b97;
+    }
+</style>
+@endpush
+
 @section('content')
-<div class="container-fluid mt-4">
-    {{-- Título --}}
-    <div class="row mb-3">
-        <div class="col-md-12">
-            <h3 class="mb-0">Dashboard general – Mes en curso</h3>
-            <small class="text-muted">
-                Resumen ejecutivo entre {{ $inicioMes->format('d-m-Y') }} y {{ $finMes->format('d-m-Y') }}.
-            </small>
-        </div>
-    </div>
+<div class="container-fluid mt-4 ot-page">
 
-    {{-- KPIs principales --}}
-    <div class="row">
-        {{-- Solicitudes --}}
-        <div class="col-md-2 mb-3">
-            <div class="card shadow-sm" style="background:var(--bg-2);border-color:var(--line);">
-                <div class="card-body py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="text-muted small">Solicitudes</span>
-                        <span data-toggle="tooltip"
-                              title="Cantidad de solicitudes creadas en el mes en curso.">
-                            <i class="fas fa-question-circle text-muted"></i>
-                        </span>
-                    </div>
-                    <h4 class="mt-2 mb-0">{{ number_format($totales['solicitudes'] ?? 0) }}</h4>
-                </div>
-            </div>
+    {{-- Header --}}
+    <div class="d-flex justify-content-between align-items-end mb-3">
+        <div>
+            <h3 class="mb-0">Dashboard OT</h3>
+            <small class="text-muted">Listado operativo de Órdenes de Trabajo.</small>
         </div>
 
-        {{-- Cotizaciones --}}
-        <div class="col-md-2 mb-3">
-            <div class="card shadow-sm" style="background:var(--bg-2);border-color:var(--line);">
-                <div class="card-body py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="text-muted small">Cotizaciones</span>
-                        <span data-toggle="tooltip"
-                              title="Número total de cotizaciones creadas este mes, con su monto acumulado.">
-                            <i class="fas fa-question-circle text-muted"></i>
-                        </span>
-                    </div>
-                    <h4 class="mt-2 mb-0">{{ number_format($totales['cotizaciones'] ?? 0) }}</h4>
-                    <small class="text-muted">
-                        Monto mes: ${{ number_format($montoCotizadoMes ?? 0, 0, ',', '.') }}
-                    </small>
-                </div>
-            </div>
-        </div>
-
-        {{-- OT (mes) + OT en curso (todas las fechas) --}}
-        <div class="col-md-2 mb-3">
-            <div class="card shadow-sm" style="background:var(--bg-2);border-color:var(--line);">
-                <div class="card-body py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="text-muted small">Órdenes de Trabajo (mes)</span>
-                        <span data-toggle="tooltip"
-                              title="Cantidad de OT creadas en el mes en curso. Debajo se muestra cuántas OT están en curso considerando todas las fechas.">
-                            <i class="fas fa-question-circle text-muted"></i>
-                        </span>
-                    </div>
-                    <h4 class="mt-2 mb-0">{{ number_format($totales['ots'] ?? 0) }}</h4>
-                    <small class="text-muted">
-                        En curso (todas las fechas): {{ number_format($otsEnCursoTotal ?? 0) }}
-                    </small>
-
-                    <small class="text-muted d-block">
-                        Monto OT en tránsito (mes): ${{ number_format($montoOtsEnTransitoMes ?? 0, 0, ',', '.') }}
-                    </small>
-
-                </div>
-            </div>
-        </div>
-
-        {{-- Inicios de carga --}}
-        <div class="col-md-3 mb-3">
-            <div class="card shadow-sm" style="background:var(--bg-2);border-color:var(--line);">
-                <div class="card-body py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="text-muted small">Inicios de carga</span>
-                        <span data-toggle="tooltip"
-                              title="Cantidad de inicios de carga registrados en el mes, asociados a OT.">
-                            <i class="fas fa-question-circle text-muted"></i>
-                        </span>
-                    </div>
-                    <h4 class="mt-2 mb-0">{{ number_format($totales['inicios_carga'] ?? 0) }}</h4>
-                </div>
-            </div>
-        </div>
-
-        {{-- Entregas --}}
-        <div class="col-md-3 mb-3">
-            <div class="card shadow-sm" style="background:var(--bg-2);border-color:var(--line);">
-                <div class="card-body py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="text-muted small">Entregas</span>
-                        <span data-toggle="tooltip"
-                              title="Cantidad de entregas registradas en el mes en curso.">
-                            <i class="fas fa-question-circle text-muted"></i>
-                        </span>
-                    </div>
-                    <h4 class="mt-2 mb-0">{{ number_format($totales['entregas'] ?? 0) }}</h4>
-                </div>
+        <div class="text-right">
+            <small class="text-muted d-block">Totales por estado (según filtros)</small>
+            <div class="d-flex flex-wrap justify-content-end" style="gap:.35rem;">
+                @foreach(($stats ?? []) as $k => $v)
+                    @php
+                        $badge = match($k) {
+                            'pendiente'       => 'badge-warning',
+                            'inicio_carga'    => 'badge-info',
+                            'en_transito'     => 'badge-primary',
+                            'con_incidencia'  => 'badge-danger',
+                            'entregada'       => 'badge-success',
+                            default           => 'badge-secondary'
+                        };
+                        $label = ucfirst(str_replace('_',' ',$k));
+                    @endphp
+                    <span class="badge badge-kpi {{ $badge }}">{{ $label }}: {{ number_format($v) }}</span>
+                @endforeach
             </div>
         </div>
     </div>
 
-    {{-- OT en curso (focus principal) --}}
-    <div class="row mt-3">
-        <div class="col-md-12 mb-3">
-            <div class="card shadow-sm" style="background:var(--bg-3);border-color:var(--line);">
-                <div class="card-header border-bottom d-flex justify-content-between align-items-center"
-                     style="border-color:var(--line);">
-                    <div>
-                        <strong>Órdenes de Trabajo en curso</strong>
-                        <small class="text-muted d-block">
-                            Cualquier fecha • Estados distintos de <code>entregada</code> • Ordenadas de más antigua a más reciente.
-                        </small>
+    {{-- Filtros --}}
+    <div class="card shadow-sm mb-3 ot-card">
+        <div class="card-body">
+            <form method="GET" action="{{ route('home') }}">
+                <div class="form-row">
+                    <div class="col-lg-4 col-md-6 mb-2">
+                        <label class="small text-muted mb-1">Buscar</label>
+                        <div class="input-icon">
+                            <span class="input-icon__prefix"><i class="fas fa-search"></i></span>
+                            <input type="text" name="q" value="{{ request('q') }}"
+                                   class="form-control form-control-sm pl-4"
+                                   placeholder="OT ID, cliente, conductor...">
+                        </div>
                     </div>
-                    <span data-toggle="tooltip"
-                          title="Se muestran las OT que todavía no están entregadas (estado distinto de 'entregada'), sin importar la fecha. Se ordenan de la más antigua a la más reciente para ver primero las que llevan más tiempo abiertas.">
-                        <i class="fas fa-question-circle text-muted"></i>
-                    </span>
+
+                    <div class="col-lg-2 col-md-6 mb-2">
+                        <label class="small text-muted mb-1">Estado Traslado</label>
+                        <select name="estado" class="form-control form-control-sm">
+                            @foreach($estadoOptions as $val => $label)
+                                <option value="{{ $val }}" @selected(request('estado','all')==$val)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="col-lg-2 col-md-6 mb-2">
+                        <label class="small text-muted mb-1">Estado OC</label>
+                        <select name="status" class="form-control form-control-sm">
+                            @foreach($statusOptions as $val => $label)
+                                <option value="{{ $val }}" @selected(request('status','all')==$val)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="col-lg-2 col-md-6 mb-2">
+                        <label class="small text-muted mb-1">Fecha (desde)</label>
+                        <input type="date" name="from" value="{{ request('from') }}"
+                               class="form-control form-control-sm">
+                    </div>
+
+                    <div class="col-lg-2 col-md-6 mb-2">
+                        <label class="small text-muted mb-1">Fecha (hasta)</label>
+                        <input type="date" name="to" value="{{ request('to') }}"
+                               class="form-control form-control-sm">
+                    </div>
                 </div>
 
-                <div class="card-body p-0">
-                    <table class="table table-sm mb-0">
-                        <thead>
-                            <tr class="text-muted">
-                                <th>Fecha OT</th>
-                                <th>Cliente</th>
-                                <th>Conductor</th>
-                                <th>Estado</th>
-                                <th class="text-right">Días en curso</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($otsEnCursoListado as $ot)
-                                @php
-                                    $clienteNombre = optional(optional(optional($ot->cotizacion)->solicitud)->cliente)->razon_social
-                                        ?? '-';
-
-                                    $badgeClass = match($ot->estado) {
-                                        'pendiente'      => 'badge-warning',
-                                        'inicio_carga'   => 'badge-info',
-                                        'en_transito'    => 'badge-primary',
-                                        'con_incidencia' => 'badge-danger',
-                                        default          => 'badge-secondary'
-                                    };
-
-                                    $diasEnCurso = $ot->created_at
-                                        ? $ot->created_at->diffInDays($hoy)
-                                        : null;
-                                @endphp
-                                <tr>
-                                    <td>{{ optional($ot->created_at)->format('d-m-Y H:i') }}</td>
-                                    <td>{{ $clienteNombre }}</td>
-                                    <td>{{ $ot->conductor ?? '-' }}</td>
-                                    <td>
-                                        <span class="badge {{ $badgeClass }}">
-                                            {{ $ot->estado_label ?? ucfirst(str_replace('_',' ',$ot->estado)) }}
-                                        </span>
-                                    </td>
-                                    <td class="text-right">
-                                        @if(!is_null($diasEnCurso))
-                                            {{ $diasEnCurso }} {{ \Illuminate\Support\Str::plural('día', $diasEnCurso) }}
-                                        @else
-                                            -
-                                        @endif
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="5" class="text-muted text-center py-3">
-                                        No hay Órdenes de Trabajo en curso. Todas están entregadas.
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                <div class="d-flex justify-content-end align-items-center" style="gap:.5rem;">
+                    <a href="{{ route('home') }}" class="btn btn-outline-secondary btn-sm">Limpiar</a>
+                    <button class="btn btn-primary btn-sm">
+                        <i class="fas fa-filter mr-1"></i> Filtrar
+                    </button>
                 </div>
-
-                @if(($otsEnCursoTotal ?? 0) > ($otsEnCursoListado->count() ?? 0))
-                    <div class="card-footer text-right">
-                        <small class="text-muted">
-                            Mostrando {{ $otsEnCursoListado->count() }} de {{ $otsEnCursoTotal }} OT en curso.
-                        </small>
-                    </div>
-                @endif
-            </div>
+            </form>
         </div>
     </div>
 
-    {{-- Funnel + gráfico --}}
-    <div class="row mt-3">
-        {{-- Funnel cotizaciones --}}
-        <div class="col-md-4 mb-3">
-            <div class="card shadow-sm h-100" style="background:var(--bg-2);border-color:var(--line);">
-                <div class="card-header border-bottom d-flex justify-content-between align-items-center"
-                     style="border-color:var(--line);">
-                    <strong>Cotizaciones por estado (mes)</strong>
-                    <span data-toggle="tooltip"
-                          title="Distribución de las cotizaciones del mes según su estado (enviada, aceptada, rechazada, etc.).">
-                        <i class="fas fa-question-circle text-muted"></i>
-                    </span>
+    {{-- Tabla OT --}}
+    <div class="card shadow-sm ot-card ot-scope">
+        <div class="card-header ot-card-header">
+            <div class="d-flex justify-content-between align-items-center w-100">
+                <div>
+                    <strong>Órdenes de Trabajo</strong>
+                    <small class="text-muted d-block"></small>
                 </div>
-                <div class="card-body p-3">
-                    @if($cotizacionesPorEstado->count())
-                        <table class="table table-sm mb-0">
-                            <thead>
-                                <tr class="text-muted">
-                                    <th>Estado</th>
-                                    <th class="text-right">Cantidad</th>
-                                    <th class="text-right">Monto</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($cotizacionesPorEstado as $row)
-                                    <tr>
-                                        <td>{{ ucfirst($row->estado ?? 'Sin estado') }}</td>
-                                        <td class="text-right">{{ number_format($row->total ?? 0) }}</td>
-                                        <td class="text-right">
-                                            ${{ number_format($row->monto_total ?? 0, 0, ',', '.') }}
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    @else
-                        <p class="text-muted mb-0">No hay cotizaciones registradas este mes.</p>
-                    @endif
+
+                <div class="d-none d-md-flex align-items-center" style="gap:.5rem;">
+                    <span class="text-muted small">Registros:</span>
+                    <span class="pill-soft">{{ number_format($ots->total()) }}</span>
                 </div>
             </div>
         </div>
 
-        {{-- Funnel OT mes --}}
-        <div class="col-md-4 mb-3">
-            <div class="card shadow-sm h-100" style="background:var(--bg-2);border-color:var(--line);">
-                <div class="card-header border-bottom d-flex justify-content-between align-items-center"
-                     style="border-color:var(--line);">
-                    <strong>Órdenes de Trabajo por estado (mes)</strong>
-                    <span data-toggle="tooltip"
-                          title="Cantidad de OT del mes agrupadas por su estado operativo.">
-                        <i class="fas fa-question-circle text-muted"></i>
-                    </span>
-                </div>
-                <div class="card-body p-3">
-                    @if($otsPorEstado->count())
-                        <table class="table table-sm mb-0">
-                            <thead>
-                                <tr class="text-muted">
-                                    <th>Estado</th>
-                                    <th class="text-right">Cantidad</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($otsPorEstado as $row)
-                                    @php
-                                        $badgeClass = match($row->estado) {
-                                            'pendiente'      => 'badge-warning',
-                                            'inicio_carga'   => 'badge-info',
-                                            'en_transito'    => 'badge-primary',
-                                            'entregada'      => 'badge-success',
-                                            'con_incidencia' => 'badge-danger',
-                                            default          => 'badge-secondary'
-                                        };
-                                    @endphp
-                                    <tr>
-                                        <td>
-                                            <span class="badge {{ $badgeClass }}">
-                                                {{ ucfirst(str_replace('_', ' ', $row->estado ?? '')) }}
-                                            </span>
-                                        </td>
-                                        <td class="text-right">{{ number_format($row->total ?? 0) }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    @else
-                        <p class="text-muted mb-0">No hay OT registradas este mes.</p>
-                    @endif
-                </div>
-            </div>
-        </div>
+        <div class="card-body p-0">
+            <div class="ot-table-wrapper table-responsive">
+                <table class="table table-sm table-bordered mb-0 ot-table">
+                    <thead>
+                        <tr>
+                            <th class="col-id">OT</th>
+                            <th class="col-equipo">Equipo</th>
+                            <th class="col-traslado text-center">Traslado</th>
+                            <th class="col-status text-center">Estado</th>
+                            <th class="col-ubicacion">Desde</th>
+                            <th class="col-ubicacion">Hasta</th>
+                            <th class="col-cliente">Cliente</th>
+                            <th class="col-money text-right">Valor</th>
+                            <th class="col-money text-right">Costo EXT</th>
+                            <th class="col-id text-right">Cotiz.</th>
+                            <th class="col-date">Fecha inicio carga</th>
+                            <th class="col-solicitante">Solicitante</th>
+                            <th class="col-conductor">Conductor</th>
+                            <th class="col-oc">OC</th>
+                            <th class="col-estado text-center">Estado OC</th>
+                            <th class="col-gdd">GDD</th>
+                            <th class="col-afid">AF/ID interno</th>
+                            <th class="col-fact">Factura EXT</th>
+                            <th class="col-fact">Factura</th>
+                            <th class="col-date">Fecha Fact.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($ots as $ot)
+                            @php
+                                $cotizacion = $ot->cotizacion;
 
-        {{-- Gráfico cotizaciones mes --}}
-        <div class="col-md-4 mb-3">
-            <div class="card shadow-sm h-100" style="background:var(--bg-2);border-color:var(--line);">
-                <div class="card-header border-bottom d-flex justify-content-between align-items-center"
-                     style="border-color:var(--line);">
-                    <strong>Evolución cotizaciones (mes)</strong>
-                    <span data-toggle="tooltip"
-                          title="Cantidad y monto diario de cotizaciones generadas en el mes en curso.">
-                        <i class="fas fa-question-circle text-muted"></i>
-                    </span>
-                </div>
-                <div class="card-body p-3">
-                    @if(!empty($chartCotizaciones['labels']))
-                        <canvas id="cotizacionesChart" height="160"></canvas>
-                    @else
-                        <p class="text-muted mb-0">Aún no hay datos suficientes para graficar este mes.</p>
-                    @endif
-                </div>
-            </div>
-        </div>
-    </div>
+                                $clienteNombre = $cotizacion->cliente
+                                    ?? optional(optional(optional($cotizacion)->solicitud)->cliente)->razon_social
+                                    ?? '-';
 
-    {{-- Actividad reciente por módulo --}}
-    <div class="row mt-3">
-        {{-- Cotizaciones recientes --}}
-        <div class="col-md-4 mb-3">
-            <div class="card shadow-sm" style="background:var(--bg-3);border-color:var(--line);">
-                <div class="card-header border-bottom d-flex justify-content-between align-items-center"
-                     style="border-color:var(--line);">
-                    <strong>Cotizaciones recientes (mes)</strong>
-                    <span data-toggle="tooltip"
-                          title="Últimas cotizaciones creadas en el mes, con su cliente y estado.">
-                        <i class="fas fa-question-circle text-muted"></i>
-                    </span>
-                </div>
-                <div class="card-body p-0">
-                    <table class="table table-sm mb-0">
-                        <thead>
-                            <tr class="text-muted">
-                                <th>Fecha</th>
-                                <th>Cliente</th>
-                                <th class="text-right">Estado</th>
+                                $estadoValue = $ot->estado ?? null;
+                                $estadoBadge = match($estadoValue) {
+                                    'pendiente'       => 'badge-warning',
+                                    'inicio_carga'    => 'badge-info',
+                                    'en_transito'     => 'badge-primary',
+                                    'con_incidencia'  => 'badge-danger',
+                                    'entregada'       => 'badge-success',
+                                    default           => 'badge-secondary'
+                                };
+                                $estadoLabel = $ot->estado_label ?? ($estadoValue ? ucfirst(str_replace('_',' ',$estadoValue)) : '-');
+
+                                $equipo        = $ot->equipo ?? '-';
+                                $trasladoTipo  = $ot->traslado ?? null;
+
+                                $trasladoClass = match($trasladoTipo) {
+                                    'interno'          => 'traslado-int',
+                                    'externo'          => 'traslado-ext',
+                                    'interno_externo'  => 'traslado-mix',
+                                    default            => 'traslado-empty'
+                                };
+
+                                // DESDE y HASTA salen desde la cotización
+                                $desde         = optional($cotizacion)->origen ?? '-';
+                                $hasta         = optional($cotizacion)->destino ?? '-';
+
+                                $valor         = $ot->valor ?? null;
+                                $costoExt      = $ot->costo_ext ?? null;
+                                $cotizacionNro = optional($cotizacion)->id ?? null;
+
+                                // Fecha inicio carga
+                                $fechaInicioCarga = optional($ot->inicioCargas->sortBy('created_at')->first())->created_at
+                                    ?? optional($ot->inicioCargas->sortBy('fecha')->first())->fecha
+                                    ?? null;
+
+                                $statusValue    = $ot->status ?? '-';
+                                $solicitante    = $ot->solicitante ?? optional($cotizacion)->solicitante ?? '-';
+                                $conductor      = $ot->conductor ?? '-';
+                                $oc             = $ot->oc ?? '-';
+                                $gdd            = $ot->gdd ?? '-';
+                                $afidInterno    = $ot->afid_interno ?? '-';
+                                $facturaExterno = $ot->factura_externo ?? '-';
+                                $factura        = $ot->factura ?? '-';
+                                $fechaFactura   = $ot->fecha_factura ?? null;
+
+                                $statusBadge = match($statusValue) {
+                                    'ENTREGADO', 'entregado'     => 'badge-success',
+                                    'EN TRANSITO', 'en_transito' => 'badge-primary',
+                                    'PENDIENTE', 'pendiente'     => 'badge-warning',
+                                    default                      => 'badge-light'
+                                };
+
+                                $costoExtValue = is_null($costoExt) ? '' : (int) $costoExt;
+                                $costoExtReadonly = !in_array($trasladoTipo, ['externo', 'interno_externo']);
+                            @endphp
+
+                            <tr>
+                                <td class="col-id text-nowrap">
+                                    @if($ot->folio)
+                                        <strong>{{ $ot->folio }}</strong>
+                                    @else
+                                        <strong>#{{ $ot->id }}</strong>
+                                    @endif
+                                </td>
+
+                                <td class="col-equipo">
+                                    <div class="two-lines" title="{{ $equipo }}">{{ $equipo }}</div>
+                                </td>
+
+                                <td class="col-traslado text-center nowrap">
+                                    <form method="POST" action="{{ url('/ots/' . $ot->id . '/traslado') }}" class="traslado-form">
+                                        @csrf
+                                        @method('PATCH')
+                                        <select name="traslado"
+                                                class="form-control form-control-sm traslado-select {{ $trasladoClass }}"
+                                                onchange="this.form.submit()">
+                                            <option value="" @selected(blank($trasladoTipo))>-</option>
+                                            <option value="interno" @selected($trasladoTipo === 'interno')>INT</option>
+                                            <option value="externo" @selected($trasladoTipo === 'externo')>EXT</option>
+                                            <option value="interno_externo" @selected($trasladoTipo === 'interno_externo')>INT/EXT</option>
+                                        </select>
+                                    </form>
+                                </td>
+
+                                <td class="col-estado text-center nowrap">
+                                    <span class="badge badge-ot {{ $estadoBadge }}">{{ $estadoLabel }}</span>
+                                </td>
+
+                                <td class="col-ubicacion">
+                                    <div class="truncate" title="{{ $desde }}">{{ $desde }}</div>
+                                </td>
+
+                                <td class="col-ubicacion">
+                                    <div class="truncate" title="{{ $hasta }}">{{ $hasta }}</div>
+                                </td>
+
+                                <td class="col-cliente">
+                                    <div class="truncate col-cliente-text" title="{{ $clienteNombre }}">{{ $clienteNombre }}</div>
+                                </td>
+
+                                <td class="col-money text-right text-nowrap">
+                                    {{ is_null($valor) ? '-' : '$'.number_format($valor,0,',','.') }}
+                                </td>
+
+                                <td class="col-money text-right text-nowrap">
+                                    <form method="POST" action="{{ url('/ots/' . $ot->id . '/costo-ext') }}" class="costo-ext-form">
+                                        @csrf
+                                        @method('PATCH')
+                                        <div class="costo-ext-wrap">
+                                            <span class="costo-ext-prefix">$</span>
+                                            <input type="number"
+                                                   name="costo_ext"
+                                                   min="0"
+                                                   step="1"
+                                                   value="{{ $costoExtValue }}"
+                                                   class="form-control form-control-sm costo-ext-input {{ $costoExtReadonly ? 'is-disabled' : '' }}"
+                                                   {{ $costoExtReadonly ? 'readonly' : '' }}
+                                                   onblur="if(!this.readOnly){ this.form.submit(); }"
+                                                   onkeydown="if(event.key === 'Enter'){ event.preventDefault(); this.form.submit(); }">
+                                        </div>
+                                    </form>
+                                </td>
+
+                                <td class="col-id text-right text-nowrap">
+                                    {{ is_null($cotizacionNro) ? '-' : number_format($cotizacionNro) }}
+                                </td>
+
+                                <td class="col-date text-nowrap">
+                                    {{ $fechaInicioCarga ? \Carbon\Carbon::parse($fechaInicioCarga)->format('d/m/y') : '-' }}
+                                </td>
+
+                                <td class="col-solicitante">
+                                    <div class="truncate" title="{{ $solicitante }}">{{ $solicitante }}</div>
+                                </td>
+
+                                <td class="col-conductor">
+                                    <div class="truncate col-conductor-text" title="{{ $conductor }}">{{ $conductor }}</div>
+                                </td>
+
+                                <td class="col-oc nowrap">
+                                    <div class="truncate" title="{{ $oc }}">{{ $oc }}</div>
+                                </td>
+
+                                <td class="col-status text-center nowrap">
+                                    <span class="badge badge-ot {{ $statusBadge }}">{{ $statusValue }}</span>
+                                </td>
+
+                                <td class="col-gdd">
+                                    <div class="truncate" title="{{ $gdd }}">{{ $gdd }}</div>
+                                </td>
+
+                                <td class="col-afid">
+                                    <div class="truncate" title="{{ $afidInterno }}">{{ $afidInterno }}</div>
+                                </td>
+
+                                <td class="col-fact">
+                                    <div class="truncate" title="{{ $facturaExterno }}">{{ $facturaExterno }}</div>
+                                </td>
+
+                                <td class="col-fact">
+                                    <div class="truncate" title="{{ $factura }}">{{ $factura }}</div>
+                                </td>
+
+                                <td class="col-date text-nowrap">
+                                    {{ $fechaFactura ? \Carbon\Carbon::parse($fechaFactura)->format('d/m/y') : '-' }}
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($recentCotizaciones as $c)
-                                <tr>
-                                    <td>{{ optional($c->created_at)->format('d-m H:i') }}</td>
-                                    <td>
-                                        {{ $c->cliente ?? optional(optional($c->solicitud)->cliente)->razon_social ?? '-' }}
-                                    </td>
-                                    <td class="text-right">
-                                        <span class="badge {{ $c->estado_badge_class ?? 'badge-secondary' }}">
-                                            {{ $c->estado_label ?? ucfirst($c->estado) }}
-                                        </span>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="3" class="text-muted text-center py-3">
-                                        No hay cotizaciones registradas este mes.
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
+                        @empty
+                            <tr>
+                                <td colspan="20" class="text-muted text-center py-4">No hay OT con los filtros actuales.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
         </div>
 
-        {{-- OT recientes --}}
-        <div class="col-md-4 mb-3">
-            <div class="card shadow-sm" style="background:var(--bg-3);border-color:var(--line);">
-                <div class="card-header border-bottom d-flex justify-content-between align-items-center"
-                     style="border-color:var(--line);">
-                    <strong>Órdenes de Trabajo recientes (mes)</strong>
-                    <span data-toggle="tooltip"
-                          title="Últimas OT creadas en el mes, indicando el cliente asociado y su estado.">
-                        <i class="fas fa-question-circle text-muted"></i>
-                    </span>
-                </div>
-                <div class="card-body p-0">
-                    <table class="table table-sm mb-0">
-                        <thead>
-                            <tr class="text-muted">
-                                <th>Fecha</th>
-                                <th>Cliente</th>
-                                <th class="text-right">Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($recentOts as $ot)
-                                <tr>
-                                    <td>{{ optional($ot->created_at)->format('d-m H:i') }}</td>
-                                    <td>
-                                        {{ optional(optional(optional($ot->cotizacion)->solicitud)->cliente)->razon_social ?? '-' }}
-                                    </td>
-                                    <td class="text-right">
-                                        <span class="badge {{ $ot->estado_badge_class ?? 'badge-secondary' }}">
-                                            {{ $ot->estado_label ?? ucfirst($ot->estado) }}
-                                        </span>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="3" class="text-muted text-center py-3">
-                                        No hay OT registradas este mes.
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        {{-- Entregas recientes --}}
-        <div class="col-md-4 mb-3">
-            <div class="card shadow-sm" style="background:var(--bg-3);border-color:var(--line);">
-                <div class="card-header border-bottom d-flex justify-content-between align-items-center"
-                     style="border-color:var(--line);">
-                    <strong>Entregas recientes (mes)</strong>
-                    <span data-toggle="tooltip"
-                          title="Últimas entregas registradas en el mes, indicando cliente y si quedó conforme.">
-                        <i class="fas fa-question-circle text-muted"></i>
-                    </span>
-                </div>
-                <div class="card-body p-0">
-                    <table class="table table-sm mb-0">
-                        <thead>
-                            <tr class="text-muted">
-                                <th>Fecha</th>
-                                <th>Cliente</th>
-                                <th class="text-right">Conforme</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($recentEntregas as $ent)
-                                <tr>
-                                    <td>{{ optional($ent->created_at)->format('d-m H:i') }}</td>
-                                    <td>
-                                        {{ $ent->cliente
-                                            ?? optional(optional(optional($ent->ot)->cotizacion)->solicitud)->cliente->razon_social
-                                            ?? '-' }}
-                                    </td>
-                                    <td class="text-right">
-                                        @if($ent->conforme)
-                                            <span class="badge badge-success">Sí</span>
-                                        @else
-                                            <span class="badge badge-danger">No</span>
-                                        @endif
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="3" class="text-muted text-center py-3">
-                                        No hay entregas registradas este mes.
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+        <div class="card-footer d-flex flex-wrap justify-content-between align-items-center">
+            <small class="text-muted">Mostrando {{ $ots->count() }} de {{ $ots->total() }} OT.</small>
+            <div>{{ $ots->links() }}</div>
         </div>
     </div>
 </div>
 @endsection
 
-@section('scripts')
-    {{-- Chart.js --}}
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+@push('scripts')
+<script>
+$(function () {
+    $('[data-toggle="tooltip"]').tooltip();
 
-    <script>
-        // Tooltips Bootstrap
-        $(function () {
-            $('[data-toggle="tooltip"]').tooltip();
-        });
+    function pintarTraslado($el) {
+        $el.removeClass('traslado-int traslado-ext traslado-mix traslado-empty');
 
-        // Gráfico de cotizaciones del mes
-        @if(!empty($chartCotizaciones['labels']))
-        const ctx = document.getElementById('cotizacionesChart').getContext('2d');
-        const dataCotizaciones = @json($chartCotizaciones);
+        if ($el.val() === 'interno') {
+            $el.addClass('traslado-int');
+        } else if ($el.val() === 'externo') {
+            $el.addClass('traslado-ext');
+        } else if ($el.val() === 'interno_externo') {
+            $el.addClass('traslado-mix');
+        } else {
+            $el.addClass('traslado-empty');
+        }
+    }
 
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: dataCotizaciones.labels,
-                datasets: [
-                    {
-                        label: 'Cantidad',
-                        data: dataCotizaciones.totales,
-                        borderWidth: 2,
-                        fill: false,
-                        tension: 0.2
-                    },
-                    {
-                        label: 'Monto',
-                        data: dataCotizaciones.montos,
-                        borderWidth: 2,
-                        borderDash: [5, 5],
-                        fill: false,
-                        tension: 0.2,
-                        yAxisID: 'y1'
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        labels: {
-                            color: '#e6e7ea'
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        ticks: { color: '#a7adb7' },
-                        grid: { display: false }
-                    },
-                    y: {
-                        position: 'left',
-                        ticks: { color: '#a7adb7' },
-                        grid: { color: '#2c3139' }
-                    },
-                    y1: {
-                        position: 'right',
-                        ticks: { color: '#a7adb7' },
-                        grid: { drawOnChartArea: false }
-                    }
-                }
-            }
-        });
-        @endif
-    </script>
-@endsection
+    $('.traslado-select').each(function () {
+        pintarTraslado($(this));
+    });
+
+    $(document).on('change', '.traslado-select', function () {
+        pintarTraslado($(this));
+    });
+});
+</script>
+@endpush
