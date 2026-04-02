@@ -6,23 +6,22 @@
 
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
-            <h1 class="mb-0">Editar usuario</h1>
-            <small class="text-muted">Actualización de datos y rol.</small>
+            <h1 class="mb-0">Nuevo usuario</h1>
+            <small class="text-muted">Creación de usuarios y asignación de rol.</small>
         </div>
         <a href="{{ route('users.index') }}" class="btn btn-default">Volver</a>
     </div>
 
     <div class="card card-outline card-primary shadow-sm">
-        <form action="{{ route('users.update', $user->id) }}" method="POST">
+        <form action="{{ route('users.store') }}" method="POST">
             @csrf
-            @method('PUT')
 
             <div class="card-body">
                 @include('users.fields')
             </div>
 
             <div class="card-footer text-right">
-                <button class="btn btn-primary">Actualizar</button>
+                <button class="btn btn-primary">Guardar</button>
             </div>
         </form>
     </div>

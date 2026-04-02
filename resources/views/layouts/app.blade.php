@@ -55,7 +55,7 @@
             </li>
 
             <li class="text-center pb-2">
-                <a href="{{ route('users.edit') }}" class="btn btn-sm btn-secondary">
+                <a href="{{ route('profile.edit') }}" class="btn btn-sm btn-secondary">
                     <i class="fas fa-user-cog mr-1"></i> Editar perfil
                 </a>
             </li>

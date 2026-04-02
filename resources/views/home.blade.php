@@ -47,10 +47,6 @@
         --ot-traslado-empty-text: #5f6b76;
     }
 
-    /* ===== DARK MODE =====
-       Ajusta estos selectores según tu layout si usa otra clase.
-       AdminLTE normalmente usa .dark-mode en body.
-    */
     body.dark-mode .ot-page .ot-scope,
     .dark-mode .ot-page .ot-scope,
     body[class*="dark"] .ot-page .ot-scope{
@@ -444,20 +440,124 @@
         border-color: #414b55;
         color: #7f8b97;
     }
+
+    .ot-page .quick-actions .btn{
+        min-width: 180px;
+        font-weight: 700;
+        border-radius: 10px;
+        padding: 10px 14px;
+    }
+
+    .ot-page .home-topbar{
+        gap: 1rem;
+    }
+
+    .ot-page .home-topbar__title{
+        min-width: 0;
+    }
+
+    .ot-page .home-topbar__stats{
+        min-width: 260px;
+    }
+
+    .ot-page .quick-actions .quick-actions-grid{
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: .75rem;
+    }
+
+    .ot-page .quick-actions .quick-action-btn{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        min-height: 48px;
+        font-weight: 700;
+        border-radius: 10px;
+        white-space: normal;
+        line-height: 1.15;
+        padding: .75rem .9rem;
+    }
+
+    .ot-page .quick-actions .quick-action-btn i{
+        margin-right: .45rem;
+    }
+
+    @media (max-width: 991.98px){
+        .ot-page .home-topbar{
+            flex-direction: column;
+            align-items: stretch !important;
+        }
+
+        .ot-page .home-topbar__stats{
+            min-width: 0;
+            width: 100%;
+            text-align: left !important;
+        }
+
+        .ot-page .home-topbar__stats .d-flex{
+            justify-content: flex-start !important;
+        }
+
+        .ot-page .quick-actions .quick-actions-grid{
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 575.98px){
+        .ot-page .home-topbar{
+            margin-bottom: 1rem !important;
+        }
+
+        .ot-page .home-topbar h3{
+            font-size: 1.35rem;
+        }
+
+        .ot-page .home-topbar small{
+            display: block;
+            line-height: 1.35;
+        }
+
+        .ot-page .quick-actions .quick-actions-grid{
+            grid-template-columns: 1fr;
+        }
+
+        .ot-page .quick-actions .quick-action-btn{
+            width: 100%;
+            justify-content: flex-start;
+        }
+    }
 </style>
 @endpush
 
 @section('content')
+@php
+    $esChofer = auth()->user()->hasRole('chofer');
+    $colspanTabla = $esChofer ? 11 : 20;
+@endphp
+
 <div class="container-fluid mt-4 ot-page">
 
     {{-- Header --}}
-    <div class="d-flex justify-content-between align-items-end mb-3">
-        <div>
-            <h3 class="mb-0">Dashboard OT</h3>
-            <small class="text-muted">Listado operativo de Órdenes de Trabajo.</small>
+    <div class="d-flex justify-content-between align-items-end mb-3 home-topbar">
+        <div class="home-topbar__title">
+            <h3 class="mb-0">
+                @role('chofer')
+                    Panel del conductor
+                @else
+                    Dashboard OT
+                @endrole
+            </h3>
+            <small class="text-muted">
+                @role('chofer')
+                    Accesos rápidos y listado de tus órdenes de trabajo.
+                @else
+                    Listado operativo de Órdenes de Trabajo.
+                @endrole
+            </small>
         </div>
 
-        <div class="text-right">
+        <div class="text-right home-topbar__stats">
             <small class="text-muted d-block">Totales por estado (según filtros)</small>
             <div class="d-flex flex-wrap justify-content-end" style="gap:.35rem;">
                 @foreach(($stats ?? []) as $k => $v)
@@ -478,6 +578,39 @@
         </div>
     </div>
 
+    @role('chofer')
+    <div class="card shadow-sm mb-3 ot-card quick-actions">
+        <div class="card-body">
+            <div class="mb-3">
+                <h5 class="mb-0">Acciones rápidas</h5>
+                <small class="text-muted">Accesos directos para registrar operaciones del conductor.</small>
+            </div>
+
+            <div class="quick-actions-grid">
+                <a href="{{ route('inicio-cargas.create') }}" class="btn btn-primary quick-action-btn">
+                    <i class="fas fa-dolly-flatbed"></i>
+                    <span>Inicio de carga</span>
+                </a>
+
+                <a href="{{ route('entregas.create') }}" class="btn btn-success quick-action-btn">
+                    <i class="fas fa-box-open"></i>
+                    <span>Entrega</span>
+                </a>
+
+                <a href="{{ route('checklist-camions.create') }}" class="btn btn-warning quick-action-btn">
+                    <i class="fas fa-clipboard-check"></i>
+                    <span>Checklist camión</span>
+                </a>
+
+                <a href="{{ route('puentes.create') }}" class="btn btn-danger quick-action-btn">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Incidencia</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    @endrole
+
     {{-- Filtros --}}
     <div class="card shadow-sm mb-3 ot-card">
         <div class="card-body">
@@ -494,11 +627,12 @@
                     </div>
 
                     <div class="col-lg-2 col-md-6 mb-2">
-                        <label class="small text-muted mb-1">Estado Traslado</label>
-                        <select name="estado" class="form-control form-control-sm">
-                            @foreach($estadoOptions as $val => $label)
-                                <option value="{{ $val }}" @selected(request('estado','all')==$val)>{{ $label }}</option>
-                            @endforeach
+                        <label class="small text-muted mb-1">Traslado</label>
+                        <select name="traslado" class="form-control form-control-sm">
+                            <option value="all" @selected(request('traslado', 'all') == 'all')>Todos</option>
+                            <option value="interno" @selected(request('traslado') == 'interno')>Interno</option>
+                            <option value="externo" @selected(request('traslado') == 'externo')>Externo</option>
+                            <option value="interno_externo" @selected(request('traslado') == 'interno_externo')>Interno / Externo</option>
                         </select>
                     </div>
 
@@ -506,7 +640,7 @@
                         <label class="small text-muted mb-1">Estado OC</label>
                         <select name="status" class="form-control form-control-sm">
                             @foreach($statusOptions as $val => $label)
-                                <option value="{{ $val }}" @selected(request('status','all')==$val)>{{ $label }}</option>
+                                <option value="{{ $val }}" @selected(request('status','all') == $val)>{{ $label }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -524,8 +658,15 @@
                     </div>
                 </div>
 
-                <div class="d-flex justify-content-end align-items-center" style="gap:.5rem;">
+                <div class="d-flex justify-content-end align-items-center flex-wrap" style="gap:.5rem;">
                     <a href="{{ route('home') }}" class="btn btn-outline-secondary btn-sm">Limpiar</a>
+
+                    @unless($esChofer)
+                        <a href="{{ route('home.export.excel', request()->query()) }}" class="btn btn-success btn-sm">
+                            <i class="fas fa-file-excel mr-1"></i> Exportar Excel
+                        </a>
+                    @endunless
+
                     <button class="btn btn-primary btn-sm">
                         <i class="fas fa-filter mr-1"></i> Filtrar
                     </button>
@@ -562,19 +703,26 @@
                             <th class="col-ubicacion">Desde</th>
                             <th class="col-ubicacion">Hasta</th>
                             <th class="col-cliente">Cliente</th>
-                            <th class="col-money text-right">Valor</th>
-                            <th class="col-money text-right">Costo EXT</th>
+
+                            @unless($esChofer)
+                                <th class="col-money text-right">Valor</th>
+                                <th class="col-money text-right">Costo EXT</th>
+                            @endunless
+
                             <th class="col-id text-right">Cotiz.</th>
                             <th class="col-date">Fecha inicio carga</th>
                             <th class="col-solicitante">Solicitante</th>
                             <th class="col-conductor">Conductor</th>
-                            <th class="col-oc">OC</th>
-                            <th class="col-estado text-center">Estado OC</th>
-                            <th class="col-gdd">GDD</th>
-                            <th class="col-afid">AF/ID interno</th>
-                            <th class="col-fact">Factura EXT</th>
-                            <th class="col-fact">Factura</th>
-                            <th class="col-date">Fecha Fact.</th>
+
+                            @unless($esChofer)
+                                <th class="col-oc">OC</th>
+                                <th class="col-estado text-center">Estado OC</th>
+                                <th class="col-gdd">GDD</th>
+                                <th class="col-afid">AF/ID interno</th>
+                                <th class="col-fact">Factura EXT</th>
+                                <th class="col-fact">Factura</th>
+                                <th class="col-date">Fecha Fact.</th>
+                            @endunless
                         </tr>
                     </thead>
                     <tbody>
@@ -607,7 +755,6 @@
                                     default            => 'traslado-empty'
                                 };
 
-                                // DESDE y HASTA salen desde la cotización
                                 $desde         = optional($cotizacion)->origen ?? '-';
                                 $hasta         = optional($cotizacion)->destino ?? '-';
 
@@ -615,7 +762,6 @@
                                 $costoExt      = $ot->costo_ext ?? null;
                                 $cotizacionNro = optional($cotizacion)->id ?? null;
 
-                                // Fecha inicio carga
                                 $fechaInicioCarga = optional($ot->inicioCargas->sortBy('created_at')->first())->created_at
                                     ?? optional($ot->inicioCargas->sortBy('fecha')->first())->fecha
                                     ?? null;
@@ -655,8 +801,7 @@
                                 </td>
 
                                 <td class="col-traslado text-center nowrap">
-                                    <form method="POST" action="{{ url('/ots/' . $ot->id . '/traslado') }}" class="traslado-form">
-                                        @csrf
+                                    <form method="POST" action="{{ route('ots.updateTraslado', $ot->id) }}" class="traslado-form">                                        @csrf
                                         @method('PATCH')
                                         <select name="traslado"
                                                 class="form-control form-control-sm traslado-select {{ $trasladoClass }}"
@@ -685,28 +830,30 @@
                                     <div class="truncate col-cliente-text" title="{{ $clienteNombre }}">{{ $clienteNombre }}</div>
                                 </td>
 
-                                <td class="col-money text-right text-nowrap">
-                                    {{ is_null($valor) ? '-' : '$'.number_format($valor,0,',','.') }}
-                                </td>
+                                @unless($esChofer)
+                                    <td class="col-money text-right text-nowrap">
+                                        {{ is_null($valor) ? '-' : '$'.number_format($valor,0,',','.') }}
+                                    </td>
 
-                                <td class="col-money text-right text-nowrap">
-                                    <form method="POST" action="{{ url('/ots/' . $ot->id . '/costo-ext') }}" class="costo-ext-form">
-                                        @csrf
-                                        @method('PATCH')
-                                        <div class="costo-ext-wrap">
-                                            <span class="costo-ext-prefix">$</span>
-                                            <input type="number"
-                                                   name="costo_ext"
-                                                   min="0"
-                                                   step="1"
-                                                   value="{{ $costoExtValue }}"
-                                                   class="form-control form-control-sm costo-ext-input {{ $costoExtReadonly ? 'is-disabled' : '' }}"
-                                                   {{ $costoExtReadonly ? 'readonly' : '' }}
-                                                   onblur="if(!this.readOnly){ this.form.submit(); }"
-                                                   onkeydown="if(event.key === 'Enter'){ event.preventDefault(); this.form.submit(); }">
-                                        </div>
-                                    </form>
-                                </td>
+                                    <td class="col-money text-right text-nowrap">
+                                        <form method="POST" action="{{ route('ots.updateCostoExt', $ot->id) }}" class="costo-ext-form">
+                                            @csrf
+                                            @method('PATCH')
+                                            <div class="costo-ext-wrap">
+                                                <span class="costo-ext-prefix">$</span>
+                                                <input type="number"
+                                                       name="costo_ext"
+                                                       min="0"
+                                                       step="1"
+                                                       value="{{ $costoExtValue }}"
+                                                       class="form-control form-control-sm costo-ext-input {{ $costoExtReadonly ? 'is-disabled' : '' }}"
+                                                       {{ $costoExtReadonly ? 'readonly' : '' }}
+                                                       onblur="if(!this.readOnly){ this.form.submit(); }"
+                                                       onkeydown="if(event.key === 'Enter'){ event.preventDefault(); this.form.submit(); }">
+                                            </div>
+                                        </form>
+                                    </td>
+                                @endunless
 
                                 <td class="col-id text-right text-nowrap">
                                     {{ is_null($cotizacionNro) ? '-' : number_format($cotizacionNro) }}
@@ -724,37 +871,41 @@
                                     <div class="truncate col-conductor-text" title="{{ $conductor }}">{{ $conductor }}</div>
                                 </td>
 
-                                <td class="col-oc nowrap">
-                                    <div class="truncate" title="{{ $oc }}">{{ $oc }}</div>
-                                </td>
+                                @unless($esChofer)
+                                    <td class="col-oc nowrap">
+                                        <div class="truncate" title="{{ $oc }}">{{ $oc }}</div>
+                                    </td>
 
-                                <td class="col-status text-center nowrap">
-                                    <span class="badge badge-ot {{ $statusBadge }}">{{ $statusValue }}</span>
-                                </td>
+                                    <td class="col-status text-center nowrap">
+                                        <span class="badge badge-ot {{ $statusBadge }}">{{ $statusValue }}</span>
+                                    </td>
 
-                                <td class="col-gdd">
-                                    <div class="truncate" title="{{ $gdd }}">{{ $gdd }}</div>
-                                </td>
+                                    <td class="col-gdd">
+                                        <div class="truncate" title="{{ $gdd }}">{{ $gdd }}</div>
+                                    </td>
 
-                                <td class="col-afid">
-                                    <div class="truncate" title="{{ $afidInterno }}">{{ $afidInterno }}</div>
-                                </td>
+                                    <td class="col-afid">
+                                        <div class="truncate" title="{{ $afidInterno }}">{{ $afidInterno }}</div>
+                                    </td>
 
-                                <td class="col-fact">
-                                    <div class="truncate" title="{{ $facturaExterno }}">{{ $facturaExterno }}</div>
-                                </td>
+                                    <td class="col-fact">
+                                        <div class="truncate" title="{{ $facturaExterno }}">{{ $facturaExterno }}</div>
+                                    </td>
 
-                                <td class="col-fact">
-                                    <div class="truncate" title="{{ $factura }}">{{ $factura }}</div>
-                                </td>
+                                    <td class="col-fact">
+                                        <div class="truncate" title="{{ $factura }}">{{ $factura }}</div>
+                                    </td>
 
-                                <td class="col-date text-nowrap">
-                                    {{ $fechaFactura ? \Carbon\Carbon::parse($fechaFactura)->format('d/m/y') : '-' }}
-                                </td>
+                                    <td class="col-date text-nowrap">
+                                        {{ $fechaFactura ? \Carbon\Carbon::parse($fechaFactura)->format('d/m/y') : '-' }}
+                                    </td>
+                                @endunless
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="20" class="text-muted text-center py-4">No hay OT con los filtros actuales.</td>
+                                <td colspan="{{ $colspanTabla }}" class="text-muted text-center py-4">
+                                    No hay OT con los filtros actuales.
+                                </td>
                             </tr>
                         @endforelse
                     </tbody>

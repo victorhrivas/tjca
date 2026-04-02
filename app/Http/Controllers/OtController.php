@@ -16,7 +16,7 @@ use Flash;
 
 class OtController extends AppBaseController
 {
-    /** @var OtRepository $otRepository*/
+    /** @var OtRepository $otRepository */
     private $otRepository;
 
     public function __construct(OtRepository $otRepo)
@@ -25,61 +25,147 @@ class OtController extends AppBaseController
     }
 
     /**
+     * Normaliza vehículos recibidos desde la vista.
+     *
+     * Espera por fila:
+     * - tipo_conductor: interno|externo
+     * - conductor: select interno
+     * - conductor_externo: texto libre externo
+     * - patente_camion
+     * - patente_remolque
+     */
+    private function normalizarVehiculos(array $vehiculosInput, ?string $trasladoOt = null)
+    {
+        $vehiculos = collect($vehiculosInput)
+            ->map(function ($v) use ($trasladoOt) {
+                $tipo = isset($v['tipo_conductor']) ? trim((string) $v['tipo_conductor']) : '';
+
+                if (!in_array($tipo, ['interno', 'externo'], true)) {
+                    if ($trasladoOt === 'externo') {
+                        $tipo = 'externo';
+                    } elseif ($trasladoOt === 'interno') {
+                        $tipo = 'interno';
+                    } else {
+                        $tipo = 'interno';
+                    }
+                }
+
+                $conductorInterno = isset($v['conductor']) ? trim((string) $v['conductor']) : '';
+                $conductorExterno = isset($v['conductor_externo']) ? trim((string) $v['conductor_externo']) : '';
+
+                $conductorFinal = $tipo === 'externo'
+                    ? $conductorExterno
+                    : $conductorInterno;
+
+                $patenteCamion = isset($v['patente_camion']) ? strtoupper(trim((string) $v['patente_camion'])) : '';
+                $patenteRemolque = isset($v['patente_remolque']) ? strtoupper(trim((string) $v['patente_remolque'])) : '';
+
+                return [
+                    'tipo_conductor'   => $tipo,
+                    'conductor'        => $conductorFinal !== '' ? $conductorFinal : null,
+                    'patente_camion'   => $patenteCamion !== '' ? $patenteCamion : null,
+                    'patente_remolque' => $patenteRemolque !== '' ? $patenteRemolque : null,
+                ];
+            })
+            ->filter(function ($v) {
+                return !empty($v['conductor'])
+                    || !empty($v['patente_camion'])
+                    || !empty($v['patente_remolque']);
+            })
+            ->values();
+
+        if ($vehiculos->isEmpty()) {
+            $vehiculos = collect([[
+                'tipo_conductor'   => $trasladoOt === 'externo' ? 'externo' : 'interno',
+                'conductor'        => null,
+                'patente_camion'   => null,
+                'patente_remolque' => null,
+            ]]);
+        }
+
+        return $vehiculos;
+    }
+
+    /**
+     * Sincroniza campos legacy de la tabla ots usando el vehículo principal.
+     */
+    private function sincronizarLegacyPrincipal(Ot $ot, $vehiculos): void
+    {
+        $principal = $vehiculos->first();
+
+        $ot->update([
+            'conductor'        => $principal['conductor'] ?? null,
+            'patente_camion'   => $principal['patente_camion'] ?? null,
+            'patente_remolque' => $principal['patente_remolque'] ?? null,
+        ]);
+    }
+
+    /**
      * Display a listing of the Ot.
      */
-
     public function index(Request $request)
     {
-        // Eager load para evitar N+1 en la tabla (vehículos + datos de cotización/solicitud/cliente si los usas)
         $query = Ot::with([
             'vehiculos',
             'cotizacion.solicitud.cliente',
+            'inicioCargas.otVehiculo',
+            'entregas.otVehiculo',
         ]);
+        $user = auth()->user();
 
-        // Texto libre: busca en varios campos (incluye tabla ot_vehiculos)
-        if ($request->filled('q')) {
-            $q = $request->get('q');
+        if ($user->hasRole('chofer')) {
+            $nombreUsuario = trim($user->name);
 
-            $query->where(function ($sub) use ($q) {
-                $sub->where('cliente', 'like', "%{$q}%")
-                    ->orWhere('origen', 'like', "%{$q}%")
-                    ->orWhere('destino', 'like', "%{$q}%")
-                    ->orWhere('equipo', 'like', "%{$q}%")
-
-                    // Legacy (por compatibilidad)
-                    ->orWhere('conductor', 'like', "%{$q}%")
-                    ->orWhere('patente_camion', 'like', "%{$q}%")
-
-                    // Nuevo: buscar también en vehículos asociados
-                    ->orWhereHas('vehiculos', function ($v) use ($q) {
-                        $v->where('conductor', 'like', "%{$q}%")
-                        ->orWhere('patente_camion', 'like', "%{$q}%")
-                        ->orWhere('patente_remolque', 'like', "%{$q}%");
+            $query->where(function ($sub) use ($nombreUsuario) {
+                $sub->where('conductor', $nombreUsuario)
+                    ->orWhereHas('vehiculos', function ($v) use ($nombreUsuario) {
+                        $v->where('conductor', $nombreUsuario)
+                          ->where(function ($q) {
+                              $q->whereNull('tipo_conductor')
+                                ->orWhere('tipo_conductor', 'interno');
+                          });
                     });
             });
         }
 
-        // Cliente (string)
+        if ($request->filled('q')) {
+            $q = trim($request->get('q'));
+
+            $query->where(function ($sub) use ($q) {
+                $sub->where('folio', $q)
+                    ->orWhere('folio', 'like', "%{$q}%")
+                    ->orWhere('id', 'like', "%{$q}%")
+                    ->orWhere('cliente', 'like', "%{$q}%")
+                    ->orWhere('origen', 'like', "%{$q}%")
+                    ->orWhere('destino', 'like', "%{$q}%")
+                    ->orWhere('equipo', 'like', "%{$q}%")
+                    ->orWhere('conductor', 'like', "%{$q}%")
+                    ->orWhere('patente_camion', 'like', "%{$q}%")
+                    ->orWhereHas('vehiculos', function ($v) use ($q) {
+                        $v->where('conductor', 'like', "%{$q}%")
+                          ->orWhere('patente_camion', 'like', "%{$q}%")
+                          ->orWhere('patente_remolque', 'like', "%{$q}%");
+                    });
+            });
+        }
+
         if ($request->filled('cliente')) {
             $query->where('cliente', 'like', '%' . $request->cliente . '%');
         }
 
-        // Estado
         if ($request->filled('estado')) {
             $query->where('estado', $request->estado);
         }
 
-        // Fecha servicio
         if ($request->filled('fecha')) {
             $query->whereDate('fecha', $request->fecha);
         }
 
-        // Filtros específicos (opcionales): conductor / patente ahora en tabla nueva también
         if ($request->filled('conductor')) {
             $c = $request->conductor;
 
             $query->where(function ($sub) use ($c) {
-                $sub->where('conductor', 'like', "%{$c}%") // legacy
+                $sub->where('conductor', 'like', "%{$c}%")
                     ->orWhereHas('vehiculos', function ($v) use ($c) {
                         $v->where('conductor', 'like', "%{$c}%");
                     });
@@ -90,10 +176,10 @@ class OtController extends AppBaseController
             $p = $request->patente;
 
             $query->where(function ($sub) use ($p) {
-                $sub->where('patente_camion', 'like', "%{$p}%") // legacy
+                $sub->where('patente_camion', 'like', "%{$p}%")
                     ->orWhereHas('vehiculos', function ($v) use ($p) {
                         $v->where('patente_camion', 'like', "%{$p}%")
-                        ->orWhere('patente_remolque', 'like', "%{$p}%");
+                          ->orWhere('patente_remolque', 'like', "%{$p}%");
                     });
             });
         }
@@ -101,44 +187,68 @@ class OtController extends AppBaseController
         $ots = $query
             ->orderByDesc('id')
             ->paginate(15)
-            ->appends($request->all()); // mantiene filtros en la paginación
+            ->appends($request->all());
 
         return view('ots.index', compact('ots'));
     }
 
+    public function updateTraslado(Request $request, Ot $ot)
+    {
+        $request->validate([
+            'traslado' => 'nullable|in:interno,externo,interno_externo',
+        ]);
+
+        $ot->traslado = $request->filled('traslado') ? $request->traslado : null;
+
+        if (!in_array($ot->traslado, ['externo', 'interno_externo'])) {
+            $ot->costo_ext = null;
+        }
+
+        $ot->save();
+
+        return redirect()->back()->with('success', 'Traslado actualizado correctamente.');
+    }
+
+    public function updateCostoExt(Request $request, Ot $ot)
+    {
+        $request->validate([
+            'costo_ext' => 'nullable|integer|min:0',
+        ]);
+
+        if (!in_array($ot->traslado, ['externo', 'interno_externo'])) {
+            return redirect()->back()->with('error', 'Solo puedes editar costo_ext cuando el traslado es externo o interno/externo.');
+        }
+
+        $ot->costo_ext = $request->filled('costo_ext') ? (int) $request->costo_ext : null;
+        $ot->save();
+
+        return redirect()->back()->with('success', 'Costo externo actualizado correctamente.');
+    }
 
     /**
      * Show the form for creating a new Ot.
      */
     public function create()
     {
-        // Trae solo los conductores activos, ordenados alfabéticamente
         $conductores = Conductor::where('activo', true)
             ->orderBy('nombre')
-            ->pluck('nombre', 'nombre'); 
-            // clave y valor = nombre, porque tu OT usa un string como conductor
+            ->pluck('nombre', 'nombre');
 
         return view('ots.create', compact('conductores'));
     }
 
     /**
      * Genera y asigna el folio a una OT recién creada.
-     * Formato: AAAAMM/NNN (ej: 202512/001).
      */
     private function asignarFolio(Ot $ot): void
     {
-        // Usamos la fecha de servicio si existe; si no, la fecha de creación
         $fechaBase = $ot->fecha ? Carbon::parse($ot->fecha) : $ot->created_at;
-
-        // Ejemplo: 202512
         $periodo = $fechaBase->format('Ym');
 
-        // Cantidad de OTs creadas en ese año/mes (incluida la actual)
         $cantidadMes = Ot::whereYear('created_at', $fechaBase->year)
             ->whereMonth('created_at', $fechaBase->month)
             ->count();
 
-        // Correlativo con 3 dígitos: 001, 002, 003...
         $correlativo = str_pad($cantidadMes, 3, '0', STR_PAD_LEFT);
 
         $ot->folio = "{$periodo}/{$correlativo}";
@@ -153,7 +263,6 @@ class OtController extends AppBaseController
 
         $folio = trim($request->numero_ot);
 
-        // Cargar OT + relaciones reales
         $ot = Ot::with([
                 'cotizacion.solicitud.cliente',
                 'inicioCargas',
@@ -162,45 +271,30 @@ class OtController extends AppBaseController
             ->where('folio', $folio)
             ->first();
 
-        if (! $ot) {
+        if (!$ot) {
             return response()->json([
                 'found'   => false,
                 'message' => 'No se encontró una OT con ese folio.',
             ]);
         }
 
-        // Cliente asociado
         $clienteNombre = optional(optional(optional($ot->cotizacion)->solicitud)->cliente)->razon_social
             ?? $ot->cliente
             ?? '-';
 
-        // ==========================
-        // FOTOS DE INICIO DE CARGA
-        // ==========================
         $inicioCargaFotos = [];
-
-        // Si quieres tomar SOLO el último inicio de carga:
         $inicio = $ot->inicioCargas->sortByDesc('id')->first();
 
         if ($inicio) {
             foreach (['foto_1', 'foto_2', 'foto_3'] as $campo) {
                 $ruta = $inicio->{$campo} ?? null;
                 if ($ruta) {
-                    // Si guardas rutas en disco 'public' tipo "inicio_cargas/xxx.jpg"
                     $inicioCargaFotos[] = Storage::url($ruta);
-
-                    // Si ya son URLs completas, usa en cambio:
-                    // $inicioCargaFotos[] = $ruta;
                 }
             }
         }
 
-        // ==========================
-        // FOTOS DE ENTREGA
-        // ==========================
         $entregaFotos = [];
-
-        // Igual: tomamos la última entrega asociada
         $entrega = $ot->entregas->sortByDesc('id')->first();
 
         if ($entrega) {
@@ -213,22 +307,18 @@ class OtController extends AppBaseController
         }
 
         return response()->json([
-            'found'       => true,
-            'folio'       => $ot->folio,
-            'estado'      => $ot->estado_label,
-            'estado_raw'  => $ot->estado,
-            'badge_class' => $ot->estado_badge_class,
-            'cliente'     => $clienteNombre,
-            'origen'      => $ot->origen,
-            'destino'     => $ot->destino,
-            'conductor'   => $ot->conductor,
-            'fecha'       => $ot->fecha
-                                ? \Carbon\Carbon::parse($ot->fecha)->format('d-m-Y')
-                                : null,
-
-            // Lo que consume el JS del modal
-            'inicio_carga_fotos' => $inicioCargaFotos,
-            'entrega_fotos'      => $entregaFotos,
+            'found'             => true,
+            'folio'             => $ot->folio,
+            'estado'            => $ot->estado_label,
+            'estado_raw'        => $ot->estado,
+            'badge_class'       => $ot->estado_badge_class,
+            'cliente'           => $clienteNombre,
+            'origen'            => $ot->origen,
+            'destino'           => $ot->destino,
+            'conductor'         => $ot->conductor,
+            'fecha'             => $ot->fecha ? \Carbon\Carbon::parse($ot->fecha)->format('d-m-Y') : null,
+            'inicio_carga_fotos'=> $inicioCargaFotos,
+            'entrega_fotos'     => $entregaFotos,
         ]);
     }
 
@@ -237,62 +327,36 @@ class OtController extends AppBaseController
      */
     public function store(CreateOtRequest $request)
     {
-        // 1) Separar vehiculos (NO va a tabla ots)
         $vehiculosInput = $request->input('vehiculos', []);
-
-        // 2) Input limpio para OT (sin vehiculos)
         $input = $request->except('vehiculos');
 
-        // Estado por defecto si no viene
         $input['estado'] = $input['estado'] ?? 'pendiente';
 
-        // Fecha base: la que venga en el formulario o hoy
         $fechaBase = $request->filled('fecha')
-            ? Carbon::parse($request->fecha)
-            : Carbon::now();
+            ? Carbon::parse($request->fecha, config('app.timezone'))
+            : now(config('app.timezone'));
 
         $input['folio'] = Ot::generarFolioParaFecha($fechaBase);
 
-        // 3) Crear OT
         $ot = $this->otRepository->create($input);
 
-        // 4) Normalizar vehículos (filtrar vacíos)
-        $vehiculos = collect($vehiculosInput)
-            ->filter(function ($v) {
-                return !empty($v['conductor'])
-                    || !empty($v['patente_camion'])
-                    || !empty($v['patente_remolque']);
-            })
-            ->values();
+        $vehiculos = $this->normalizarVehiculos(
+            $vehiculosInput,
+            $input['traslado'] ?? null
+        );
 
-        // Si no mandaron ninguno, crea 1 (principal) vacío para consistencia
-        if ($vehiculos->isEmpty()) {
-            $vehiculos = collect([[
-                'conductor' => null,
-                'patente_camion' => null,
-                'patente_remolque' => null,
-            ]]);
-        }
-
-        // 5) Guardar vehículos (orden 1..N)
         foreach ($vehiculos as $idx => $v) {
             $ot->vehiculos()->create([
-                'conductor'        => $v['conductor'] ?? null,
-                'patente_camion'   => $v['patente_camion'] ?? null,
-                'patente_remolque' => $v['patente_remolque'] ?? null,
+                'tipo_conductor'   => $v['tipo_conductor'],
+                'conductor'        => $v['conductor'],
+                'patente_camion'   => $v['patente_camion'],
+                'patente_remolque' => $v['patente_remolque'],
                 'orden'            => $idx + 1,
                 'rol'              => $idx === 0 ? 'principal' : null,
             ]);
         }
 
-        // 6) (Opcional recomendado) mantener legacy en ots como “cache” del principal
-        // Esto ayuda a que reportes/vistas antiguas sigan OK mientras migras.
-        $principal = $vehiculos->first();
-        $ot->update([
-            'conductor' => $principal['conductor'] ?? null,
-            'patente_camion' => $principal['patente_camion'] ?? null,
-            'patente_remolque' => $principal['patente_remolque'] ?? null,
-        ]);
+        $this->sincronizarLegacyPrincipal($ot, $vehiculos);
 
         Flash::success('OT se guardó correctamente.');
         return redirect(route('ots.index'));
@@ -308,7 +372,7 @@ class OtController extends AppBaseController
             'traslado' => $request->traslado,
         ];
 
-        if ($request->traslado !== 'externo') {
+        if (!in_array($request->traslado, ['externo', 'interno_externo'], true)) {
             $data['costo_ext'] = null;
         }
 
@@ -323,8 +387,8 @@ class OtController extends AppBaseController
             'costo_ext' => 'nullable|integer|min:0',
         ]);
 
-        if ($ot->traslado !== 'externo') {
-            return back()->with('error', 'Solo puedes ingresar costo externo cuando el traslado es EXT.');
+        if (!in_array($ot->traslado, ['externo', 'interno_externo'], true)) {
+            return back()->with('error', 'Solo puedes ingresar costo externo cuando el traslado es EXT o INT/EXT.');
         }
 
         $ot->update([
@@ -349,11 +413,7 @@ class OtController extends AppBaseController
         $ot->load([
             'cotizacion',
             'vehiculos',
-
-            // nested eager load
             'inicioCargas.otVehiculo',
-
-            // entregas + vehículo + guías (N fotos)
             'entregas.otVehiculo',
             'entregas.guias',
         ]);
@@ -361,12 +421,11 @@ class OtController extends AppBaseController
         return view('ots.show')->with('ot', $ot);
     }
 
-
     public function pdf($id)
     {
         $ot = Ot::with([
             'cotizacion.cargas',
-            'vehiculos',        // <-- nuevo
+            'vehiculos',
         ])->findOrFail($id);
 
         $pdf = Pdf::loadView('ots.pdf', [
@@ -376,7 +435,6 @@ class OtController extends AppBaseController
         $fileName = 'ot_' . $ot->id . '.pdf';
 
         return $pdf->stream($fileName);
-        // o ->download($fileName)
     }
 
     /**
@@ -391,13 +449,11 @@ class OtController extends AppBaseController
             return redirect(route('ots.index'));
         }
 
-        // Cargar vehículos asociados (para que el fields.blade.php pinte N vehículos)
         $ot->load('vehiculos');
 
-        // Conductores activos para el select
         $conductores = Conductor::where('activo', true)
             ->orderBy('nombre')
-            ->pluck('nombre', 'nombre'); // clave y valor = nombre
+            ->pluck('nombre', 'nombre');
 
         return view('ots.edit', compact('ot', 'conductores'));
     }
@@ -414,50 +470,30 @@ class OtController extends AppBaseController
             return redirect(route('ots.index'));
         }
 
-        // 1) Separar vehiculos
         $vehiculosInput = $request->input('vehiculos', []);
-
-        // 2) Actualizar OT sin vehiculos
         $input = $request->except('vehiculos');
+
         $ot = $this->otRepository->update($input, $id);
 
-        // 3) Normalizar vehículos (filtrar vacíos)
-        $vehiculos = collect($vehiculosInput)
-            ->filter(function ($v) {
-                return !empty($v['conductor'])
-                    || !empty($v['patente_camion'])
-                    || !empty($v['patente_remolque']);
-            })
-            ->values();
+        $vehiculos = $this->normalizarVehiculos(
+            $vehiculosInput,
+            $input['traslado'] ?? $ot->traslado ?? null
+        );
 
-        if ($vehiculos->isEmpty()) {
-            $vehiculos = collect([[
-                'conductor' => null,
-                'patente_camion' => null,
-                'patente_remolque' => null,
-            ]]);
-        }
-
-        // 4) Estrategia simple: borrar y recrear (consistente y rápido)
         $ot->vehiculos()->delete();
 
         foreach ($vehiculos as $idx => $v) {
             $ot->vehiculos()->create([
-                'conductor'        => $v['conductor'] ?? null,
-                'patente_camion'   => $v['patente_camion'] ?? null,
-                'patente_remolque' => $v['patente_remolque'] ?? null,
+                'tipo_conductor'   => $v['tipo_conductor'],
+                'conductor'        => $v['conductor'],
+                'patente_camion'   => $v['patente_camion'],
+                'patente_remolque' => $v['patente_remolque'],
                 'orden'            => $idx + 1,
                 'rol'              => $idx === 0 ? 'principal' : null,
             ]);
         }
 
-        // 5) Mantener legacy (principal) sincronizado
-        $principal = $vehiculos->first();
-        $ot->update([
-            'conductor' => $principal['conductor'] ?? null,
-            'patente_camion' => $principal['patente_camion'] ?? null,
-            'patente_remolque' => $principal['patente_remolque'] ?? null,
-        ]);
+        $this->sincronizarLegacyPrincipal($ot, $vehiculos);
 
         Flash::success('Ot Actualizada Correctamente.');
         return redirect(route('ots.index'));
@@ -477,7 +513,6 @@ class OtController extends AppBaseController
             ->with('success', "Estado de la OT #{$ot->id} actualizado a {$ot->estado_label}.");
     }
 
-
     /**
      * Remove the specified Ot from storage.
      *
@@ -489,7 +524,6 @@ class OtController extends AppBaseController
 
         if (empty($ot)) {
             Flash::error('Ot not found');
-
             return redirect(route('ots.index'));
         }
 

@@ -246,10 +246,10 @@
                         <div class="col-lg-3 col-md-6 mb-3">
                             <label class="otx-label">Texto libre</label>
                             <input type="text"
-                                   name="q"
-                                   class="form-control"
-                                   placeholder="Cliente, origen, destino, conductor..."
-                                   value="{{ request('q') }}">
+                                name="q"
+                                class="form-control"
+                                placeholder="Folio, cliente, origen, destino, conductor..."
+                                value="{{ request('q') }}">
                         </div>
 
                         <div class="col-lg-3 col-md-6 mb-3">

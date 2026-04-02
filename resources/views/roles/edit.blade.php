@@ -2,23 +2,27 @@
 
 @section('content')
 <div class="container-fluid mt-4">
-    @include('adminlte-templates::common.errors')
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            <strong>Ups.</strong> Revisa los campos del formulario.
+        </div>
+    @endif
 
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
-            <h1 class="mb-0">Editar usuario</h1>
-            <small class="text-muted">Actualización de datos y rol.</small>
+            <h1 class="mb-0">Editar rol</h1>
+            <small class="text-muted">Actualización de nombre y permisos.</small>
         </div>
-        <a href="{{ route('users.index') }}" class="btn btn-default">Volver</a>
+        <a href="{{ route('roles.index') }}" class="btn btn-default">Volver</a>
     </div>
 
     <div class="card card-outline card-primary shadow-sm">
-        <form action="{{ route('users.update', $user->id) }}" method="POST">
+        <form action="{{ route('roles.update', $role->id) }}" method="POST">
             @csrf
             @method('PUT')
 
             <div class="card-body">
-                @include('users.fields')
+                @include('roles.fields')
             </div>
 
             <div class="card-footer text-right">

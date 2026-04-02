@@ -32,5 +32,14 @@ class Puente extends Model
         'motivo' => 'required'
     ];
 
-    
+    public function ot()
+    {
+        return $this->belongsTo(\App\Models\Ot::class);
+    }
+
+    public function otVehiculo()
+    {
+        return $this->belongsTo(\App\Models\OtVehiculo::class, 'ot_vehiculo_id');
+    }
+        
 }

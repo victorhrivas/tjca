@@ -39,14 +39,30 @@ class InicioCargaController extends AppBaseController
 
     public function create(Request $request)
     {
-        $ots = Ot::with([
+        $user = auth()->user();
+
+        $otsQuery = Ot::with([
                 'cotizacion.solicitud.cliente',
                 'vehiculos' => fn ($q) => $q->orderBy('orden')->with('inicioCargas'),
             ])
             ->whereIn('estado', ['pendiente', 'en_transito'])
             ->whereHas('vehiculos', function ($q) {
                 $q->whereDoesntHave('inicioCargas');
-            })
+            });
+
+        // Si es chofer, solo ve OTs asignadas a él, excepto si el usuario se llama Externo
+        if ($user->hasRole('chofer') && trim($user->name) !== 'Externo') {
+            $nombreUsuario = trim($user->name);
+
+            $otsQuery->where(function ($q) use ($nombreUsuario) {
+                $q->where('conductor', $nombreUsuario)
+                ->orWhereHas('vehiculos', function ($vehiculoQuery) use ($nombreUsuario) {
+                    $vehiculoQuery->where('conductor', $nombreUsuario);
+                });
+            });
+        }
+
+        $ots = $otsQuery
             ->orderBy('id', 'desc')
             ->get()
             ->map(function ($ot) {
@@ -68,45 +84,51 @@ class InicioCargaController extends AppBaseController
                     $ot->conductor = optional($ot->cotizacion)->conductor;
                 }
 
-                // ✅ Estos son los que usas en la vista (data-telefono / data-correo)
                 $ot->contacto          = $cliente?->razon_social;
                 $ot->telefono_contacto = $cliente?->telefono ?? '';
-                $ot->correo_contacto   = $cliente?->correo   ?? '';
+                $ot->correo_contacto   = $cliente?->correo ?? '';
 
                 return $ot;
             });
 
         $ot = null;
 
-        // ✅ Si viene ot_id, carga TAMBIÉN las relaciones para obtener correo desde cliente
         if ($request->filled('ot_id')) {
-            $ot = Ot::with([
-                    'cotizacion.solicitud.cliente', // ✅ necesario para $ot->cotizacion->solicitud->cliente->correo
+            $otQuery = Ot::with([
+                    'cotizacion.solicitud.cliente',
                     'vehiculos' => fn($q) => $q->orderBy('orden')->with('inicioCargas'),
-                ])
-                ->find($request->get('ot_id'));
+                ]);
 
-            // ✅ Opcional: setear los campos derivados igual que arriba,
-            // para que el $ot preseleccionado tenga correo_contacto, etc.
+            // Si es chofer, tampoco puede precargar una OT de otro conductor por URL
+            if ($user->hasRole('chofer')) {
+                $nombreUsuario = trim($user->name);
+                $otQuery->where('conductor', $nombreUsuario);
+            }
+
+            $ot = $otQuery->find($request->get('ot_id'));
+
             if ($ot) {
                 $cliente = optional(optional(optional($ot->cotizacion)->solicitud)->cliente);
 
                 if (is_null($ot->cliente)) {
                     $ot->cliente = $cliente?->razon_social;
                 }
+
                 if (is_null($ot->origen)) {
                     $ot->origen = optional($ot->cotizacion)->origen;
                 }
+
                 if (is_null($ot->destino)) {
                     $ot->destino = optional($ot->cotizacion)->destino;
                 }
+
                 if (is_null($ot->conductor)) {
                     $ot->conductor = optional($ot->cotizacion)->conductor;
                 }
 
                 $ot->contacto          = $cliente?->razon_social;
                 $ot->telefono_contacto = $cliente?->telefono ?? '';
-                $ot->correo_contacto   = $cliente?->correo   ?? '';
+                $ot->correo_contacto   = $cliente?->correo ?? '';
             }
         }
 

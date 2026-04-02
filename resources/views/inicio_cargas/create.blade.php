@@ -1,9 +1,7 @@
 {{-- resources/views/inicio_cargas/create.blade.php --}}
-<x-laravel-ui-adminlte::adminlte-layout>
+@extends('layouts.app')
 
-    <link rel="shortcut icon" href="{{ asset('images/logo.png') }}" type="image/png">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
+@push('styles')
     {{-- Select2 para búsqueda de OT --}}
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@1.5.2/dist/select2-bootstrap4.min.css" rel="stylesheet" />
@@ -15,12 +13,12 @@
             --accent:#d4ad18;--accent-hover:#e1ba1f;--accent-ink:#0b0c0e;
             --shadow:0 14px 40px rgba(0,0,0,.45);
         }
-        body{
-            background: var(--bg-0);
+
+        .inicio-carga-page{
             color: var(--ink);
-            font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif;
         }
-        .form-wrap{
+
+        .inicio-carga-page .form-wrap{
             max-width: 900px;
             margin: 40px auto;
             padding: 24px;
@@ -29,7 +27,8 @@
             border-radius: 18px;
             box-shadow: var(--shadow);
         }
-        .form-head{
+
+        .inicio-carga-page .form-head{
             display:flex;
             align-items:center;
             gap:16px;
@@ -39,49 +38,100 @@
             padding:10px 14px;
             margin-bottom:18px;
         }
-        .form-head img{height:70px;}
-        .form-head .title{font-weight:800;letter-spacing:.4px;text-transform:uppercase;font-size:0.95rem;}
-        .form-head .subtitle{font-size:0.85rem;}
+
+        .inicio-carga-page .form-head img{
+            height:70px;
+            width:auto;
+            object-fit:contain;
+        }
+
+        .inicio-carga-page .form-head .title{
+            font-weight:800;
+            letter-spacing:.4px;
+            text-transform:uppercase;
+            font-size:0.95rem;
+        }
+
+        .inicio-carga-page .form-head .subtitle{
+            font-size:0.85rem;
+        }
 
         /* Campos que vienen desde la OT */
-        .auto-from-ot { display: none; }
+        .inicio-carga-page .auto-from-ot {
+            display: none;
+        }
 
-        .card-section{background:var(--bg-2);border-radius:14px;padding:20px;border:1px solid var(--line);}
+        .inicio-carga-page .card-section{
+            background:var(--bg-2);
+            border-radius:14px;
+            padding:20px;
+            border:1px solid var(--line);
+        }
 
         /* Base inputs dark */
-        .form-control{
+        .inicio-carga-page .form-control{
             background:#2a2f38;
             border:1px solid var(--line);
             color:var(--ink);
             border-radius:10px;
         }
-        .form-control:focus{
+
+        .inicio-carga-page .form-control:focus{
             background:#2d333d;
             border-color:var(--accent);
             box-shadow:0 0 0 .15rem rgba(246,199,0,.2);
-            color:#fff
+            color:#fff;
         }
 
         /* OVERRIDE Bootstrap: readonly/disabled */
-        .form-control[readonly],
-        .form-control:disabled{
+        .inicio-carga-page .form-control[readonly],
+        .inicio-carga-page .form-control:disabled{
             background:#222834 !important;
             color:var(--ink) !important;
             opacity:1 !important;
             -webkit-text-fill-color: var(--ink) !important;
         }
-        .form-control::placeholder{ color: rgba(167,173,183,.75); }
 
-        label{font-size:0.85rem;color:var(--muted);}
-        .btn{border-radius:10px;font-weight:700;letter-spacing:.3px;}
-        .btn-accent{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);}
-        .btn-accent:hover{background:var(--accent-hover);border-color:var(--accent-hover);box-shadow:0 10px 24px rgba(246,199,0,.28);transform:translateY(-1px);}
+        .inicio-carga-page .form-control::placeholder{
+            color: rgba(167,173,183,.75);
+        }
 
-        .back-link{font-size:0.85rem;color:var(--muted);}
-        .back-link a{color:var(--accent);}
+        .inicio-carga-page label{
+            font-size:0.85rem;
+            color:var(--muted);
+        }
+
+        .inicio-carga-page .btn{
+            border-radius:10px;
+            font-weight:700;
+            letter-spacing:.3px;
+        }
+
+        .inicio-carga-page .btn-accent{
+            background:var(--accent);
+            border-color:var(--accent);
+            color:var(--accent-ink);
+        }
+
+        .inicio-carga-page .btn-accent:hover{
+            background:var(--accent-hover);
+            border-color:var(--accent-hover);
+            box-shadow:0 10px 24px rgba(246,199,0,.28);
+            transform:translateY(-1px);
+            color:var(--accent-ink);
+        }
+
+        .inicio-carga-page .back-link{
+            font-size:0.85rem;
+            color:var(--muted);
+        }
+
+        .inicio-carga-page .back-link a{
+            color:var(--accent);
+        }
 
         /* Select2 */
-        .select2-container--bootstrap4 .select2-selection--single {
+        .inicio-carga-page .select2-container--bootstrap4 .select2-selection--single {
             background: #2a2f38 !important;
             border-color: var(--line) !important;
             color: var(--ink) !important;
@@ -90,38 +140,73 @@
             display:flex;
             align-items:center;
         }
-        .select2-container--bootstrap4 .select2-selection__rendered { color: var(--ink) !important; }
-        .select2-container--bootstrap4 .select2-selection__placeholder { color: var(--muted) !important; }
-        .select2-container--bootstrap4 .select2-dropdown { background: #1c1f24 !important; border-color: var(--line) !important; }
-        .select2-container--bootstrap4 .select2-results > .select2-results__options { background: #1c1f24 !important; }
-        .select2-container--bootstrap4 .select2-results__option { color: var(--ink) !important; }
-        .select2-container--bootstrap4 .select2-results__option--highlighted[aria-selected] {
+
+        .inicio-carga-page .select2-container--bootstrap4 .select2-selection__rendered {
+            color: var(--ink) !important;
+        }
+
+        .inicio-carga-page .select2-container--bootstrap4 .select2-selection__placeholder {
+            color: var(--muted) !important;
+        }
+
+        .inicio-carga-page .select2-container--bootstrap4 .select2-dropdown {
+            background: #1c1f24 !important;
+            border-color: var(--line) !important;
+        }
+
+        .inicio-carga-page .select2-container--bootstrap4 .select2-results > .select2-results__options {
+            background: #1c1f24 !important;
+        }
+
+        .inicio-carga-page .select2-container--bootstrap4 .select2-results__option {
+            color: var(--ink) !important;
+        }
+
+        .inicio-carga-page .select2-container--bootstrap4 .select2-results__option--highlighted[aria-selected] {
             background: var(--accent) !important;
             color: var(--accent-ink) !important;
         }
-        .select2-container--bootstrap4 .select2-search__field {
+
+        .inicio-carga-page .select2-container--bootstrap4 .select2-search__field {
             background: #101114 !important;
             color: var(--ink) !important;
             border-color: var(--line) !important;
         }
 
         /* Modal oscuro */
-        .modal-content{
+        .inicio-carga-page .modal-content{
             background: var(--bg-2);
             border: 1px solid var(--line);
             border-radius: 14px;
             color: var(--ink);
         }
-        .modal-header, .modal-footer{ border-color: var(--line); }
-        .modal-title{ color: var(--ink); }
-        .modal .close{ color: var(--ink); text-shadow:none; opacity:.9; }
-        .modal .text-muted{ color: var(--muted) !important; }
+
+        .inicio-carga-page .modal-header,
+        .inicio-carga-page .modal-footer{
+            border-color: var(--line);
+        }
+
+        .inicio-carga-page .modal-title{
+            color: var(--ink);
+        }
+
+        .inicio-carga-page .modal .close{
+            color: var(--ink);
+            text-shadow:none;
+            opacity:.9;
+        }
+
+        .inicio-carga-page .modal .text-muted{
+            color: var(--muted) !important;
+        }
 
         /* Errores visibles */
-        .text-danger{ color:#ff6b6b !important; }
+        .inicio-carga-page .text-danger{
+            color:#ff6b6b !important;
+        }
 
         /* Alerta de errores */
-        .alert-danger{
+        .inicio-carga-page .alert-danger{
             background: rgba(255, 107, 107, .12);
             border: 1px solid rgba(255, 107, 107, .35);
             color: var(--ink);
@@ -129,8 +214,13 @@
         }
 
         /* Fotos */
-        .photo-grid{ display:flex; flex-wrap:wrap; gap:16px; }
-        .photo-card{
+        .inicio-carga-page .photo-grid{
+            display:flex;
+            flex-wrap:wrap;
+            gap:16px;
+        }
+
+        .inicio-carga-page .photo-card{
             flex:1 1 0;
             min-width:180px;
             max-width:260px;
@@ -143,13 +233,15 @@
             justify-content:space-between;
             transition:.15s all ease-out;
         }
-        .photo-card:hover{
+
+        .inicio-carga-page .photo-card:hover{
             border-style:solid;
             border-color:var(--accent);
             box-shadow:0 10px 24px rgba(0,0,0,.4);
             transform:translateY(-1px);
         }
-        .photo-upload-label{
+
+        .inicio-carga-page .photo-upload-label{
             cursor:pointer;
             display:flex;
             flex-direction:column;
@@ -160,10 +252,22 @@
             color:var(--muted);
             min-height:130px;
         }
-        .photo-upload-label i{ font-size:1.8rem; color:var(--accent); }
-        .photo-upload-label span{ font-size:.8rem; }
-        .photo-preview{ margin-top:8px; display:none; }
-        .photo-preview img{
+
+        .inicio-carga-page .photo-upload-label i{
+            font-size:1.8rem;
+            color:var(--accent);
+        }
+
+        .inicio-carga-page .photo-upload-label span{
+            font-size:.8rem;
+        }
+
+        .inicio-carga-page .photo-preview{
+            margin-top:8px;
+            display:none;
+        }
+
+        .inicio-carga-page .photo-preview img{
             max-width:100%;
             max-height:140px;
             border-radius:10px;
@@ -171,218 +275,222 @@
             border:1px solid var(--line);
         }
     </style>
+@endpush
 
-    <div class="form-wrap">
-        <div class="form-head">
-            <img src="{{ url('/') }}/images/logo.png" alt="TJCA">
-            <div>
-                <div class="title">Inicio de carga</div>
-                <div class="subtitle">Formulario público de registro de servicio</div>
-            </div>
-        </div>
-
-        <div class="card-section">
-            {{-- ✅ SIEMPRE mostrar errores del backend --}}
-            @if ($errors->any())
-                <div class="alert alert-danger mb-3">
-                    <strong>No se pudo enviar.</strong>
-                    <ul class="mb-0 mt-2">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
+@section('content')
+<div class="content-wrapper inicio-carga-page">
+    <section class="content pt-4">
+        <div class="container-fluid">
+            <div class="form-wrap">
+                <div class="form-head">
+                    <img src="{{ asset('images/logo.png') }}" alt="TJCA">
+                    <div>
+                        <div class="title">Inicio de carga</div>
+                        <div class="subtitle">Formulario de registro de servicio</div>
+                    </div>
                 </div>
-            @endif
 
-            <form id="inicio-carga-form" method="POST" action="{{ route('inicio-cargas.store') }}" enctype="multipart/form-data">
-                @csrf
+                <div class="card-section">
+                    @if ($errors->any())
+                        <div class="alert alert-danger mb-3">
+                            <strong>No se pudo enviar.</strong>
+                            <ul class="mb-0 mt-2">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
 
-                <div class="row">
-                    {{-- OT --}}
-                    <div class="col-md-12 mb-3">
-                        <label>OT</label>
-                        <select name="ot_id" id="ot_id" class="form-control" required>
-                            <option value="">Selecciona una OT...</option>
+                    <form id="inicio-carga-form" method="POST" action="{{ route('inicio-cargas.store') }}" enctype="multipart/form-data">
+                        @csrf
 
-                            @foreach($ots as $otItem)
-                                @php
-                                    $vehiculosPayload = $otItem->vehiculos
-                                        ->filter(fn($v) => $v->inicioCargas->isEmpty())
-                                        ->map(function($v){
-                                            return [
-                                                'id' => $v->id,
-                                                'orden' => $v->orden,
-                                                'rol' => $v->rol,
-                                                'conductor' => $v->conductor,
-                                                'patente_camion' => $v->patente_camion,
-                                                'patente_remolque' => $v->patente_remolque,
-                                            ];
-                                        })->values();
+                        <div class="row">
+                            {{-- OT --}}
+                            <div class="col-md-12 mb-3">
+                                <label>OT</label>
+                                <select name="ot_id" id="ot_id" class="form-control" required>
+                                    <option value="">Selecciona una OT...</option>
 
-                                    // correo real del cliente
-                                    $correoCliente = optional(optional(optional($otItem->cotizacion)->solicitud)->cliente)->correo;
-                                    $correoFinal = $correoCliente ?: ($otItem->correo_contacto ?? '');
-                                @endphp
+                                    @foreach($ots as $otItem)
+                                        @php
+                                            $vehiculosPayload = $otItem->vehiculos
+                                                ->filter(fn($v) => $v->inicioCargas->isEmpty())
+                                                ->map(function($v){
+                                                    return [
+                                                        'id' => $v->id,
+                                                        'orden' => $v->orden,
+                                                        'rol' => $v->rol,
+                                                        'conductor' => $v->conductor,
+                                                        'patente_camion' => $v->patente_camion,
+                                                        'patente_remolque' => $v->patente_remolque,
+                                                    ];
+                                                })->values();
 
-                                <option
-                                    value="{{ $otItem->id }}"
-                                    data-folio="{{ $otItem->folio }}"
-                                    data-equipo="{{ $otItem->equipo }}"
-                                    data-cliente="{{ $otItem->cliente }}"
-                                    data-contacto="{{ $otItem->solicitante }}"
-                                    data-telefono="{{ $otItem->telefono_contacto }}"
-                                    data-correo="{{ $correoFinal }}"
-                                    data-origen="{{ $otItem->origen }}"
-                                    data-destino="{{ $otItem->destino }}"
-                                    data-conductor="{{ $otItem->conductor }}"
-                                    @isset($ot)
-                                        {{ $ot->id === $otItem->id ? 'selected' : '' }}
-                                    @endisset
-                                >
-                                    OT #{{ $otItem->folio }}
-                                    @if($otItem->cliente) · {{ $otItem->cliente }} @endif
-                                    @if($otItem->origen || $otItem->destino) · {{ $otItem->origen }} → {{ $otItem->destino }} @endif
-                                </option>
+                                            $correoCliente = optional(optional(optional($otItem->cotizacion)->solicitud)->cliente)->correo;
+                                            $correoFinal = $correoCliente ?: ($otItem->correo_contacto ?? '');
+                                        @endphp
 
-                                <script type="application/json" id="vehiculos_ot_{{ $otItem->id }}">
-                                    {!! $vehiculosPayload->toJson() !!}
-                                </script>
-                            @endforeach
-                        </select>
-                    </div>
+                                        <option
+                                            value="{{ $otItem->id }}"
+                                            data-folio="{{ $otItem->folio }}"
+                                            data-equipo="{{ $otItem->equipo }}"
+                                            data-cliente="{{ $otItem->cliente }}"
+                                            data-contacto="{{ $otItem->solicitante }}"
+                                            data-telefono="{{ $otItem->telefono_contacto }}"
+                                            data-correo="{{ $correoFinal }}"
+                                            data-origen="{{ $otItem->origen }}"
+                                            data-destino="{{ $otItem->destino }}"
+                                            data-conductor="{{ $otItem->conductor }}"
+                                            @isset($ot)
+                                                {{ $ot->id === $otItem->id ? 'selected' : '' }}
+                                            @endisset
+                                        >
+                                            OT #{{ $otItem->folio }}
+                                            @if($otItem->cliente) · {{ $otItem->cliente }} @endif
+                                            @if($otItem->origen || $otItem->destino) · {{ $otItem->origen }} → {{ $otItem->destino }} @endif
+                                        </option>
 
-                    {{-- VEHÍCULO --}}
-                    <div class="col-md-12 mb-3" id="vehiculo_block" style="display:none;">
-                        <label>Vehículo</label>
-                        <select name="ot_vehiculo_id" id="ot_vehiculo_id" class="form-control">
-                            <option value="">Selecciona un vehículo...</option>
-                        </select>
-                        <small class="text-muted" style="color: var(--muted);">
-                            Si la OT tiene varios vehículos, selecciona cuál realizará este inicio de carga.
-                        </small>
-                    </div>
-
-                    {{-- Campo oculto requerido por BD --}}
-                    <input type="hidden" name="tipo_carga" id="tipo_carga">
-
-                    {{-- Detalle OT (auto) --}}
-                    <div class="col-md-6 mb-3 auto-from-ot">
-                        <label>N° OT</label>
-                        <input type="text" id="ot_folio" class="form-control" readonly>
-                    </div>
-
-                    <div class="col-md-6 mb-3 auto-from-ot">
-                        <label>Equipo</label>
-                        <input type="text" id="equipo_ot" class="form-control" readonly>
-                    </div>
-
-                    <div class="col-md-6 mb-3 auto-from-ot">
-                        <label>Cliente</label>
-                        <input type="text" name="cliente" id="cliente" class="form-control" readonly>
-                    </div>
-
-                    <div class="col-md-6 mb-3 auto-from-ot">
-                        <label>Contacto / Solicitante</label>
-                        <input type="text" name="contacto" id="contacto" class="form-control" readonly>
-                    </div>
-
-                    <div class="col-md-6 mb-3 auto-from-ot">
-                        <label>Teléfono de contacto</label>
-                        <input type="text" name="telefono_contacto" id="telefono_contacto" class="form-control" readonly>
-                    </div>
-
-                    <div class="col-md-6 mb-3 auto-from-ot">
-                        <label>Origen</label>
-                        <input type="text" name="origen" id="origen" class="form-control" value="{{ old('origen') }}" required>
-                    </div>
-
-                    <div class="col-md-6 mb-3 auto-from-ot">
-                        <label>Destino</label>
-                        <input type="text" name="destino" id="destino" class="form-control" value="{{ old('destino') }}" required>
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label>Fecha de carga</label>
-                        <input type="date" name="fecha_carga" class="form-control" value="{{ old('fecha_carga') }}">
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label>Conductor</label>
-                        <input type="text" name="conductor" id="conductor" class="form-control" value="{{ old('conductor') }}" placeholder="Nombre del conductor">
-                    </div>
-
-                    {{-- Fotos --}}
-                    <div class="col-md-12 mb-3">
-                        <label>Fotos de la carga (opcional)</label>
-
-                        <div class="photo-grid">
-                            <div class="photo-card">
-                                <label class="photo-upload-label" for="foto_1">
-                                    <i class="fas fa-camera"></i>
-                                    <strong>Tomar / subir foto 1</strong>
-                                    <span>Toca aquí para abrir la cámara o la galería.</span>
-                                    <input type="file" name="foto_1" id="foto_1" class="d-none" accept="image/*"
-                                           onchange="previewPhoto(this, 'preview_foto_1')">
-                                </label>
-                                <div id="preview_foto_1" class="photo-preview">
-                                    <img src="#" alt="Vista previa foto 1">
-                                </div>
+                                        <script type="application/json" id="vehiculos_ot_{{ $otItem->id }}">
+                                            {!! $vehiculosPayload->toJson() !!}
+                                        </script>
+                                    @endforeach
+                                </select>
                             </div>
 
-                            <div class="photo-card">
-                                <label class="photo-upload-label" for="foto_2">
-                                    <i class="fas fa-camera"></i>
-                                    <strong>Tomar / subir foto 2</strong>
-                                    <span>Opcional, para más ángulos.</span>
-                                    <input type="file" name="foto_2" id="foto_2" class="d-none" accept="image/*"
-                                           onchange="previewPhoto(this, 'preview_foto_2')">
-                                </label>
-                                <div id="preview_foto_2" class="photo-preview">
-                                    <img src="#" alt="Vista previa foto 2">
-                                </div>
+                            {{-- VEHÍCULO --}}
+                            <div class="col-md-12 mb-3" id="vehiculo_block" style="display:none;">
+                                <label>Vehículo</label>
+                                <select name="ot_vehiculo_id" id="ot_vehiculo_id" class="form-control">
+                                    <option value="">Selecciona un vehículo...</option>
+                                </select>
+                                <small class="text-muted" style="color: var(--muted);">
+                                    Si la OT tiene varios vehículos, selecciona cuál realizará este inicio de carga.
+                                </small>
                             </div>
 
-                            <div class="photo-card">
-                                <label class="photo-upload-label" for="foto_3">
-                                    <i class="fas fa-camera"></i>
-                                    <strong>Tomar / subir foto 3</strong>
-                                    <span>Opcional.</span>
-                                    <input type="file" name="foto_3" id="foto_3" class="d-none" accept="image/*"
-                                           onchange="previewPhoto(this, 'preview_foto_3')">
-                                </label>
-                                <div id="preview_foto_3" class="photo-preview">
-                                    <img src="#" alt="Vista previa foto 3">
+                            {{-- Campo oculto requerido por BD --}}
+                            <input type="hidden" name="tipo_carga" id="tipo_carga">
+
+                            {{-- Detalle OT (auto) --}}
+                            <div class="col-md-6 mb-3 auto-from-ot">
+                                <label>N° OT</label>
+                                <input type="text" id="ot_folio" class="form-control" readonly>
+                            </div>
+
+                            <div class="col-md-6 mb-3 auto-from-ot">
+                                <label>Equipo</label>
+                                <input type="text" id="equipo_ot" class="form-control" readonly>
+                            </div>
+
+                            <div class="col-md-6 mb-3 auto-from-ot">
+                                <label>Cliente</label>
+                                <input type="text" name="cliente" id="cliente" class="form-control" readonly>
+                            </div>
+
+                            <div class="col-md-6 mb-3 auto-from-ot">
+                                <label>Contacto / Solicitante</label>
+                                <input type="text" name="contacto" id="contacto" class="form-control" readonly>
+                            </div>
+
+                            <div class="col-md-6 mb-3 auto-from-ot">
+                                <label>Teléfono de contacto</label>
+                                <input type="text" name="telefono_contacto" id="telefono_contacto" class="form-control" readonly>
+                            </div>
+
+                            <div class="col-md-6 mb-3 auto-from-ot">
+                                <label>Origen</label>
+                                <input type="text" name="origen" id="origen" class="form-control" value="{{ old('origen') }}" required>
+                            </div>
+
+                            <div class="col-md-6 mb-3 auto-from-ot">
+                                <label>Destino</label>
+                                <input type="text" name="destino" id="destino" class="form-control" value="{{ old('destino') }}" required>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label>Fecha de carga</label>
+                                <input type="date" name="fecha_carga" class="form-control" value="{{ old('fecha_carga') }}">
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label>Conductor</label>
+                                <input type="text" name="conductor" id="conductor" class="form-control" value="{{ old('conductor') }}" placeholder="Nombre del conductor">
+                            </div>
+
+                            {{-- Fotos --}}
+                            <div class="col-md-12 mb-3">
+                                <label>Fotos de la carga (opcional)</label>
+
+                                <div class="photo-grid">
+                                    <div class="photo-card">
+                                        <label class="photo-upload-label" for="foto_1">
+                                            <i class="fas fa-camera"></i>
+                                            <strong>Tomar / subir foto 1</strong>
+                                            <span>Toca aquí para abrir la cámara o la galería.</span>
+                                            <input type="file" name="foto_1" id="foto_1" class="d-none" accept="image/*"
+                                                   onchange="previewPhoto(this, 'preview_foto_1')">
+                                        </label>
+                                        <div id="preview_foto_1" class="photo-preview">
+                                            <img src="#" alt="Vista previa foto 1">
+                                        </div>
+                                    </div>
+
+                                    <div class="photo-card">
+                                        <label class="photo-upload-label" for="foto_2">
+                                            <i class="fas fa-camera"></i>
+                                            <strong>Tomar / subir foto 2</strong>
+                                            <span>Opcional, para más ángulos.</span>
+                                            <input type="file" name="foto_2" id="foto_2" class="d-none" accept="image/*"
+                                                   onchange="previewPhoto(this, 'preview_foto_2')">
+                                        </label>
+                                        <div id="preview_foto_2" class="photo-preview">
+                                            <img src="#" alt="Vista previa foto 2">
+                                        </div>
+                                    </div>
+
+                                    <div class="photo-card">
+                                        <label class="photo-upload-label" for="foto_3">
+                                            <i class="fas fa-camera"></i>
+                                            <strong>Tomar / subir foto 3</strong>
+                                            <span>Opcional.</span>
+                                            <input type="file" name="foto_3" id="foto_3" class="d-none" accept="image/*"
+                                                   onchange="previewPhoto(this, 'preview_foto_3')">
+                                        </label>
+                                        <div id="preview_foto_3" class="photo-preview">
+                                            <img src="#" alt="Vista previa foto 3">
+                                        </div>
+                                    </div>
                                 </div>
+
+                                <small class="text-muted" style="color: var(--muted);">
+                                    Formatos permitidos: JPG, PNG. Máx 4 MB por archivo.
+                                </small>
+                            </div>
+
+                            <div class="col-md-12 mb-3">
+                                <label>Observaciones</label>
+                                <textarea name="observaciones" rows="3" class="form-control">{{ old('observaciones') }}</textarea>
                             </div>
                         </div>
 
-                        <small class="text-muted" style="color: var(--muted);">
-                            Formatos permitidos: JPG, PNG. Máx 4 MB por archivo.
-                        </small>
-                    </div>
-
-                    <div class="col-md-12 mb-3">
-                        <label>Observaciones</label>
-                        <textarea name="observaciones" rows="3" class="form-control">{{ old('observaciones') }}</textarea>
-                    </div>
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <div class="back-link">
+                                <a href="{{ route('home') }}">Volver</a>
+                            </div>
+                            <button id="btn-submit" type="submit" class="btn btn-accent">
+                                Enviar solicitud
+                            </button>
+                        </div>
+                    </form>
                 </div>
-
-                {{-- Botonera --}}
-                <div class="d-flex justify-content-between align-items-center mt-3">
-                    <div class="back-link">
-                        <a href="{{ route('login') }}">Volver al portal</a>
-                    </div>
-                    <button id="btn-submit" type="submit" class="btn btn-accent">
-                        Enviar solicitud
-                    </button>
-                </div>
-            </form>
+            </div>
         </div>
-    </div>
+    </section>
+</div>
+@endsection
 
-    {{-- jQuery + Bootstrap (modal) + Select2 --}}
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+@push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <script>
@@ -424,7 +532,6 @@
                 $cliente.val('');
                 $contacto.val('');
                 $tel.val('');
-                $correo.val('');
 
                 $origen.val('').prop('readonly', false);
                 $destino.val('').prop('readonly', false);
@@ -437,8 +544,12 @@
             const getVehiculosFromOt = (otId) => {
                 const el = document.getElementById(`vehiculos_ot_${otId}`);
                 if (!el) return [];
-                try { return JSON.parse(el.textContent || '[]') || []; }
-                catch (e) { return []; }
+
+                try {
+                    return JSON.parse(el.textContent || '[]') || [];
+                } catch (e) {
+                    return [];
+                }
             };
 
             $otSelect.select2({
@@ -466,7 +577,10 @@
                 const otId = $(this).val();
                 const $opt = $(this).find('option:selected');
 
-                if (!otId) { resetForm(); return; }
+                if (!otId) {
+                    resetForm();
+                    return;
+                }
 
                 const folio     = $opt.data('folio')     || '';
                 const equipo    = $opt.data('equipo')    || '';
@@ -522,9 +636,15 @@
                 }
             });
 
-            // Inicial
-            resetForm();
-            if ($otSelect.val()) $otSelect.trigger('change');
+            $form.on('submit', function () {
+                $btnSubmit.prop('disabled', true).text('Enviando...');
+            });
+
+            if ($otSelect.val()) {
+                $otSelect.trigger('change');
+            } else {
+                resetForm();
+            }
         });
     </script>
 
@@ -539,8 +659,15 @@
                     let height = img.height;
                     const aspectRatio = width / height;
 
-                    if (width > maxWidth) { width = maxWidth; height = Math.round(width / aspectRatio); }
-                    if (height > maxHeight) { height = maxHeight; width = Math.round(height * aspectRatio); }
+                    if (width > maxWidth) {
+                        width = maxWidth;
+                        height = Math.round(width / aspectRatio);
+                    }
+
+                    if (height > maxHeight) {
+                        height = maxHeight;
+                        width = Math.round(height * aspectRatio);
+                    }
 
                     const canvas = document.createElement('canvas');
                     canvas.width = width;
@@ -552,7 +679,10 @@
                     canvas.toBlob(
                         (blob) => {
                             URL.revokeObjectURL(url);
-                            if (!blob) return reject(new Error('No se pudo generar el blob'));
+
+                            if (!blob) {
+                                return reject(new Error('No se pudo generar el blob'));
+                            }
 
                             const compressedFile = new File([blob], file.name, {
                                 type: 'image/jpeg',
@@ -603,5 +733,4 @@
             }
         }
     </script>
-
-</x-laravel-ui-adminlte::adminlte-layout>
+@endpush

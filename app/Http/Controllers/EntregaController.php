@@ -42,22 +42,43 @@ class EntregaController extends AppBaseController
      */
     public function create(Request $request)
     {
-        $ots = Ot::with([
+        $user = auth()->user();
+
+        $otsQuery = Ot::with([
                 'cotizacion.solicitud.cliente',
-                'vehiculos' => fn($q) => $q->orderBy('orden')->with('entregas'),
+                'vehiculos' => fn ($q) => $q
+                    ->orderBy('orden')
+                    ->with(['entregas', 'inicioCargas']),
             ])
-            ->whereIn('estado', ['en_transito'])
             ->whereHas('vehiculos', function ($q) {
-                $q->whereDoesntHave('entregas');
-            })
+                $q->whereHas('inicioCargas')
+                ->whereDoesntHave('entregas');
+            });
+
+        // Si es chofer, filtrar SOLO las internas por el conductor logueado.
+        // Las externas e interno_externo quedan visibles completas.
+        if ($user->hasRole('chofer') && trim($user->name) !== 'Externo') {
+            $nombreUsuario = trim($user->name);
+
+            $otsQuery->where(function ($q) use ($nombreUsuario) {
+                $q->whereIn('traslado', ['externo', 'interno_externo'])
+                ->orWhere(function ($sub) use ($nombreUsuario) {
+                    $sub->where('traslado', 'interno')
+                        ->whereHas('vehiculos', function ($vehiculoQuery) use ($nombreUsuario) {
+                            $vehiculoQuery->where('conductor', $nombreUsuario);
+                        });
+                });
+            });
+        }
+
+        $ots = $otsQuery
             ->orderBy('id', 'desc')
             ->get()
-            ->map(function ($ot) {
-                $clienteRel = optional(optional(optional($ot->cotizacion)->solicitud)->cliente);
+            ->map(function ($ot) use ($user) {
+                $cliente = optional(optional(optional($ot->cotizacion)->solicitud)->cliente);
 
-                // Defaults visuales (si algo viene nulo)
                 if (is_null($ot->cliente)) {
-                    $ot->cliente = $clienteRel?->razon_social;
+                    $ot->cliente = $cliente?->razon_social;
                 }
 
                 if (is_null($ot->origen)) {
@@ -68,11 +89,48 @@ class EntregaController extends AppBaseController
                     $ot->destino = optional($ot->cotizacion)->destino;
                 }
 
-                // Correo REAL del cliente
-                $ot->correo_cliente = $clienteRel?->correo ?? '';
+                if (is_null($ot->conductor)) {
+                    $ot->conductor = optional($ot->cotizacion)->conductor;
+                }
+
+                $ot->contacto          = $cliente?->razon_social;
+                $ot->telefono_contacto = $cliente?->telefono ?? '';
+                $ot->correo_contacto   = $cliente?->correo ?? '';
+
+                // Solo vehículos que:
+                // 1) ya tienen inicio de carga
+                // 2) aún no tienen entrega
+                $vehiculos = $ot->vehiculos
+                    ->filter(function ($vehiculo) {
+                        return $vehiculo->inicioCargas->isNotEmpty()
+                            && $vehiculo->entregas->isEmpty();
+                    })
+                    ->values();
+
+                // Si es chofer y la OT es interna, mostrar solo sus vehículos
+                if (
+                    $user->hasRole('chofer') &&
+                    trim($user->name) !== 'Externo' &&
+                    $ot->traslado === 'interno'
+                ) {
+                    $nombreUsuario = trim($user->name);
+
+                    $vehiculos = $vehiculos
+                        ->filter(function ($vehiculo) use ($nombreUsuario) {
+                            return trim((string) $vehiculo->conductor) === $nombreUsuario;
+                        })
+                        ->values();
+                }
+
+                $ot->setRelation('vehiculos', $vehiculos);
 
                 return $ot;
-            });
+            })
+            ->filter(function ($ot) {
+                // Si después del filtro no quedaron vehículos visibles, no mostrar OT
+                return $ot->vehiculos->isNotEmpty();
+            })
+            ->values();
 
         $conductores = Conductor::where('activo', true)
             ->orderBy('nombre')
@@ -132,6 +190,20 @@ class EntregaController extends AppBaseController
             return back()->withInput()->withErrors([
                 'ot_vehiculo_id' => 'El vehículo seleccionado no pertenece a la OT.',
             ]);
+        }
+
+        $user = auth()->user();
+
+        if ($user && $user->hasRole('chofer')) {
+            $vehiculo = $ot->vehiculos->firstWhere('id', (int) $data['ot_vehiculo_id']);
+
+            if ($vehiculo && $ot->traslado === 'interno') {
+                if (trim((string) $vehiculo->conductor) !== trim((string) $user->name)) {
+                    return back()->withInput()->withErrors([
+                        'ot_vehiculo_id' => 'No puedes registrar la entrega de un vehículo interno asignado a otro chofer.',
+                    ]);
+                }
+            }
         }
 
         // Evitar duplicado (además del unique en DB)

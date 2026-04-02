@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\DashboardOtExport;
+use App\Models\Ot;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
-
-use App\Models\Ot;
+use Illuminate\Support\Facades\Schema;
+use Maatwebsite\Excel\Facades\Excel;
 
 class HomeController extends Controller
 {
@@ -19,92 +21,42 @@ class HomeController extends Controller
     {
         $hoy = Carbon::today();
 
-        // =========================
-        // Filtros (GET)
-        // =========================
-        $q         = trim((string) $request->get('q', ''));
-        $estado    = $request->get('estado');     // ej: pendiente, inicio_carga, en_transito, entregada, con_incidencia
-        $status    = $request->get('status');     // (si es distinto a "estado" en tu modelo)
-        $traslado  = $request->get('traslado');   // INT / EXT (cuando exista)
-        $from      = $request->get('from');       // YYYY-MM-DD
-        $to        = $request->get('to');         // YYYY-MM-DD
+        $otsQuery = $this->buildDashboardQuery($request);
 
-        // =========================
-        // Query base OT
-        // =========================
-        $otsQuery = Ot::query()
-            ->with(['cotizacion.solicitud.cliente']);
+        $user = auth()->user();
 
-        // Rango de fecha (usa created_at como "Fecha OT")
-        if ($from) {
-            $otsQuery->whereDate('created_at', '>=', $from);
-        }
-        if ($to) {
-            $otsQuery->whereDate('created_at', '<=', $to);
-        }
+        if ($user->hasRole('chofer')) {
+            $nombreUsuario = trim($user->name);
 
-        // Estado (columna existente en tu OT)
-        if (!empty($estado) && $estado !== 'all') {
-            $otsQuery->where('estado', $estado);
-        }
-
-        // Status (si existe como columna distinta a estado; si no existe, no lo filtres)
-        // Actívalo cuando tengas la columna `status` en ots:
-        if (!empty($status) && $status !== 'all') {
-            // Evita romper si aún no existe la columna: comenta hasta migrar
-            // $otsQuery->where('status', $status);
-        }
-
-        // Traslado (INT/EXT) - Actívalo cuando exista la columna
-        if (!empty($traslado) && $traslado !== 'all') {
-            // $otsQuery->where('traslado_tipo', $traslado); // ej: traslado_tipo = INT|EXT
-        }
-
-        // Búsqueda (por id OT, cliente, conductor, desde/hasta, equipo)
-        if ($q !== '') {
-            $otsQuery->where(function ($qq) use ($q) {
-                $qq->where('id', $q)
-                   ->orWhere('conductor', 'like', "%{$q}%")
-                   // Campos futuros: si hoy no existen, no los uses aquí
-                   //->orWhere('equipo', 'like', "%{$q}%")
-                   //->orWhere('desde', 'like', "%{$q}%")
-                   //->orWhere('hasta', 'like', "%{$q}%")
-                   ->orWhereHas('cotizacion.solicitud.cliente', function ($c) use ($q) {
-                       $c->where('razon_social', 'like', "%{$q}%");
-                   });
+            $otsQuery->where(function ($q) use ($nombreUsuario) {
+                $q->where('conductor', $nombreUsuario);
             });
         }
 
-        // =========================
-        // Datos para dashboard
-        // =========================
         $ots = (clone $otsQuery)
             ->orderBy('created_at', 'desc')
             ->paginate(25)
             ->withQueryString();
 
-        // Stats rápidos (con mismos filtros)
         $stats = (clone $otsQuery)
             ->select('estado', DB::raw('COUNT(*) as total'))
             ->groupBy('estado')
             ->pluck('total', 'estado');
 
-        // Para selects (puedes ajustar a tus valores reales)
         $estadoOptions = [
-            'all'           => 'Todos',
-            'pendiente'     => 'Pendiente',
-            'inicio_carga'  => 'Inicio carga',
-            'en_transito'   => 'En tránsito',
-            'con_incidencia'=> 'Con incidencia',
-            'entregada'     => 'Entregada',
+            'all'            => 'Todos',
+            'pendiente'      => 'Pendiente',
+            'inicio_carga'   => 'Inicio carga',
+            'en_transito'    => 'En tránsito',
+            'con_incidencia' => 'Con incidencia',
+            'entregada'      => 'Entregada',
         ];
 
-        // StatusOptions (cuando exista status real)
         $statusOptions = [
-            'all'        => 'Todos',
-            'pendiente'  => 'Pendiente',
-            'en_transito'=> 'En tránsito',
-            'entregado'  => 'Entregado',
+            'all'         => 'Todos',
+            'pendiente'   => 'Pendiente',
+            'en_transito' => 'En tránsito',
+            'entregado'   => 'Entregado',
         ];
 
         return view('home', compact(
@@ -114,5 +66,98 @@ class HomeController extends Controller
             'statusOptions',
             'hoy'
         ));
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $query = $this->buildDashboardQuery($request)
+            ->orderBy('created_at', 'desc');
+
+        $filename = 'dashboard_ot_' . now()->format('Y-m-d_H-i-s') . '.xlsx';
+
+        return Excel::download(new DashboardOtExport($query), $filename);
+    }
+
+    private function buildDashboardQuery(Request $request)
+    {
+        $q        = trim((string) $request->get('q', ''));
+        $estado   = $request->get('estado');
+        $status   = $request->get('status');
+        $traslado = $request->get('traslado');
+        $from     = $request->get('from');
+        $to       = $request->get('to');
+
+        $columns = Schema::getColumnListing('ots');
+
+        $otsQuery = Ot::query()
+            ->with([
+                'cotizacion.solicitud.cliente',
+                'inicioCargas',
+            ]);
+
+        if ($from) {
+            $otsQuery->whereDate('created_at', '>=', $from);
+        }
+
+        if ($to) {
+            $otsQuery->whereDate('created_at', '<=', $to);
+        }
+
+        if (!empty($estado) && $estado !== 'all') {
+            $otsQuery->where('estado', $estado);
+        }
+
+        if (!empty($status) && $status !== 'all' && in_array('status', $columns)) {
+            $otsQuery->where('status', $status);
+        }
+
+        if (!empty($traslado) && $traslado !== 'all') {
+            $otsQuery->where('traslado', $traslado);
+        }
+
+        if ($q !== '') {
+            $otsQuery->where(function ($qq) use ($q, $columns) {
+                if (is_numeric($q)) {
+                    $qq->where('id', (int) $q);
+                }
+
+                $qq->orWhere('folio', 'like', "%{$q}%")
+                    ->orWhere('conductor', 'like', "%{$q}%")
+                    ->orWhere('equipo', 'like', "%{$q}%")
+                    ->orWhere('solicitante', 'like', "%{$q}%");
+
+                if (in_array('gdd', $columns)) {
+                    $qq->orWhere('gdd', 'like', "%{$q}%");
+                }
+
+                if (in_array('afid_interno', $columns)) {
+                    $qq->orWhere('afid_interno', 'like', "%{$q}%");
+                }
+
+                if (in_array('factura', $columns)) {
+                    $qq->orWhere('factura', 'like', "%{$q}%");
+                }
+
+                if (in_array('factura_externo', $columns)) {
+                    $qq->orWhere('factura_externo', 'like', "%{$q}%");
+                }
+
+                if (in_array('oc', $columns)) {
+                    $qq->orWhere('oc', 'like', "%{$q}%");
+                }
+
+                $qq->orWhereHas('cotizacion', function ($c) use ($q) {
+                    $c->where('cliente', 'like', "%{$q}%")
+                        ->orWhere('origen', 'like', "%{$q}%")
+                        ->orWhere('destino', 'like', "%{$q}%")
+                        ->orWhere('solicitante', 'like', "%{$q}%");
+                })
+                ->orWhereHas('cotizacion.solicitud.cliente', function ($c) use ($q) {
+                    $c->where('razon_social', 'like', "%{$q}%");
+                });
+            });
+        }
+
+        return $otsQuery;
     }
 }

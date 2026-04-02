@@ -41,4 +41,9 @@ class OtVehiculo extends Model
     {
         return $this->hasMany(\App\Models\Entrega::class, 'ot_vehiculo_id');
     }
+
+    public function puentes()
+    {
+        return $this->hasMany(\App\Models\Puente::class, 'ot_vehiculo_id');
+    }
 }

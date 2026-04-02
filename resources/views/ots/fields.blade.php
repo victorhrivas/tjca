@@ -58,6 +58,20 @@
     {!! Form::text('solicitante', null, ['class' => 'form-control']) !!}
 </div>
 
+<!-- Traslado -->
+<div class="form-group col-sm-6">
+    {!! Form::label('traslado', 'Traslado:') !!}
+    {!! Form::select('traslado', [
+        'interno' => 'Interno',
+        'externo' => 'Externo',
+        'interno_externo' => 'Interno / Externo',
+    ], old('traslado', $ot->traslado ?? null), [
+        'class' => 'form-control custom-select',
+        'id' => 'traslado_ot',
+        'placeholder' => 'Seleccione tipo de traslado'
+    ]) !!}
+</div>
+
 {{-- =========================
      VEHÍCULOS / CHOFERES (N)
    ========================= --}}
@@ -76,73 +90,110 @@
 </div>
 
 @php
-    /**
-     * Pre-carga:
-     * - En CREATE: usa old('vehiculos') o 1 fila vacía
-     * - En EDIT: si existe $ot y tiene vehiculos, usa esos; si no, fallback a los campos legacy
-     */
+    $trasladoActual = old('traslado', $ot->traslado ?? null);
+
     $vehiculos = [];
 
     if (old('vehiculos')) {
         $vehiculos = old('vehiculos');
     } elseif (isset($ot)) {
-        // Si ya cargaste relación en controller: $ot->load('vehiculos')
         if (isset($ot->vehiculos) && $ot->vehiculos->count() > 0) {
             $vehiculos = $ot->vehiculos->map(function ($v) {
+                $tipo = $v->tipo_conductor ?? null;
+
+                if (!$tipo) {
+                    $tipo = 'interno';
+                }
+
                 return [
-                    'conductor' => $v->conductor,
-                    'patente_camion' => $v->patente_camion,
+                    'tipo_conductor'   => $tipo,
+                    'conductor'        => $tipo === 'externo' ? null : $v->conductor,
+                    'conductor_externo'=> $tipo === 'externo' ? $v->conductor : null,
+                    'patente_camion'   => $v->patente_camion,
                     'patente_remolque' => $v->patente_remolque,
                 ];
             })->toArray();
         } else {
-            // Fallback a legacy
             $vehiculos = [[
-                'conductor' => $ot->conductor ?? null,
-                'patente_camion' => $ot->patente_camion ?? null,
-                'patente_remolque' => $ot->patente_remolque ?? null,
+                'tipo_conductor'    => $trasladoActual === 'externo' ? 'externo' : 'interno',
+                'conductor'         => $trasladoActual === 'externo' ? null : ($ot->conductor ?? null),
+                'conductor_externo' => $trasladoActual === 'externo' ? ($ot->conductor ?? null) : null,
+                'patente_camion'    => $ot->patente_camion ?? null,
+                'patente_remolque'  => $ot->patente_remolque ?? null,
             ]];
         }
     } else {
         $vehiculos = [[
-            'conductor' => null,
-            'patente_camion' => null,
-            'patente_remolque' => null,
+            'tipo_conductor'    => $trasladoActual === 'externo' ? 'externo' : ($trasladoActual === 'interno_externo' ? null : 'interno'),
+            'conductor'         => null,
+            'conductor_externo' => null,
+            'patente_camion'    => null,
+            'patente_remolque'  => null,
         ]];
     }
 @endphp
 
 <div class="col-12 mt-3" id="vehiculosWrapper">
     @foreach($vehiculos as $i => $v)
+        @php
+            $tipoConductor = $v['tipo_conductor'] ?? ($trasladoActual === 'externo' ? 'externo' : ($trasladoActual === 'interno_externo' ? null : 'interno'));
+        @endphp
+
         <div class="card mb-3 vehiculo-item" data-index="{{ $i }}">
             <div class="card-header d-flex align-items-center justify-content-between">
                 <div>
                     <strong>Vehículo #{{ $i + 1 }}</strong>
                     @if($i === 0)
-                        <span class="badge badge-secondary ml-2">Principal</span>
+                        <span class="badge badge-secondary ml-2 badgePrincipal">Principal</span>
+                    @else
+                        <span class="badge badge-secondary ml-2 badgePrincipal" style="display:none;">Principal</span>
                     @endif
                 </div>
 
                 <button type="button"
                         class="btn btn-sm btn-danger btnRemoveVehiculo"
-                        @if($i === 0 && count($vehiculos) === 1) style="display:none" @endif>
+                        @if($i === 0 && count($vehiculos) === 1) style="display:none;" @endif>
                     Quitar
                 </button>
             </div>
 
             <div class="card-body">
                 <div class="row">
-                    <!-- Conductor -->
-                    <div class="form-group col-sm-4">
-                        {!! Form::label("vehiculos[$i][conductor]", 'Conductor:') !!}
-                        {!! Form::select("vehiculos[$i][conductor]", $conductores, $v['conductor'] ?? null, [
-                            'class' => 'form-control',
-                            'placeholder' => 'Seleccione un conductor'
+                    <!-- Tipo conductor -->
+                    <div class="form-group col-sm-3">
+                        {!! Form::label("vehiculos[$i][tipo_conductor]", 'Tipo conductor:') !!}
+                        <select name="vehiculos[{{ $i }}][tipo_conductor]" class="form-control tipo-conductor">
+                            <option value="">Seleccione tipo</option>
+                            <option value="interno" {{ $tipoConductor === 'interno' ? 'selected' : '' }}>Interno</option>
+                            <option value="externo" {{ $tipoConductor === 'externo' ? 'selected' : '' }}>Externo</option>
+                        </select>
+                    </div>
+
+                    <!-- Conductor interno -->
+                    <div class="form-group col-sm-3 conductor-select-wrap" style="{{ $tipoConductor === 'externo' ? 'display:none;' : '' }}">
+                        {!! Form::label("vehiculos[$i][conductor]", 'Conductor interno:') !!}
+                        {!! Form::select("vehiculos[$i][conductor]", $conductores, $tipoConductor === 'externo' ? null : ($v['conductor'] ?? null), [
+                            'class' => 'form-control conductor-select',
+                            'placeholder' => 'Seleccione un conductor',
+                            'disabled' => $tipoConductor === 'externo'
                         ]) !!}
                     </div>
 
+                    <!-- Conductor externo -->
+                    <div class="form-group col-sm-3 conductor-text-wrap" style="{{ $tipoConductor === 'externo' ? '' : 'display:none;' }}">
+                        <label>Conductor externo:</label>
+                        <input
+                            type="text"
+                            name="vehiculos[{{ $i }}][conductor_externo]"
+                            class="form-control conductor-text"
+                            value="{{ $tipoConductor === 'externo' ? ($v['conductor_externo'] ?? ($v['conductor'] ?? null)) : '' }}"
+                            placeholder="Ingrese nombre del conductor externo"
+                            {{ $tipoConductor === 'externo' ? '' : 'disabled' }}
+                        >
+                    </div>
+
                     <!-- Patente camión -->
-                    <div class="form-group col-sm-4">
+                    <div class="form-group col-sm-3">
                         {!! Form::label("vehiculos[$i][patente_camion]", 'Patente camión:') !!}
                         {!! Form::text("vehiculos[$i][patente_camion]", $v['patente_camion'] ?? null, [
                             'class' => 'form-control',
@@ -151,7 +202,7 @@
                     </div>
 
                     <!-- Patente remolque -->
-                    <div class="form-group col-sm-4">
+                    <div class="form-group col-sm-3">
                         {!! Form::label("vehiculos[$i][patente_remolque]", 'Patente remolque:') !!}
                         {!! Form::text("vehiculos[$i][patente_remolque]", $v['patente_remolque'] ?? null, [
                             'class' => 'form-control',
@@ -164,13 +215,13 @@
     @endforeach
 </div>
 
-{{-- Template HTML para clonar (no se envía al servidor) --}}
+{{-- Template HTML para clonar --}}
 <template id="vehiculoTemplate">
     <div class="card mb-3 vehiculo-item" data-index="__INDEX__">
         <div class="card-header d-flex align-items-center justify-content-between">
             <div>
                 <strong>Vehículo #__NUM__</strong>
-                <span class="badge badge-secondary ml-2 badgePrincipal" style="display:none">Principal</span>
+                <span class="badge badge-secondary ml-2 badgePrincipal" style="display:none;">Principal</span>
             </div>
 
             <button type="button" class="btn btn-sm btn-danger btnRemoveVehiculo">
@@ -180,9 +231,20 @@
 
         <div class="card-body">
             <div class="row">
-                <div class="form-group col-sm-4">
-                    <label for="vehiculos___INDEX___conductor">Conductor:</label>
-                    <select name="vehiculos[__INDEX__][conductor]" class="form-control">
+                <!-- Tipo conductor -->
+                <div class="form-group col-sm-3">
+                    <label>Tipo conductor:</label>
+                    <select name="vehiculos[__INDEX__][tipo_conductor]" class="form-control tipo-conductor">
+                        <option value="">Seleccione tipo</option>
+                        <option value="interno">Interno</option>
+                        <option value="externo">Externo</option>
+                    </select>
+                </div>
+
+                <!-- Conductor interno -->
+                <div class="form-group col-sm-3 conductor-select-wrap">
+                    <label>Conductor interno:</label>
+                    <select name="vehiculos[__INDEX__][conductor]" class="form-control conductor-select">
                         <option value="">Seleccione un conductor</option>
                         @foreach($conductores as $key => $label)
                             <option value="{{ $key }}">{{ $label }}</option>
@@ -190,14 +252,38 @@
                     </select>
                 </div>
 
-                <div class="form-group col-sm-4">
-                    <label for="vehiculos___INDEX___patente_camion">Patente camión:</label>
-                    <input type="text" name="vehiculos[__INDEX__][patente_camion]" class="form-control" placeholder="Ej: AB-CD-12">
+                <!-- Conductor externo -->
+                <div class="form-group col-sm-3 conductor-text-wrap" style="display:none;">
+                    <label>Conductor externo:</label>
+                    <input
+                        type="text"
+                        name="vehiculos[__INDEX__][conductor_externo]"
+                        class="form-control conductor-text"
+                        placeholder="Ingrese nombre del conductor externo"
+                        disabled
+                    >
                 </div>
 
-                <div class="form-group col-sm-4">
-                    <label for="vehiculos___INDEX___patente_remolque">Patente remolque:</label>
-                    <input type="text" name="vehiculos[__INDEX__][patente_remolque]" class="form-control" placeholder="Opcional">
+                <!-- Patente camión -->
+                <div class="form-group col-sm-3">
+                    <label>Patente camión:</label>
+                    <input
+                        type="text"
+                        name="vehiculos[__INDEX__][patente_camion]"
+                        class="form-control"
+                        placeholder="Ej: AB-CD-12"
+                    >
+                </div>
+
+                <!-- Patente remolque -->
+                <div class="form-group col-sm-3">
+                    <label>Patente remolque:</label>
+                    <input
+                        type="text"
+                        name="vehiculos[__INDEX__][patente_remolque]"
+                        class="form-control"
+                        placeholder="Opcional"
+                    >
                 </div>
             </div>
         </div>
@@ -295,7 +381,6 @@
 <!-- Estado -->
 <div class="form-group col-sm-6">
     {!! Form::label('estado', 'Estado:') !!}
-
     {!! Form::select('estado', [
         'pendiente'    => 'Pendiente',
         'inicio_carga' => 'Inicio de carga',
@@ -315,13 +400,70 @@
     ]) !!}
 </div>
 
-{{-- JS (sin jQuery) para agregar/quitar vehículos --}}
 @push('scripts')
 <script>
 (function () {
     const wrapper = document.getElementById('vehiculosWrapper');
     const btnAdd = document.getElementById('btnAddVehiculo');
     const tpl = document.getElementById('vehiculoTemplate');
+    const trasladoSelect = document.getElementById('traslado_ot');
+
+    if (!wrapper || !tpl) return;
+
+    function getDefaultTipoConductor() {
+        const traslado = trasladoSelect ? trasladoSelect.value : '';
+
+        if (traslado === 'interno') return 'interno';
+        if (traslado === 'externo') return 'externo';
+        return '';
+    }
+
+    function syncVehiculoCard(card) {
+        if (!card) return;
+
+        const tipoSelect = card.querySelector('.tipo-conductor');
+        const tipo = tipoSelect ? tipoSelect.value : '';
+
+        const selectWrap = card.querySelector('.conductor-select-wrap');
+        const textWrap   = card.querySelector('.conductor-text-wrap');
+        const selectEl   = card.querySelector('.conductor-select');
+        const textEl     = card.querySelector('.conductor-text');
+
+        if (!selectWrap || !textWrap || !selectEl || !textEl) return;
+
+        if (tipo === 'externo') {
+            selectWrap.style.display = 'none';
+            textWrap.style.display = '';
+
+            selectEl.disabled = true;
+            textEl.disabled = false;
+        } else {
+            selectWrap.style.display = '';
+            textWrap.style.display = 'none';
+
+            selectEl.disabled = false;
+            textEl.disabled = true;
+        }
+    }
+
+    function syncAllVehiculoCards() {
+        wrapper.querySelectorAll('.vehiculo-item').forEach(card => syncVehiculoCard(card));
+    }
+
+    function applyDefaultTipoToEmptyCards() {
+        const defaultTipo = getDefaultTipoConductor();
+
+        wrapper.querySelectorAll('.vehiculo-item').forEach(card => {
+            const tipoSelect = card.querySelector('.tipo-conductor');
+            if (!tipoSelect) return;
+
+            if (!tipoSelect.value) {
+                tipoSelect.value = defaultTipo;
+            }
+
+            syncVehiculoCard(card);
+        });
+    }
 
     function updateHeadersAndButtons() {
         const items = wrapper.querySelectorAll('.vehiculo-item');
@@ -329,53 +471,37 @@
         items.forEach((item, idx) => {
             item.dataset.index = idx;
 
-            // Header "Vehículo #"
             const strong = item.querySelector('.card-header strong');
             if (strong) strong.textContent = 'Vehículo #' + (idx + 1);
 
-            // Principal badge
-            const badge = item.querySelector('.badgePrincipal') || item.querySelector('.badge');
-            const isFirst = idx === 0;
-
-            // Si es el primer card, mostramos badge principal
+            const badge = item.querySelector('.badgePrincipal');
             if (badge) {
-                if (badge.classList.contains('badgePrincipal')) {
-                    badge.style.display = isFirst ? '' : 'none';
-                } else {
-                    // En cards renderizados por PHP el primero trae badge fijo
-                    // No hacemos nada aquí.
-                }
+                badge.style.display = idx === 0 ? '' : 'none';
             }
 
-            // Renombrar inputs name="vehiculos[__][x]"
             item.querySelectorAll('input, select, textarea').forEach(el => {
                 if (!el.name) return;
 
                 el.name = el.name
+                    .replace(/vehiculos\[\d+\]\[tipo_conductor\]/, `vehiculos[${idx}][tipo_conductor]`)
                     .replace(/vehiculos\[\d+\]\[conductor\]/, `vehiculos[${idx}][conductor]`)
+                    .replace(/vehiculos\[\d+\]\[conductor_externo\]/, `vehiculos[${idx}][conductor_externo]`)
                     .replace(/vehiculos\[\d+\]\[patente_camion\]/, `vehiculos[${idx}][patente_camion]`)
                     .replace(/vehiculos\[\d+\]\[patente_remolque\]/, `vehiculos[${idx}][patente_remolque]`);
 
-                // template usa __INDEX__ (si entró directo)
                 el.name = el.name
-                    .replace(/vehiculos\[\__INDEX__\]\[conductor\]/, `vehiculos[${idx}][conductor]`)
-                    .replace(/vehiculos\[\__INDEX__\]\[patente_camion\]/, `vehiculos[${idx}][patente_camion]`)
-                    .replace(/vehiculos\[\__INDEX__\]\[patente_remolque\]/, `vehiculos[${idx}][patente_remolque]`);
+                    .replace(/vehiculos\[__INDEX__\]\[tipo_conductor\]/, `vehiculos[${idx}][tipo_conductor]`)
+                    .replace(/vehiculos\[__INDEX__\]\[conductor\]/, `vehiculos[${idx}][conductor]`)
+                    .replace(/vehiculos\[__INDEX__\]\[conductor_externo\]/, `vehiculos[${idx}][conductor_externo]`)
+                    .replace(/vehiculos\[__INDEX__\]\[patente_camion\]/, `vehiculos[${idx}][patente_camion]`)
+                    .replace(/vehiculos\[__INDEX__\]\[patente_remolque\]/, `vehiculos[${idx}][patente_remolque]`);
             });
 
-            // Botón quitar: si solo queda 1, ocultar
             const btnRemove = item.querySelector('.btnRemoveVehiculo');
             if (btnRemove) {
-                btnRemove.style.display = (items.length === 1) ? 'none' : '';
+                btnRemove.style.display = items.length === 1 ? 'none' : '';
             }
         });
-
-        // Asegura que el primer item tenga badge principal (en items nuevos)
-        const first = wrapper.querySelector('.vehiculo-item');
-        if (first) {
-            const badge = first.querySelector('.badgePrincipal');
-            if (badge) badge.style.display = '';
-        }
     }
 
     function addVehiculo() {
@@ -388,33 +514,52 @@
         temp.innerHTML = html.trim();
         const node = temp.firstElementChild;
 
+        const tipoSelect = node.querySelector('.tipo-conductor');
+        if (tipoSelect) {
+            tipoSelect.value = getDefaultTipoConductor();
+        }
+
         wrapper.appendChild(node);
         updateHeadersAndButtons();
+        syncVehiculoCard(node);
     }
 
     function removeVehiculo(btn) {
         const card = btn.closest('.vehiculo-item');
         if (!card) return;
+
         card.remove();
         updateHeadersAndButtons();
+        syncAllVehiculoCards();
     }
 
-    // Add
     if (btnAdd) {
         btnAdd.addEventListener('click', addVehiculo);
     }
 
-    // Remove (delegación)
-    if (wrapper) {
-        wrapper.addEventListener('click', function (e) {
-            const btn = e.target.closest('.btnRemoveVehiculo');
-            if (!btn) return;
-            removeVehiculo(btn);
+    if (trasladoSelect) {
+        trasladoSelect.addEventListener('change', function () {
+            applyDefaultTipoToEmptyCards();
+            syncAllVehiculoCards();
         });
     }
 
-    // Inicial
+    wrapper.addEventListener('click', function (e) {
+        const btn = e.target.closest('.btnRemoveVehiculo');
+        if (!btn) return;
+        removeVehiculo(btn);
+    });
+
+    wrapper.addEventListener('change', function (e) {
+        if (e.target.classList.contains('tipo-conductor')) {
+            const card = e.target.closest('.vehiculo-item');
+            if (card) syncVehiculoCard(card);
+        }
+    });
+
     updateHeadersAndButtons();
+    applyDefaultTipoToEmptyCards();
+    syncAllVehiculoCards();
 })();
 </script>
 @endpush

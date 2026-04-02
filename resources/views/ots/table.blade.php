@@ -292,6 +292,20 @@
                 padding: 8px 8px;
             }
         }
+
+        .otx-page .otx-badge-mixto{
+            background: #a855f7;
+            color: #ffffff;
+        }
+
+        .otx-page .otx-dot-mixto{
+            background: #a855f7;
+        }
+
+        .otx-page .otx-vehiculo-badge{
+            margin-top: 6px;
+            display: inline-flex;
+        }
     </style>
 
     <div class="table-responsive">
@@ -317,6 +331,7 @@
                         'en_transito'    => ['label' => 'En tránsito',     'badge' => 'otx-badge-transito',   'dot' => 'otx-dot-transito'],
                         'entregada'      => ['label' => 'Entregada',       'badge' => 'otx-badge-entregada',  'dot' => 'otx-dot-entregada'],
                         'con_incidencia' => ['label' => 'Con incidencia',  'badge' => 'otx-badge-incidencia', 'dot' => 'otx-dot-incidencia'],
+                        'mixto'          => ['label' => 'Mixto',           'badge' => 'otx-badge-mixto',       'dot' => 'otx-dot-mixto'],
                     ];
 
                     $estadoActual = $ot->estado ?? 'pendiente';
@@ -340,10 +355,50 @@
 
                     if ($vehiculos->isEmpty() && $tieneLegacy) {
                         $vehiculos = collect([(object)[
+                            'id' => null,
                             'conductor' => $ot->conductor,
                             'patente_camion' => $ot->patente_camion,
                             'patente_remolque' => $ot->patente_remolque,
                         ]]);
+                    }
+
+                    $inicioCargas = $ot->inicioCargas ?? collect();
+                    $entregas = $ot->entregas ?? collect();
+
+                    $vehiculosDetallados = $vehiculos->map(function ($v) use ($inicioCargas, $entregas, $estadosDisponibles) {
+                        $vehiculoId = $v->id ?? null;
+
+                        $tieneInicio = $vehiculoId
+                            ? $inicioCargas->contains(fn($ic) => optional($ic->otVehiculo)->id === $vehiculoId)
+                            : false;
+
+                        $tieneEntrega = $vehiculoId
+                            ? $entregas->contains(fn($e) => optional($e->otVehiculo)->id === $vehiculoId)
+                            : false;
+
+                        if ($tieneEntrega) {
+                            $estadoVehiculo = 'entregada';
+                        } elseif ($tieneInicio) {
+                            $estadoVehiculo = 'en_transito';
+                        } else {
+                            $estadoVehiculo = 'pendiente';
+                        }
+
+                        return [
+                            'modelo' => $v,
+                            'estado' => $estadoVehiculo,
+                            'cfg'    => $estadosDisponibles[$estadoVehiculo],
+                        ];
+                    });
+
+                    $estadosVehiculosUnicos = $vehiculosDetallados->pluck('estado')->unique()->values();
+
+                    if ($vehiculosDetallados->isNotEmpty() && $estadosVehiculosUnicos->count() > 1) {
+                        $cfgResumen = $estadosDisponibles['mixto'];
+                    } elseif ($vehiculosDetallados->isNotEmpty()) {
+                        $cfgResumen = $vehiculosDetallados->first()['cfg'];
+                    } else {
+                        $cfgResumen = $cfg;
                     }
                 @endphp
 
@@ -368,18 +423,22 @@
                     </td>
 
                     <td class="otx-col-vehiculos">
-                        @if($vehiculos->isEmpty())
+                        @if($vehiculosDetallados->isEmpty())
                             <span class="text-muted">—</span>
                         @else
                             <span class="otx-chip otx-chip-count">
-                                {{ $vehiculos->count() }} vehículo{{ $vehiculos->count() === 1 ? '' : 's' }}
+                                {{ $vehiculosDetallados->count() }} vehículo{{ $vehiculosDetallados->count() === 1 ? '' : 's' }}
                             </span>
 
                             <details class="otx-details">
-                                <summary>Ver lista</summary>
+                                <summary>Ver detalle</summary>
 
                                 <div class="otx-vehiculo-list">
-                                    @foreach($vehiculos as $i => $v)
+                                    @foreach($vehiculosDetallados as $i => $item)
+                                        @php
+                                            $v = $item['modelo'];
+                                        @endphp
+
                                         <div class="otx-vehiculo-item">
                                             <strong>#{{ $i + 1 }}</strong>
                                             · {{ $v->conductor ?: 'Sin conductor' }}
@@ -390,6 +449,10 @@
                                                     · Remolque: {{ $v->patente_remolque }}
                                                 @endif
                                             </span>
+                                            <br>
+                                            <span class="otx-badge otx-vehiculo-badge {{ $item['cfg']['badge'] }}">
+                                                {{ $item['cfg']['label'] }}
+                                            </span>
                                         </div>
                                     @endforeach
                                 </div>
@@ -398,20 +461,34 @@
                     </td>
 
                     <td class="otx-col-estado">
-                        <div class="dropdown otx-estado-dropdown">
+                        <div class="mb-1">
+                            <span class="otx-badge {{ $cfgResumen['badge'] }}">
+                                {{ $cfgResumen['label'] }}
+                            </span>
+                        </div>
+
+                        @if($vehiculosDetallados->count() > 1 && $estadosVehiculosUnicos->count() > 1)
+                            <small class="text-muted d-block">
+                                Estado general mixto según avance por vehículo
+                            </small>
+                        @else
+                            <small class="text-muted d-block">
+                                Estado resumido de la OT
+                            </small>
+                        @endif
+
+                        <div class="dropdown otx-estado-dropdown mt-1">
                             <button type="button"
                                     class="btn btn-default btn-xs dropdown-toggle"
                                     data-toggle="dropdown"
                                     aria-haspopup="true"
                                     aria-expanded="false">
-                                <span class="otx-badge {{ $cfg['badge'] }}">
-                                    {{ $cfg['label'] }}
-                                </span>
+                                <small>Cambiar OT</small>
                             </button>
 
                             <div class="dropdown-menu dropdown-menu-right">
                                 @foreach($estadosDisponibles as $value => $data)
-                                    @if($value !== $estadoActual)
+                                    @if(!in_array($value, ['mixto']) && $value !== $estadoActual)
                                         <form method="POST" action="{{ route('ots.updateEstado', $ot) }}">
                                             @csrf
                                             @method('PATCH')

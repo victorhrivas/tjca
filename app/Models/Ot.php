@@ -21,27 +21,29 @@ class Ot extends Model
         'fecha',
         'solicitante',
         'conductor',
-
-        // ORIGEN
         'contacto_origen',
         'telefono_origen',
         'direccion_origen',
         'link_mapa_origen',
-
-        // DESTINO
         'contacto_destino',
         'telefono_destino',
         'direccion_destino',
         'link_mapa_destino',
-
-        // Campo legacy
         'link_mapa',
-
         'patente_camion',
         'patente_remolque',
         'estado',
         'observaciones',
         'folio',
+
+        // si existen en la tabla
+        'oc',
+        'status',
+        'gdd',
+        'afid_interno',
+        'factura_externo',
+        'factura',
+        'fecha_factura',
     ];
 
     protected $casts = [
@@ -55,6 +57,13 @@ class Ot extends Model
         'estado'           => 'string',
         'traslado'         => 'string',
         'costo_ext'        => 'integer',
+        'status'         => 'string',
+        'oc'             => 'string',
+        'gdd'            => 'string',
+        'afid_interno'   => 'string',
+        'factura_externo'=> 'string',
+        'factura'        => 'string',
+        'fecha_factura'  => 'datetime',
     ];
 
     public static array $rules = [
@@ -166,6 +175,9 @@ class Ot extends Model
         return $principal?->patente_remolque ?? $value;
     }
 
-
+    public function puentes()
+    {
+        return $this->hasMany(\App\Models\Puente::class);
+    }
 
 }
